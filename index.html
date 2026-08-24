@@ -1151,7 +1151,7 @@ let state = {
   searchQuery: '',
   taskView: 'list',
   data: { domains: [], krs: [], todos: [], quickNotes: [], checkins: {} },
-  prefs: { theme: 'light', shortcuts: { ...DEFAULT_SHORTCUTS }, navOrder: ['dashboard','krs','tasks','weekly','ai','settings'] },
+  prefs: { theme: 'light', shortcuts: { ...DEFAULT_SHORTCUTS }, navOrder: ['dashboard','krs','tasks','notes','weekly','ai','settings'] },
   aiChat: [],
   notesSearch: '',
   notesTypeFilter: 'all'
@@ -1208,7 +1208,10 @@ function loadPrefs() {
       const saved = JSON.parse(raw);
       state.prefs = Object.assign(state.prefs, saved);
       state.prefs.shortcuts = Object.assign({ ...DEFAULT_SHORTCUTS }, saved.shortcuts || {});
-      if (!state.prefs.navOrder || !Array.isArray(state.prefs.navOrder)) state.prefs.navOrder = ['dashboard','krs','tasks','weekly','ai','settings'];
+      if (!state.prefs.navOrder || !Array.isArray(state.prefs.navOrder)) state.prefs.navOrder = ['dashboard','krs','tasks','notes','weekly','ai','settings'];
+      // Migration: ensure 'notes' is in navOrder
+      const DEFAULT_NAV = ['dashboard','krs','tasks','notes','weekly','ai','settings'];
+      DEFAULT_NAV.forEach(v => { if (!state.prefs.navOrder.includes(v)) state.prefs.navOrder.splice(DEFAULT_NAV.indexOf(v), 0, v); });
     }
   } catch(e) {}
 }
@@ -2634,7 +2637,7 @@ function onNavDrop(e, targetView) {
   e.preventDefault();
   onDragLeaveClean(e);
   if (!_dragNavView || _dragNavView === targetView) return;
-  const order = state.prefs.navOrder || ['dashboard','krs','tasks','weekly','ai','settings'];
+  const order = state.prefs.navOrder || ['dashboard','krs','tasks','notes','weekly','ai','settings'];
   const fromIdx = order.indexOf(_dragNavView);
   const toIdx = order.indexOf(targetView);
   if (fromIdx < 0 || toIdx < 0) return;
