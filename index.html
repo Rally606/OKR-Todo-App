@@ -201,10 +201,21 @@ body {
   font-weight: 500;
   color: var(--c-text-2);
   transition: all .15s;
+  display: flex;
+  align-items: center;
+  gap: 6px;
 }
 .domain-tab:hover { border-color: var(--c-primary-light); }
 .domain-tab.active { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
 .domain-tab.add { border-style: dashed; color: var(--c-text-3); }
+.domain-edit-btn {
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity .15s;
+  margin-left: 2px;
+}
+.domain-tab:hover .domain-edit-btn { opacity: .7; }
+.domain-tab .domain-edit-btn:hover { opacity: 1; transform: scale(1.2); }
 
 /* ===== Cards ===== */
 .card {
@@ -379,6 +390,23 @@ body {
 .qn-item .qn-time { font-size: 10px; color: var(--c-text-3); flex-shrink: 0; }
 .qn-item .qn-del { color: var(--c-text-3); cursor: pointer; font-size: 12px; }
 .qn-item .qn-del:hover { color: var(--c-danger); }
+
+.ai-shortcut {
+  margin-top: 12px;
+  padding: 12px 14px;
+  background: linear-gradient(135deg, var(--c-ai-bg), var(--c-primary-bg));
+  border: 1px solid var(--c-ai);
+  border-radius: var(--r-md);
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  transition: all .15s;
+}
+.ai-shortcut:hover { transform: translateY(-1px); box-shadow: var(--sh-sm); }
+.ai-shortcut-icon { font-size: 22px; }
+.ai-shortcut-title { font-size: 13px; font-weight: 600; color: var(--c-text); }
+.ai-shortcut-desc { font-size: 11px; color: var(--c-text-2); margin-top: 2px; }
 
 /* ===== Split View (KR Management) ===== */
 .split-view { display: flex; gap: 16px; min-height: calc(100vh - 120px); }
@@ -911,11 +939,6 @@ body {
   .page-title { font-size: 20px; }
   .modal { max-width: 100%; }
   .modal-body, .modal-head, .modal-foot { padding: 16px; }
-  .week-nav { flex-wrap: wrap; gap: 8px; }
-  .week-nav .week-stats { margin-left: 0; width: 100%; }
-  .weekly-overview { padding: 16px; }
-  .week-day .day-head { padding: 8px 12px; font-size: 12px; }
-  .week-day .day-head .day-count { font-size: 10px; }
 }
 
 @media (max-width: 480px) {
@@ -923,12 +946,6 @@ body {
   .filter-bar { flex-direction: column; align-items: stretch; }
   .filter-select { width: 100%; }
   .ai-hero { padding: 24px 16px; }
-  .week-nav > button:not(.btn) { width: 28px; height: 28px; font-size: 12px; }
-  .week-nav .week-label { font-size: 13px; }
-  .weekly-overview { padding: 12px; }
-  .weekly-overview h3 { font-size: 14px; }
-  .week-day .day-todos { padding: 4px 8px; }
-  .week-day .day-todos .todo-row { gap: 8px; padding: 6px 2px; }
 }
 </style>
 </head>
@@ -1029,6 +1046,14 @@ function loadData() {
         if (t.ddlDate === undefined) t.ddlDate = '';
         if (t.category !== undefined) delete t.category;
       });
+      if (state.data.krs) state.data.krs.forEach(k => {
+        if (k.ddlDate === undefined) k.ddlDate = '';
+        if (k.ddlText === undefined) k.ddlText = k.deadline || '';
+        if (k.deadline !== undefined) delete k.deadline;
+      });
+      if (state.data.quickNotes) state.data.quickNotes.forEach(q => {
+        if (q.krId === undefined) q.krId = '';
+      });
     }
   } catch(e) { console.error('Load failed', e); }
 }
@@ -1082,9 +1107,9 @@ function initData() {
       { id: 'd3', name: '生活健康', order: 2, hidden: false }
     ],
     krs: [
-      { id: 'k1', domainId: 'd1', name: '季度项目交付', type: 'project', goal: '按时完成本季度核心项目', priority: 'P0', status: '进行中', progress: 30, deadline: '', notes: '项目型KR：进度由子任务完成度自动计算', nextStep: '拆解关键里程碑', checklist: [] },
-      { id: 'k2', domainId: 'd2', name: '每日阅读', type: 'habit', goal: '每天阅读30分钟', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '习惯型KR：点击打卡按钮记录每日完成', nextStep: '', checklist: [] },
-      { id: 'k3', domainId: 'd3', name: '规律作息', type: 'habit', goal: '23点前入睡', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '', nextStep: '', checklist: [] }
+      { id: 'k1', domainId: 'd1', name: '季度项目交付', type: 'project', goal: '按时完成本季度核心项目', priority: 'P0', status: '进行中', progress: 30, ddlDate: '', ddlText: '', notes: '项目型KR：进度由子任务完成度自动计算', nextStep: '拆解关键里程碑', checklist: [] },
+      { id: 'k2', domainId: 'd2', name: '每日阅读', type: 'habit', goal: '每天阅读30分钟', priority: 'P2', status: '进行中', progress: 0, ddlDate: '', ddlText: '', notes: '习惯型KR：点击打卡按钮记录每日完成', nextStep: '', checklist: [] },
+      { id: 'k3', domainId: 'd3', name: '规律作息', type: 'habit', goal: '23点前入睡', priority: 'P2', status: '进行中', progress: 0, ddlDate: '', ddlText: '', notes: '', nextStep: '', checklist: [] }
     ],
     todos: [
       { id: 't1', krId: 'k1', domainId: 'd1', title: '撰写项目周报', priority: 'P0', ddl: '', ddlDate: '', ddlText: '本周', nextStep: '汇总本周进展与风险', notes: '示例任务，可自由编辑或删除', status: '进行中', done: false, createdAt: now.getTime() },
@@ -1093,7 +1118,7 @@ function initData() {
       { id: 't4', krId: '', domainId: 'd3', title: '整理桌面文件', priority: 'P3', ddl: '', ddlDate: '', ddlText: '有空', nextStep: '', notes: '不紧急不重要事项', status: '待开始', done: false, createdAt: now.getTime() }
     ],
     quickNotes: [
-      { id: 'q1', content: '欢迎使用 OKR Todo！这是一条示例闪念笔记，随时可以删除。', createdAt: now.getTime() - 3600000 }
+      { id: 'q1', content: '欢迎使用 OKR Todo！这是一条示例闪念笔记，随时可以删除。', createdAt: now.getTime() - 3600000, krId: '' }
     ],
     checkins: {
       'k2': { [d3ago]: true, [d2ago]: true, [yesterdayStr]: true },
@@ -1126,26 +1151,6 @@ function getWeekDates(offset) {
     dates.push(d);
   }
   return dates;
-}
-
-function selectDate(dateStr) {
-  state.selectedDate = dateStr;
-  var sel = new Date(dateStr + 'T00:00:00');
-  if (!isNaN(sel)) {
-    sel.setHours(0,0,0,0);
-    var now = new Date(); now.setHours(0,0,0,0);
-    var day = now.getDay() || 7;
-    var thisMon = new Date(now);
-    thisMon.setDate(now.getDate() - day + 1);
-    thisMon.setHours(0,0,0,0);
-    var selDay = sel.getDay() || 7;
-    var selMon = new Date(sel);
-    selMon.setDate(sel.getDate() - selDay + 1);
-    selMon.setHours(0,0,0,0);
-    var diff = Math.round((selMon - thisMon) / (7 * 86400000));
-    state.weekOffset = diff;
-  }
-  render();
 }
 
 function weekLabel(offset) {
@@ -1278,7 +1283,10 @@ function renderDashboard() {
     ${pageHeader('首页', '概览你的目标与待办')}
 
     <div class="domain-tabs">
-      ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectDomain('${d.id}')">${esc(d.name)}</div>`).join('')}
+      ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectDomain('${d.id}')">
+        <span>${esc(d.name)}</span>
+        <span class="domain-edit-btn" onclick="event.stopPropagation();openDomainModal('${d.id}')" title="编辑领域">✏️</span>
+      </div>`).join('')}
       <div class="domain-tab add" onclick="openDomainModal()">+ 新建领域</div>
     </div>
 
@@ -1343,16 +1351,30 @@ function renderDashboard() {
         <div class="quick-notes">
           <h3>💡 闪念笔记</h3>
           <div class="qn-input">
-            <input type="text" id="qn-input" placeholder="随手记下想法..." onkeydown="if(event.key==='Enter')addQuickNote()">
-            <button class="btn btn-primary btn-sm" onclick="addQuickNote()">+</button>
+            <input type="text" id="qn-input" placeholder="快速记录，回车即保存..." onkeydown="if(event.key==='Enter')addQuickNote()">
+            <button class="btn btn-primary btn-sm" onclick="openQuickNoteModal()" title="完整编辑并选择归属">＋</button>
           </div>
-          ${state.data.quickNotes.slice(0, 5).map(q => `
-            <div class="qn-item">
+          ${state.data.quickNotes.slice(0, 5).map(q => {
+            const kr = q.krId ? getKR(q.krId) : null;
+            return `
+            <div class="qn-item" onclick="openQuickNoteModal('${q.id}')" style="cursor:pointer;">
               <span class="qn-text">${esc(q.content)}</span>
-              <span class="qn-time">${formatDate(q.createdAt).split(' ')[0]}</span>
-              <span class="qn-del" onclick="deleteQuickNote('${q.id}')">✕</span>
+              <div style="display:flex;align-items:center;gap:6px;">
+                ${kr ? `<span style="font-size:10px;padding:1px 6px;background:var(--c-primary-bg);color:var(--c-primary);border-radius:999px;">${esc(kr.name)}</span>` : ''}
+                <span class="qn-time">${formatDate(q.createdAt).split(' ')[0]}</span>
+                <span class="qn-del" onclick="event.stopPropagation();deleteQuickNote('${q.id}')">✕</span>
+              </div>
             </div>
-          `).join('') || '<div class="empty-state" style="padding:12px;"><div class="es-text">还没有笔记</div></div>'}
+          `}).join('') || '<div class="empty-state" style="padding:12px;"><div class="es-text">还没有笔记</div></div>'}
+        </div>
+
+        <div class="ai-shortcut" onclick="switchView('ai')">
+          <div class="ai-shortcut-icon">🤖</div>
+          <div class="ai-shortcut-text">
+            <div class="ai-shortcut-title">AI 助手</div>
+            <div class="ai-shortcut-desc">创建Todo / 领域 / KR · 生成周报</div>
+          </div>
+          <span style="margin-left:auto;color:var(--c-text-3);">→</span>
         </div>
       </div>
     </div>
@@ -1474,7 +1496,7 @@ function renderKRDetail(kr) {
         <span class="kr-pri pri-${esc(kr.priority)}">${esc(kr.priority)}</span>
         <span class="meta-chip">${esc(kr.status)}</span>
         ${kr.goal ? `<span class="meta-chip">🎯 ${esc(kr.goal)}</span>` : ''}
-        ${kr.deadline ? `<span class="meta-chip">⏰ ${esc(kr.deadline)}</span>` : ''}
+        ${(kr.ddlDate || kr.ddlText) ? `<span class="meta-chip">⏰ ${formatDDL(kr)}</span>` : ''}
       </div>
     </div>
 
@@ -1493,6 +1515,20 @@ function renderKRDetail(kr) {
 
     <div class="section-label">📝 笔记区</div>
     <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;min-height:40px;white-space:pre-wrap;">${esc(kr.notes) || '暂无笔记'}</div>
+
+    ${(() => {
+      const krNotes = state.data.quickNotes.filter(q => q.krId === kr.id);
+      if (krNotes.length === 0) return '';
+      return `
+        <div class="section-label" style="margin-top:16px;">💡 归属的闪念笔记 (${krNotes.length})</div>
+        ${krNotes.map(q => `
+          <div class="qn-item" onclick="openQuickNoteModal('${q.id}')" style="cursor:pointer;">
+            <span class="qn-text">${esc(q.content)}</span>
+            <span class="qn-time">${formatDate(q.createdAt).split(' ')[0]}</span>
+          </div>
+        `).join('')}
+      `;
+    })()}
 
     <div class="section-label">
       📋 待办 (${todos.length})
@@ -1655,38 +1691,26 @@ function sameDay(a, b) {
 function todoBelongsToDay(t, d, i, isWeekend) {
   if (t.ddlDate) {
     const todoDate = new Date(t.ddlDate + 'T00:00:00');
-    if (!isNaN(todoDate) && sameDay(todoDate, d)) return true;
+    if (!isNaN(todoDate)) {
+      // Done todos: only show on deadline day
+      if (t.done) return sameDay(todoDate, d);
+      // Undone todos: show from today to deadline day (inclusive)
+      const today = new Date();
+      today.setHours(0,0,0,0);
+      const dayStart = new Date(d);
+      dayStart.setHours(0,0,0,0);
+      if (dayStart >= today && dayStart <= todoDate) return true;
+      // Also show if deadline is before today (overdue) - show on every day until done
+      if (todoDate < today) return true;
+    }
   }
   if (!t.ddlText) return false;
   const ddl = t.ddlText;
   if (ddl.includes(`${d.getMonth()+1}.${d.getDate()}`) || ddl.includes(`${d.getMonth()+1}/${d.getDate()}`)) return true;
   if (ddl.includes('每天') || ddl.includes('每日')) return true;
-
-  var now = new Date(); now.setHours(0,0,0,0);
-  var todayIdx = now.getDay() || 7;
-  var thisMon = new Date(now); thisMon.setDate(now.getDate() - todayIdx + 1); thisMon.setHours(0,0,0,0);
-  var nextMon = new Date(thisMon); nextMon.setDate(thisMon.getDate() + 7);
-  var lastMon = new Date(thisMon); lastMon.setDate(thisMon.getDate() - 7);
-  var inThis = d >= thisMon && d < nextMon;
-  var inNext = d >= nextMon && d < new Date(nextMon.getTime() + 7*86400000);
-  var inLast = d >= lastMon && d < thisMon;
-
-  if (ddl.includes('本周末') || ddl.includes('这周末')) return isWeekend && inThis;
-  if ((ddl.includes('本周') || ddl.includes('这周')) && !ddl.includes('末')) return inThis;
-
-  if (ddl.includes('下周')) {
-    var dm = {'一':0,'二':1,'三':2,'四':3,'五':4,'六':5,'日':6,'天':6};
-    for (var ch in dm) { if (ddl.includes('下周'+ch)) return i === dm[ch] && inNext; }
-    return inNext;
-  }
-  if (ddl.includes('上周')) {
-    var dm2 = {'一':0,'二':1,'三':2,'四':3,'五':4,'六':5,'日':6,'天':6};
-    for (var ch2 in dm2) { if (ddl.includes('上周'+ch2)) return i === dm2[ch2] && inLast; }
-    return inLast;
-  }
-  if (ddl.includes('今天') || ddl.includes('今日')) return sameDay(d, now);
-  if (ddl.includes('明天')) { var tm = new Date(now); tm.setDate(now.getDate()+1); return sameDay(d, tm); }
-  if (ddl.includes('后天')) { var da = new Date(now); da.setDate(now.getDate()+2); return sameDay(d, da); }
+  if (ddl.includes('本周末') || ddl.includes('这周末')) return isWeekend;
+  if (ddl.includes('本周') && !ddl.includes('末')) return true;
+  if (i === 0 && (ddl.includes('今天') || ddl.includes('今日'))) return true;
   return false;
 }
 
@@ -1731,10 +1755,10 @@ function renderWeekly() {
       <span class="week-stats">${done}/${total} 已完成</span>
     </div>
 
-    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
       <label style="font-size:13px;color:var(--c-text-2);white-space:nowrap;">📅 选择日期</label>
-      <input type="date" value="${esc(state.selectedDate)}" onchange="selectDate(this.value)" style="padding:6px 10px;border:1px solid var(--c-border);border-radius:var(--r-md);background:var(--c-surface);color:var(--c-text);font-size:13px;">
-      <button class="btn btn-secondary btn-sm" onclick="selectDate('${isoOf(today)}')" style="white-space:nowrap;">回到今天</button>
+      <input type="date" value="${esc(state.selectedDate)}" onchange="state.selectedDate=this.value;render()" style="padding:6px 10px;border:1px solid var(--c-border);border-radius:var(--r-md);background:var(--c-surface);color:var(--c-text);font-size:13px;">
+      <button class="btn btn-secondary btn-sm" onclick="state.selectedDate='${isoOf(today)}';render()" style="white-space:nowrap;">回到今天</button>
     </div>
 
     <div class="weekly-overview" style="margin-bottom:20px;">
@@ -2224,13 +2248,59 @@ function addQuickNote() {
   const input = document.getElementById('qn-input');
   const text = input.value.trim();
   if (!text) return;
-  state.data.quickNotes.unshift({ id: uid(), content: text, createdAt: Date.now() });
+  state.data.quickNotes.unshift({ id: uid(), content: text, createdAt: Date.now(), krId: '' });
   saveData(); render(); toast('已添加笔记', 'success');
 }
 
 function deleteQuickNote(id) {
   state.data.quickNotes = state.data.quickNotes.filter(q => q.id !== id);
   saveData(); render();
+}
+
+function openQuickNoteModal(id) {
+  const q = id ? state.data.quickNotes.find(x => x.id === id) : null;
+  const krs = state.data.krs;
+  showModal(`
+    <div class="modal-head">
+      <h3>${q ? '编辑笔记' : '新建笔记'}</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>笔记内容</label>
+        <textarea id="qn-content" rows="6" placeholder="记录你的想法...">${q ? esc(q.content) : ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label>归属KR（选填）</label>
+        <select id="qn-kr">
+          <option value="">不归属（独立闪念笔记）</option>
+          ${krs.map(kr => `<option value="${kr.id}" ${q && q.krId === kr.id ? 'selected' : ''}>${esc(kr.name)}</option>`).join('')}
+        </select>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveQuickNote('${id || ''}')">保存</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('qn-content')?.focus(), 100);
+}
+
+function saveQuickNote(id) {
+  const content = document.getElementById('qn-content').value.trim();
+  if (!content) { toast('请输入笔记内容', 'error'); return; }
+  const krId = document.getElementById('qn-kr').value;
+  if (id) {
+    const q = state.data.quickNotes.find(x => x.id === id);
+    q.content = content;
+    q.krId = krId;
+  } else {
+    state.data.quickNotes.unshift({ id: uid(), content, createdAt: Date.now(), krId });
+  }
+  saveData();
+  closeModal();
+  render();
+  toast(id ? '已保存' : '已添加笔记', 'success');
 }
 
 function checkIn(krId) {
@@ -2419,12 +2489,18 @@ function openKRModal(id) {
         <label>目标</label>
         <input type="text" id="kr-goal" value="${kr ? esc(kr.goal) : ''}" placeholder="如：按时完成本季度核心项目">
       </div>
-      <div class="form-group">
-        <label>截止时间（选填）</label>
-        <input type="text" id="kr-deadline" value="${kr ? esc(kr.deadline) : ''}" placeholder="如：2026年12月">
+      <div class="form-row">
+        <div class="form-group">
+          <label>截止日期（选填）</label>
+          <input type="date" id="kr-ddldate" value="${kr ? esc(kr.ddlDate || '') : ''}">
+        </div>
+        <div class="form-group">
+          <label>截止时间补充</label>
+          <input type="text" id="kr-ddltext" value="${kr ? esc(kr.ddlText || '') : ''}" placeholder="如：年底 / Q4 / 月底">
+        </div>
       </div>
       <div class="form-group">
-        <label>下一步</label>
+        <label>备注</label>
         <input type="text" id="kr-nextstep" value="${kr ? esc(kr.nextStep) : ''}" placeholder="如：拆解关键里程碑">
       </div>
       <div class="form-group">
@@ -2451,7 +2527,8 @@ function saveKR(id) {
     priority: document.getElementById('kr-priority').value,
     status: document.getElementById('kr-status').value,
     goal: document.getElementById('kr-goal').value.trim(),
-    deadline: document.getElementById('kr-deadline').value.trim(),
+    ddlDate: document.getElementById('kr-ddldate').value.trim(),
+    ddlText: document.getElementById('kr-ddltext').value.trim(),
     nextStep: document.getElementById('kr-nextstep').value.trim(),
     notes: document.getElementById('kr-notes').value.trim()
   };
