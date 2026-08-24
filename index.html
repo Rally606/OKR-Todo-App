@@ -552,9 +552,9 @@ body {
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
-  flex-wrap: wrap;
+  flex-wrap: nowrap;
 }
-.week-nav button {
+.week-nav > button:not(.btn) {
   width: 32px; height: 32px;
   border: 1px solid var(--c-border);
   border-radius: var(--r-md);
@@ -563,10 +563,12 @@ body {
   font-size: 14px;
   color: var(--c-text-2);
   display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0;
 }
-.week-nav button:hover { background: var(--c-bg); }
-.week-nav .week-label { font-size: 15px; font-weight: 600; }
-.week-nav .week-stats { margin-left: auto; font-size: 13px; color: var(--c-text-2); }
+.week-nav > button:not(.btn):hover { background: var(--c-bg); }
+.week-nav .week-label { font-size: 15px; font-weight: 600; white-space: nowrap; }
+.week-nav .btn-sm { white-space: nowrap; flex-shrink: 0; }
+.week-nav .week-stats { margin-left: auto; font-size: 13px; color: var(--c-text-2); white-space: nowrap; }
 
 .week-day {
   background: var(--c-surface);
@@ -821,6 +823,9 @@ body {
 .shortcut-list .sc-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: var(--r-md); background: var(--c-bg); }
 .shortcut-list .sc-row .sc-desc { font-size: 13px; color: var(--c-text-2); }
 .shortcut-list .sc-row kbd { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 11px; padding: 3px 8px; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--r-sm); color: var(--c-text); font-weight: 600; }
+.shortcut-list .sc-capture-btn { font-size: 11px; padding: 3px 10px; }
+.shortcut-list .sc-capture-btn.capturing { background: var(--c-primary); color: #fff; border-color: var(--c-primary); animation: pulse 1s infinite; }
+@keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: 0.6; } }
 
 /* ===== Toast ===== */
 #toast-container {
@@ -895,7 +900,6 @@ body {
   .split-view { flex-direction: column; }
   .split-left { width: 100%; }
   .kr-grid { grid-template-columns: 1fr; }
-  .roadmap-timeline { flex-direction: column; }
   .ai-grid { grid-template-columns: 1fr; }
   .quadrant-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
   .quadrant { min-height: auto; }
@@ -945,8 +949,7 @@ body {
       </div>
     </nav>
     <div class="sidebar-footer">
-      本地存储 · 数据仅存于当前设备<br>
-      V2 云端同步 · V3 AI能力 即将上线
+      本地存储 · 数据仅存于当前设备
     </div>
   </aside>
   <div class="mobile-backdrop" id="mobile-backdrop" onclick="closeSidebar()"></div>
@@ -967,6 +970,24 @@ body {
 
 <script>
 /* ===== State ===== */
+const DEFAULT_SHORTCUTS = {
+  newTodo: 'n',
+  toggleTheme: 't',
+  quadrantToggle: 'q',
+  generateReport: 'r',
+  searchFocus: '/',
+  showHelp: '?'
+};
+
+const SHORTCUT_LABELS = {
+  newTodo: '新建 Todo',
+  toggleTheme: '切换深色/浅色模式',
+  quadrantToggle: '列表/四象限切换',
+  generateReport: '生成本周周报',
+  searchFocus: '聚焦任务搜索',
+  showHelp: '显示快捷键帮助'
+};
+
 let state = {
   view: 'dashboard',
   currentDomainId: null,
@@ -976,7 +997,7 @@ let state = {
   searchQuery: '',
   taskView: 'list',
   data: { domains: [], krs: [], todos: [], quickNotes: [], checkins: {} },
-  prefs: { theme: 'light' },
+  prefs: { theme: 'light', shortcuts: { ...DEFAULT_SHORTCUTS } },
   aiChat: []
 };
 
@@ -1002,7 +1023,11 @@ function saveData() {
 function loadPrefs() {
   try {
     const raw = localStorage.getItem(PREFS_KEY);
-    if (raw) state.prefs = Object.assign(state.prefs, JSON.parse(raw));
+    if (raw) {
+      const saved = JSON.parse(raw);
+      state.prefs = Object.assign(state.prefs, saved);
+      state.prefs.shortcuts = Object.assign({ ...DEFAULT_SHORTCUTS }, saved.shortcuts || {});
+    }
   } catch(e) {}
 }
 
@@ -1300,6 +1325,13 @@ function renderTodoRow(t, re) {
 function selectDomain(id) {
   state.currentDomainId = id;
   render();
+}
+
+function jumpToDomainKR(domainId) {
+  state.currentDomainId = domainId;
+  state.currentKRId = null;
+  switchView('krs');
+  closeSidebar();
 }
 
 function renderKRs() {
@@ -1648,7 +1680,6 @@ function renderAI() {
       <div class="chat-head">
         <span style="font-size:18px;">🤖</span>
         <h4>AI 助手</h4>
-        <span class="ai-badge" style="margin-left:auto;">本地引擎</span>
       </div>
       <div class="chat-body" id="ai-chat-body">
         ${state.aiChat.length === 0 ? `
@@ -1671,49 +1702,9 @@ function renderAI() {
       </div>
     </div>
 
-    <div class="roadmap">
-      <h3>📋 版本路线图</h3>
-      <div class="roadmap-timeline">
-        <div class="roadmap-item current">
-          <span class="rm-status current">当前版本</span>
-          <div class="rm-ver">V1.1</div>
-          <div style="font-size:13px;color:var(--c-text-2);margin-top:4px;">本地增强版</div>
-          <ul>
-            <li>完整的 O-KR-Todo 三层结构</li>
-            <li>项目型 / 习惯型 KR</li>
-            <li>习惯打卡 + 热力图</li>
-            <li>深色模式 + 键盘快捷键</li>
-            <li>任务搜索 + 四象限视图</li>
-            <li>CSV 导出 + 移动端适配</li>
-            <li>AI 本地引擎体验（解析/周报）</li>
-          </ul>
-        </div>
-        <div class="roadmap-item">
-          <span class="rm-status planned">规划中</span>
-          <div class="rm-ver">V2</div>
-          <div style="font-size:13px;color:var(--c-text-2);margin-top:4px;">云端同步版</div>
-          <ul>
-            <li>云端服务器 + 数据同步</li>
-            <li>手机 / 网页多端使用</li>
-            <li>用户账号体系</li>
-            <li>数据隐私隔离</li>
-            <li>数据备份与恢复</li>
-          </ul>
-        </div>
-        <div class="roadmap-item">
-          <span class="rm-status planned">规划中</span>
-          <div class="rm-ver">V3</div>
-          <div style="font-size:13px;color:var(--c-text-2);margin-top:4px;">AI 智能版</div>
-          <ul>
-            <li>大模型对话式输入</li>
-            <li>智能分类与领域匹配</li>
-            <li>周报 / 月报自动生成</li>
-            <li>思路梳理与关联推荐</li>
-            <li>SOP自动化</li>
-            <li>智能优先级推荐</li>
-          </ul>
-        </div>
-      </div>
+    <div style="margin-top:24px;padding:16px 20px;border-radius:var(--r-lg);border:1px solid var(--c-border-2);text-align:center;">
+      <div style="font-size:14px;font-weight:600;margin-bottom:6px;">🚀 更多 AI 能力持续开发中</div>
+      <div style="font-size:13px;color:var(--c-text-2);">思路梳理、SOP生成、优先级推荐等功能正在开发中，敬请期待</div>
     </div>
   `;
   document.getElementById('page-ai').innerHTML = html;
@@ -1863,7 +1854,7 @@ function aiFeatureClick(title) {
   } else if (title === '周报生成') {
     generateReport();
   } else {
-    toast('该能力将在 V3 接入大模型后上线', 'info');
+    toast('该能力正在开发中，敬请期待', 'info');
   }
 }
 
@@ -1958,12 +1949,12 @@ function renderSettings() {
     <div class="settings-section">
       <h3>📁 领域管理</h3>
       ${domains.map(d => `
-        <div class="settings-row">
+        <div class="settings-row" style="cursor:pointer;" onclick="jumpToDomainKR('${d.id}')">
           <div>
             <label>${esc(d.name)}</label>
-            <div class="sr-desc">${getKRsByDomain(d.id).length} 个KR · ${getTodosByDomain(d.id).length} 个Todo</div>
+            <div class="sr-desc">${getKRsByDomain(d.id).length} 个KR · ${getTodosByDomain(d.id).length} 个Todo · 点击进入管理 →</div>
           </div>
-          <div style="display:flex;gap:6px;">
+          <div style="display:flex;gap:6px;" onclick="event.stopPropagation()">
             <button class="btn btn-secondary btn-sm" onclick="openDomainModal('${d.id}')">编辑</button>
             <button class="btn btn-danger btn-sm" onclick="deleteDomain('${d.id}')">删除</button>
           </div>
@@ -1997,13 +1988,12 @@ function renderSettings() {
       <h3>⌨️ 键盘快捷键</h3>
       <div class="shortcut-list">
         <div class="sc-row"><span class="sc-desc">切换页面</span><span><kbd>1</kbd> ~ <kbd>6</kbd></span></div>
-        <div class="sc-row"><span class="sc-desc">新建 Todo</span><kbd>N</kbd></div>
-        <div class="sc-row"><span class="sc-desc">聚焦任务搜索</span><kbd>/</kbd></div>
-        <div class="sc-row"><span class="sc-desc">切换深色/浅色模式</span><kbd>T</kbd></div>
-        <div class="sc-row"><span class="sc-desc">列表/四象限切换</span><kbd>Q</kbd></div>
-        <div class="sc-row"><span class="sc-desc">生成本周周报</span><kbd>R</kbd></div>
+        ${['newTodo','searchFocus','toggleTheme','quadrantToggle','generateReport','showHelp'].map(a => renderShortcutRow(a)).join('')}
         <div class="sc-row"><span class="sc-desc">关闭弹窗</span><kbd>Esc</kbd></div>
-        <div class="sc-row"><span class="sc-desc">显示快捷键帮助</span><kbd>?</kbd></div>
+      </div>
+      <div style="margin-top:12px;display:flex;gap:8px;">
+        <button class="btn btn-secondary btn-sm" onclick="resetShortcuts()">恢复默认</button>
+        <button class="btn btn-secondary btn-sm" onclick="showShortcutsModal()">查看全部</button>
       </div>
     </div>
 
@@ -2011,8 +2001,7 @@ function renderSettings() {
       <h3>ℹ️ 关于</h3>
       <div class="settings-row"><label>版本</label><span class="sr-val">V1.1 本地增强版</span></div>
       <div class="settings-row"><label>数据存储</label><span class="sr-val">仅当前设备 · localStorage</span></div>
-      <div class="settings-row"><label>下一版本</label><span class="sr-val">V2: 云端同步 · 多端使用</span></div>
-      <div class="settings-row"><label>未来规划</label><span class="sr-val">V3: AI能力 · 大模型智能整理</span></div>
+
     </div>
   `;
   document.getElementById('page-settings').innerHTML = html;
@@ -2402,7 +2391,73 @@ function isTextInput(el) {
   return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
 }
 
+let _keyCaptureAction = null;
+
+function getShortcutKey(action) {
+  return state.prefs.shortcuts[action] || DEFAULT_SHORTCUTS[action];
+}
+
+function findShortcutConflict(key, excludeAction) {
+  if (key >= '1' && key <= '6') return 'pageNavigation';
+  if (key === 'Escape') return 'escape';
+  for (const [action, k] of Object.entries(state.prefs.shortcuts)) {
+    if (action !== excludeAction && k === key) return action;
+  }
+  return null;
+}
+
+function startKeyCapture(action) {
+  _keyCaptureAction = action;
+  document.querySelectorAll('.sc-capture-btn').forEach(btn => {
+    btn.textContent = btn.dataset.action === action ? '按下新键...' : '修改';
+    if (btn.dataset.action === action) {
+      btn.classList.add('capturing');
+      btn.textContent = '按下新键...';
+    } else {
+      btn.classList.remove('capturing');
+    }
+  });
+}
+
+function resetShortcuts() {
+  state.prefs.shortcuts = { ...DEFAULT_SHORTCUTS };
+  savePrefs();
+  if (state.view === 'settings') render();
+  if (document.getElementById('modal-container').innerHTML.trim()) showShortcutsModal();
+  toast('已恢复默认快捷键', 'success');
+}
+
 document.addEventListener('keydown', (e) => {
+  // Key capture mode for rebinding
+  if (_keyCaptureAction) {
+    e.preventDefault();
+    e.stopPropagation();
+    const key = e.key;
+    if (key === 'Escape') {
+      _keyCaptureAction = null;
+      if (document.getElementById('modal-container').innerHTML.trim()) showShortcutsModal();
+      else if (state.view === 'settings') render();
+      return;
+    }
+    if (e.ctrlKey || e.metaKey || e.altKey) {
+      toast('不支持组合键，请按单个字母或符号键', 'info');
+      return;
+    }
+    const conflict = findShortcutConflict(key, _keyCaptureAction);
+    if (conflict) {
+      const label = SHORTCUT_LABELS[conflict] || (conflict === 'pageNavigation' ? '页面切换(1~6)' : conflict);
+      toast(`按键 "${key}" 已被「${label}」占用`, 'error');
+      return;
+    }
+    state.prefs.shortcuts[_keyCaptureAction] = key;
+    savePrefs();
+    _keyCaptureAction = null;
+    toast(`快捷键已更新`, 'success');
+    if (document.getElementById('modal-container').innerHTML.trim()) showShortcutsModal();
+    else if (state.view === 'settings') render();
+    return;
+  }
+
   // Esc always closes modal first
   if (e.key === 'Escape') {
     const modal = document.getElementById('modal-container');
@@ -2410,13 +2465,7 @@ document.addEventListener('keydown', (e) => {
     if (document.getElementById('sidebar').classList.contains('open')) { closeSidebar(); return; }
     return;
   }
-  // Shortcut to show help
-  if (e.key === '?' && !isTextInput(e.target)) {
-    e.preventDefault();
-    showShortcutsModal();
-    return;
-  }
-  // If typing in a text field, ignore the rest (except Cmd/Ctrl combos)
+  // If typing in a text field, ignore the rest
   if (isTextInput(e.target)) return;
   if (e.ctrlKey || e.metaKey || e.altKey) return;
 
@@ -2426,33 +2475,47 @@ document.addEventListener('keydown', (e) => {
     switchView(views[parseInt(e.key) - 1]);
     return;
   }
-  switch (e.key.toLowerCase()) {
-    case 'n':
-      e.preventDefault();
-      openTodoModal(null);
-      break;
-    case 't':
-      e.preventDefault();
-      toggleTheme();
-      break;
-    case 'q':
-      e.preventDefault();
-      if (state.view !== 'tasks') switchView('tasks');
-      else { state.taskView = state.taskView === 'list' ? 'quadrant' : 'list'; render(); }
-      break;
-    case 'r':
-      e.preventDefault();
-      generateReport();
-      break;
-    case '/':
-      e.preventDefault();
-      if (state.view !== 'tasks') { switchView('tasks'); setTimeout(() => document.getElementById('task-search')?.focus(), 50); }
-      else document.getElementById('task-search')?.focus();
-      break;
+
+  const k = e.key.toLowerCase();
+  const sc = state.prefs.shortcuts;
+
+  if (k === sc.showHelp || e.key === sc.showHelp) {
+    e.preventDefault();
+    showShortcutsModal();
+    return;
   }
+  if (e.key === sc.searchFocus) {
+    e.preventDefault();
+    if (state.view !== 'tasks') { switchView('tasks'); setTimeout(() => document.getElementById('task-search')?.focus(), 50); }
+    else document.getElementById('task-search')?.focus();
+    return;
+  }
+  if (k === sc.newTodo) { e.preventDefault(); openTodoModal(null); return; }
+  if (k === sc.toggleTheme) { e.preventDefault(); toggleTheme(); return; }
+  if (k === sc.quadrantToggle) {
+    e.preventDefault();
+    if (state.view !== 'tasks') switchView('tasks');
+    else { state.taskView = state.taskView === 'list' ? 'quadrant' : 'list'; render(); }
+    return;
+  }
+  if (k === sc.generateReport) { e.preventDefault(); generateReport(); return; }
 });
 
+function renderShortcutRow(action) {
+  const key = getShortcutKey(action);
+  const display = key.length === 1 ? key.toUpperCase() : key;
+  const capturing = _keyCaptureAction === action;
+  return `<div class="sc-row">
+    <span class="sc-desc">${SHORTCUT_LABELS[action]}</span>
+    <span style="display:flex;align-items:center;gap:8px;">
+      <kbd>${esc(display)}</kbd>
+      <button class="sc-capture-btn btn btn-secondary btn-sm" data-action="${action}" onclick="startKeyCapture('${action}')">${capturing ? '按下新键...' : '修改'}</button>
+    </span>
+  </div>`;
+}
+
 function showShortcutsModal() {
+  const customizableActions = ['newTodo','searchFocus','toggleTheme','quadrantToggle','generateReport','showHelp'];
   showModal(`
     <div class="modal-head">
       <h3>⌨️ 键盘快捷键</h3>
@@ -2461,17 +2524,13 @@ function showShortcutsModal() {
     <div class="modal-body">
       <div class="shortcut-list">
         <div class="sc-row"><span class="sc-desc">切换页面（首页→设置）</span><span><kbd>1</kbd> ~ <kbd>6</kbd></span></div>
-        <div class="sc-row"><span class="sc-desc">新建 Todo</span><kbd>N</kbd></div>
-        <div class="sc-row"><span class="sc-desc">聚焦任务搜索</span><kbd>/</kbd></div>
-        <div class="sc-row"><span class="sc-desc">切换深色/浅色模式</span><kbd>T</kbd></div>
-        <div class="sc-row"><span class="sc-desc">任务看板列表/四象限切换</span><kbd>Q</kbd></div>
-        <div class="sc-row"><span class="sc-desc">生成本周周报</span><kbd>R</kbd></div>
+        ${customizableActions.map(a => renderShortcutRow(a)).join('')}
         <div class="sc-row"><span class="sc-desc">关闭弹窗/侧边栏</span><kbd>Esc</kbd></div>
-        <div class="sc-row"><span class="sc-desc">显示本帮助</span><kbd>?</kbd></div>
       </div>
-      <div style="margin-top:14px;font-size:12px;color:var(--c-text-3);">在输入框中输入时快捷键会自动禁用。</div>
+      <div style="margin-top:14px;font-size:12px;color:var(--c-text-3);">点击「修改」后按下新键即可重新绑定。Esc 可取消。1~6 和 Esc 固定不可改。</div>
     </div>
-    <div class="modal-foot">
+    <div class="modal-foot" style="display:flex;gap:8px;">
+      <button class="btn btn-secondary btn-sm" onclick="resetShortcuts()">恢复默认</button>
       <button class="btn btn-primary" onclick="closeModal()">知道了</button>
     </div>
   `);
