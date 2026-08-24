@@ -911,6 +911,11 @@ body {
   .page-title { font-size: 20px; }
   .modal { max-width: 100%; }
   .modal-body, .modal-head, .modal-foot { padding: 16px; }
+  .week-nav { flex-wrap: wrap; gap: 8px; }
+  .week-nav .week-stats { margin-left: 0; width: 100%; }
+  .weekly-overview { padding: 16px; }
+  .week-day .day-head { padding: 8px 12px; font-size: 12px; }
+  .week-day .day-head .day-count { font-size: 10px; }
 }
 
 @media (max-width: 480px) {
@@ -918,6 +923,12 @@ body {
   .filter-bar { flex-direction: column; align-items: stretch; }
   .filter-select { width: 100%; }
   .ai-hero { padding: 24px 16px; }
+  .week-nav > button:not(.btn) { width: 28px; height: 28px; font-size: 12px; }
+  .week-nav .week-label { font-size: 13px; }
+  .weekly-overview { padding: 12px; }
+  .weekly-overview h3 { font-size: 14px; }
+  .week-day .day-todos { padding: 4px 8px; }
+  .week-day .day-todos .todo-row { gap: 8px; padding: 6px 2px; }
 }
 </style>
 </head>
@@ -1630,9 +1641,32 @@ function todoBelongsToDay(t, d, i, isWeekend) {
   const ddl = t.ddlText;
   if (ddl.includes(`${d.getMonth()+1}.${d.getDate()}`) || ddl.includes(`${d.getMonth()+1}/${d.getDate()}`)) return true;
   if (ddl.includes('每天') || ddl.includes('每日')) return true;
-  if (ddl.includes('本周末') || ddl.includes('这周末')) return isWeekend;
-  if (ddl.includes('本周') && !ddl.includes('末')) return true;
-  if (i === 0 && (ddl.includes('今天') || ddl.includes('今日'))) return true;
+
+  var now = new Date(); now.setHours(0,0,0,0);
+  var todayIdx = now.getDay() || 7;
+  var thisMon = new Date(now); thisMon.setDate(now.getDate() - todayIdx + 1); thisMon.setHours(0,0,0,0);
+  var nextMon = new Date(thisMon); nextMon.setDate(thisMon.getDate() + 7);
+  var lastMon = new Date(thisMon); lastMon.setDate(thisMon.getDate() - 7);
+  var inThis = d >= thisMon && d < nextMon;
+  var inNext = d >= nextMon && d < new Date(nextMon.getTime() + 7*86400000);
+  var inLast = d >= lastMon && d < thisMon;
+
+  if (ddl.includes('本周末') || ddl.includes('这周末')) return isWeekend && inThis;
+  if ((ddl.includes('本周') || ddl.includes('这周')) && !ddl.includes('末')) return inThis;
+
+  if (ddl.includes('下周')) {
+    var dm = {'一':0,'二':1,'三':2,'四':3,'五':4,'六':5,'日':6,'天':6};
+    for (var ch in dm) { if (ddl.includes('下周'+ch)) return i === dm[ch] && inNext; }
+    return inNext;
+  }
+  if (ddl.includes('上周')) {
+    var dm2 = {'一':0,'二':1,'三':2,'四':3,'五':4,'六':5,'日':6,'天':6};
+    for (var ch2 in dm2) { if (ddl.includes('上周'+ch2)) return i === dm2[ch2] && inLast; }
+    return inLast;
+  }
+  if (ddl.includes('今天') || ddl.includes('今日')) return sameDay(d, now);
+  if (ddl.includes('明天')) { var tm = new Date(now); tm.setDate(now.getDate()+1); return sameDay(d, tm); }
+  if (ddl.includes('后天')) { var da = new Date(now); da.setDate(now.getDate()+2); return sameDay(d, da); }
   return false;
 }
 
@@ -1677,7 +1711,7 @@ function renderWeekly() {
       <span class="week-stats">${done}/${total} 已完成</span>
     </div>
 
-    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <label style="font-size:13px;color:var(--c-text-2);white-space:nowrap;">📅 选择日期</label>
       <input type="date" value="${esc(state.selectedDate)}" onchange="state.selectedDate=this.value;render()" style="padding:6px 10px;border:1px solid var(--c-border);border-radius:var(--r-md);background:var(--c-surface);color:var(--c-text);font-size:13px;">
       <button class="btn btn-secondary btn-sm" onclick="state.selectedDate='${isoOf(today)}';render()" style="white-space:nowrap;">回到今天</button>
@@ -1748,12 +1782,12 @@ function renderAI() {
         ${state.aiChat.length === 0 ? `
           <div class="chat-placeholder">
             <div class="ph-icon">💭</div>
-            <div style="font-size:14px;font-weight:500;margin-bottom:4px;">试试用自然语言描述任务或创建结构</div>
-            <div style="font-size:13px;max-width:380px;">支持：创建Todo、新建领域、新建KR、生成周报</div>
+            <div style="font-size:14px;font-weight:500;margin-bottom:4px;">试试用自然语言描述一个任务</div>
+            <div style="font-size:13px;max-width:380px;">例如："明天要交项目周报，很紧急" —— AI 会解析出标题、优先级、截止时间并自动匹配领域</div>
             <div class="chat-suggest">
               <button onclick="fillAIExample('明天要交项目周报，很紧急')">明天要交项目周报，很紧急</button>
-              <button onclick="fillAIExample('新建领域：工作&生活')">新建领域：工作&生活</button>
-              <button onclick="fillAIExample('新建KR：完成毕业论文，领域：学业')">新建KR：完成毕业论文</button>
+              <button onclick="fillAIExample('本周读完一本书')">本周读完一本书</button>
+              <button onclick="fillAIExample('下周一组织复盘会议')">下周一组织复盘会议</button>
               <button onclick="generateReport()">📊 生成本周周报</button>
             </div>
           </div>
@@ -1803,23 +1837,6 @@ function renderChatMsg(m) {
   }
   if (m.type === 'report') {
     return `<div class="chat-msg ai"><div class="chat-avatar">🤖</div><div class="chat-bubble"><pre>${esc(m.content)}</pre></div></div>`;
-  }
-  if (m.type === 'domain_created') {
-    return `<div class="chat-msg ai"><div class="chat-avatar">🤖</div><div class="chat-bubble">
-      ✅ 已创建新领域：<strong>${esc(m.name)}</strong>
-      <div class="pc-actions">
-        <button class="btn-primary" onclick="switchView('settings')">去设置查看</button>
-        <button class="btn-secondary" onclick="goToDomain('${m.domainId}')" style="background:var(--c-bg);color:var(--c-text-2);border:1px solid var(--c-border);">去该领域管理</button>
-      </div>
-    </div></div>`;
-  }
-  if (m.type === 'kr_created') {
-    return `<div class="chat-msg ai"><div class="chat-avatar">🤖</div><div class="chat-bubble">
-      ✅ 已创建新KR：<strong>${esc(m.name)}</strong>（${esc(m.krType === 'habit' ? '习惯型' : '项目型')} · 领域：${esc(m.domainName)}）
-      <div class="pc-actions">
-        <button class="btn-primary" onclick="switchView('kr')">去KR管理查看</button>
-      </div>
-    </div></div>`;
   }
   return '';
 }
@@ -1958,41 +1975,6 @@ function sendAIMessage() {
   renderAI();
   setTimeout(() => {
     state.aiChat = state.aiChat.filter(m => !(m.type === 'typing' && m.id === typingId));
-
-    // Domain creation
-    const domMatch = text.match(/^(?:新建|创建|新增|添加)领域[:：\s]+(.+)/);
-    if (domMatch) {
-      const name = domMatch[1].trim();
-      const nd = { id: uid(), name, color: '#6366f1', hidden: false };
-      state.data.domains.push(nd);
-      saveData();
-      state.aiChat.push({ type: 'domain_created', id: uid(), domainId: nd.id, name });
-      renderAI();
-      return;
-    }
-
-    // KR creation
-    const krMatch = text.match(/^(?:新建|创建|新增|添加)KR[:：\s]+(.+)/);
-    if (krMatch) {
-      let krName = krMatch[1].trim();
-      let domainId = null;
-      const domSpec = krName.match(/[,，]\s*(?:领域|属于)[:：\s]+(.+)/);
-      if (domSpec) {
-        krName = krName.replace(/[,，]\s*(?:领域|属于)[:：\s]+.+/, '').trim();
-        const found = state.data.domains.find(d => d.name === domSpec[1].trim());
-        if (found) domainId = found.id;
-      }
-      if (!domainId) domainId = state.data.domains.length > 0 ? state.data.domains[0].id : null;
-      const krType = /习惯|每日|打卡|坚持/.test(text) ? 'habit' : 'project';
-      const nkr = { id: uid(), domainId, name: krName, type: krType, progress: 0, target: 100, unit: '%' };
-      state.data.krs.push(nkr);
-      saveData();
-      const dom = state.data.domains.find(d => d.id === domainId);
-      state.aiChat.push({ type: 'kr_created', id: uid(), krId: nkr.id, name: krName, domainName: dom ? dom.name : '默认', krType });
-      renderAI();
-      return;
-    }
-
     if (text.includes('周报') || text.includes('总结') || text.includes('汇总') || text.includes('report')) {
       const report = generateWeeklyReportContent();
       state.aiChat.push({ type: 'report', content: report });
@@ -2003,11 +1985,6 @@ function sendAIMessage() {
     }
     renderAI();
   }, 600);
-}
-
-function goToDomain(domainId) {
-  state.currentDomainId = domainId;
-  switchView('kr');
 }
 
 function generateReport() {
