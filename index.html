@@ -1760,7 +1760,7 @@ function renderAI() {
         ` : state.aiChat.map(m => renderChatMsg(m)).join('')}
       </div>
       <div class="chat-input-bar">
-        <input type="text" id="ai-input" placeholder="描述你的任务，AI帮你拆解..." onkeydown="if(event.key==='Enter')sendAIMessage()">
+        <input type="text" id="ai-input" placeholder="输入任务描述，或包含'领域''KR'关键词创建结构..." onkeydown="if(event.key==='Enter')sendAIMessage()">
         <button onclick="sendAIMessage()">发送</button>
       </div>
     </div>
@@ -1959,17 +1959,55 @@ function sendAIMessage() {
   setTimeout(() => {
     state.aiChat = state.aiChat.filter(m => !(m.type === 'typing' && m.id === typingId));
 
-    // Domain creation - supports both "新建领域：XXX" and "新建XXX领域"
-    let domName = null;
-    const domMatch1 = text.match(/^(?:新建|创建|新增|添加)领域[:：\s]+(.+)/);
-    if (domMatch1) {
-      domName = domMatch1[1];
-    } else {
-      const domMatch2 = text.match(/^(?:新建|创建|新增|添加)(.+)领域/);
-      if (domMatch2) domName = domMatch2[1];
+    const hasKR = /KR/i.test(text);
+    const hasDomain = /领域/.test(text);
+
+    // KR creation: text contains "KR"
+    if (hasKR) {
+      let krName = text;
+      let domainId = null;
+
+      // Extract domain: "XXX领域" or "领域：XXX"
+      const domBefore = krName.match(/([\u4e00-\u9fa5a-zA-Z0-9&]+)领域/);
+      const domAfter = krName.match(/领域[:：\s]*([\u4e00-\u9fa5a-zA-Z0-9&]+)/);
+      const domRef = (domBefore && domBefore[1]) || (domAfter && domAfter[1]);
+      if (domRef) {
+        const found = state.data.domains.find(d => d.name === domRef);
+        if (found) domainId = found.id;
+        krName = krName.replace(domBefore ? domBefore[0] : '', '').replace(domAfter ? domAfter[0] : '');
+      }
+
+      // Clean KR name: remove trigger words, "KR", "领域", colons, emojis
+      krName = krName
+        .replace(/新建|创建|新增|添加/g, '')
+        .replace(/KR/gi, '')
+        .replace(/领域/g, '')
+        .replace(/属于/g, '')
+        .replace(/[:：,，\s]/g, '')
+        .replace(/[^\u4e00-\u9fa5a-zA-Z0-9&]/g, '')
+        .trim();
+
+      if (krName) {
+        if (!domainId) domainId = state.data.domains.length > 0 ? state.data.domains[0].id : null;
+        const krType = /习惯|每日|打卡|坚持/.test(text) ? 'habit' : 'project';
+        const nkr = { id: uid(), domainId, name: krName, type: krType, progress: 0, target: 100, unit: '%' };
+        state.data.krs.push(nkr);
+        saveData();
+        const dom = state.data.domains.find(d => d.id === domainId);
+        state.aiChat.push({ type: 'kr_created', id: uid(), krId: nkr.id, name: krName, domainName: dom ? dom.name : '默认', krType });
+        renderAI();
+        return;
+      }
     }
-    if (domName) {
-      const name = domName.replace(/[^\u4e00-\u9fa5a-zA-Z0-9&]/g, '').trim();
+
+    // Domain creation: text contains "领域"
+    if (hasDomain) {
+      const name = text
+        .replace(/新建|创建|新增|添加/g, '')
+        .replace(/领域/g, '')
+        .replace(/[:：\s,，]/g, '')
+        .replace(/[^\u4e00-\u9fa5a-zA-Z0-9&]/g, '')
+        .trim();
       if (name) {
         const nd = { id: uid(), name, color: '#6366f1', hidden: false };
         state.data.domains.push(nd);
@@ -1978,35 +2016,6 @@ function sendAIMessage() {
         renderAI();
         return;
       }
-    }
-
-    // KR creation - supports both "新建KR：XXX" and "新建XXXKR"
-    let krRaw = null;
-    const krMatch1 = text.match(/^(?:新建|创建|新增|添加)KR[:：\s]+(.+)/);
-    if (krMatch1) {
-      krRaw = krMatch1[1];
-    } else {
-      const krMatch2 = text.match(/^(?:新建|创建|新增|添加)(.+)KR/);
-      if (krMatch2) krRaw = krMatch2[1];
-    }
-    if (krRaw) {
-      let krName = krRaw.trim();
-      let domainId = null;
-      const domSpec = krName.match(/[,，]\s*(?:领域|属于)[:：\s]+(.+)/);
-      if (domSpec) {
-        krName = krName.replace(/[,，]\s*(?:领域|属于)[:：\s]+.+/, '').trim();
-        const found = state.data.domains.find(d => d.name === domSpec[1].trim());
-        if (found) domainId = found.id;
-      }
-      if (!domainId) domainId = state.data.domains.length > 0 ? state.data.domains[0].id : null;
-      const krType = /习惯|每日|打卡|坚持/.test(text) ? 'habit' : 'project';
-      const nkr = { id: uid(), domainId, name: krName, type: krType, progress: 0, target: 100, unit: '%' };
-      state.data.krs.push(nkr);
-      saveData();
-      const dom = state.data.domains.find(d => d.id === domainId);
-      state.aiChat.push({ type: 'kr_created', id: uid(), krId: nkr.id, name: krName, domainName: dom ? dom.name : '默认', krType });
-      renderAI();
-      return;
     }
 
     if (text.includes('周报') || text.includes('总结') || text.includes('汇总') || text.includes('report')) {
