@@ -2,7 +2,8 @@
 <html lang="zh-CN">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=5.0">
+<meta name="color-scheme" content="light dark">
 <title>OKR Todo - 目标与待办管理</title>
 <style>
 :root {
@@ -31,6 +32,32 @@
   --sh-sm: 0 1px 2px rgba(0,0,0,.05);
   --sh-md: 0 4px 6px rgba(0,0,0,.07);
   --sh-lg: 0 10px 15px rgba(0,0,0,.1);
+  --backdrop: rgba(0,0,0,.4);
+}
+
+[data-theme="dark"] {
+  --c-primary: #818cf8;
+  --c-primary-light: #a5b4fc;
+  --c-primary-bg: #1e1b4b;
+  --c-bg: #0f172a;
+  --c-surface: #1e293b;
+  --c-text: #e2e8f0;
+  --c-text-2: #94a3b8;
+  --c-text-3: #64748b;
+  --c-border: #334155;
+  --c-border-2: #1e293b;
+  --c-success: #34d399;
+  --c-success-bg: #052e2b;
+  --c-warning: #fbbf24;
+  --c-warning-bg: #422006;
+  --c-danger: #f87171;
+  --c-danger-bg: #450a0a;
+  --c-ai: #a78bfa;
+  --c-ai-bg: #2e1065;
+  --sh-sm: 0 1px 2px rgba(0,0,0,.3);
+  --sh-md: 0 4px 6px rgba(0,0,0,.35);
+  --sh-lg: 0 10px 15px rgba(0,0,0,.45);
+  --backdrop: rgba(0,0,0,.65);
 }
 
 * { margin:0; padding:0; box-sizing:border-box; }
@@ -42,6 +69,7 @@ body {
   font-size: 14px;
   line-height: 1.6;
   -webkit-font-smoothing: antialiased;
+  transition: background .25s, color .25s;
 }
 
 /* ===== Layout ===== */
@@ -89,11 +117,13 @@ body {
   font-weight: 500;
   transition: all .15s;
   margin-bottom: 2px;
+  user-select: none;
 }
 
 .nav-item:hover { background: var(--c-border-2); color: var(--c-text); }
 .nav-item.active { background: var(--c-primary-bg); color: var(--c-primary); }
 .nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-item .shortcut { margin-left:auto; font-size:10px; color:var(--c-text-3); opacity:.7; }
 .nav-item .badge {
   margin-left: auto;
   font-size: 10px;
@@ -118,17 +148,37 @@ body {
   min-height: 100vh;
 }
 
-.page { display: none; padding: 24px 32px; max-width: 1400px; }
+.page { display: none; padding: 24px 32px; max-width: 1400px; animation: fadeIn .2s ease; }
 .page.active { display: block; }
+@keyframes fadeIn { from { opacity:0; transform: translateY(4px); } to { opacity:1; transform: translateY(0); } }
 
 .page-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
   margin-bottom: 24px;
+  gap: 12px;
+  flex-wrap: wrap;
 }
 .page-title { font-size: 22px; font-weight: 700; }
 .page-subtitle { font-size: 13px; color: var(--c-text-2); margin-top: 2px; }
+.page-header-actions { display:flex; gap:8px; align-items:center; }
+
+/* Theme toggle */
+.theme-toggle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px; height: 36px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  cursor: pointer;
+  font-size: 16px;
+  color: var(--c-text-2);
+  transition: all .15s;
+}
+.theme-toggle:hover { background: var(--c-bg); color: var(--c-text); }
 
 /* ===== Domain Tabs ===== */
 .domain-tabs {
@@ -221,7 +271,7 @@ body {
 .heatmap .day.today { border: 2px solid var(--c-primary); }
 .heatmap .day.future { background: var(--c-border-2); opacity: .4; }
 
-.kr-card .kr-foot { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--c-text-3); }
+.kr-card .kr-foot { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--c-text-3); flex-wrap: wrap; }
 .kr-card .kr-next { font-size: 12px; color: var(--c-text-2); margin-top: 8px; padding: 6px 8px; background: var(--c-border-2); border-radius: var(--r-sm); }
 
 /* KR add card */
@@ -261,9 +311,9 @@ body {
 }
 .todo-row:last-child { border-bottom: none; }
 .todo-check {
-  width: 18px; height: 18px;
+  width: 20px; height: 20px;
   border: 2px solid var(--c-border);
-  border-radius: 4px;
+  border-radius: 5px;
   cursor: pointer;
   flex-shrink: 0;
   display: flex; align-items: center; justify-content: center;
@@ -271,16 +321,16 @@ body {
 }
 .todo-check:hover { border-color: var(--c-primary); }
 .todo-check.done { background: var(--c-success); border-color: var(--c-success); color: #fff; }
-.todo-check.done::after { content: '✓'; font-size: 11px; }
+.todo-check.done::after { content: '✓'; font-size: 12px; }
 .todo-info { flex: 1; min-width: 0; }
-.todo-title { font-size: 14px; font-weight: 500; }
+.todo-title { font-size: 14px; font-weight: 500; word-break: break-word; }
 .todo-title.done { text-decoration: line-through; color: var(--c-text-3); }
 .todo-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; color: var(--c-text-3); margin-top: 2px; }
 .todo-ddl { color: var(--c-danger); font-weight: 500; }
 .todo-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
 .todo-row:hover .todo-actions { opacity: 1; }
 .todo-action-btn {
-  width: 26px; height: 26px;
+  width: 28px; height: 28px;
   border: none; background: var(--c-border-2);
   border-radius: var(--r-sm);
   cursor: pointer;
@@ -289,6 +339,7 @@ body {
   display: flex; align-items: center; justify-content: center;
 }
 .todo-action-btn:hover { background: var(--c-border); }
+.todo-row.highlight { background: var(--c-primary-bg); border-radius: var(--r-sm); }
 
 /* ===== Quick Notes ===== */
 .quick-notes {
@@ -310,6 +361,8 @@ body {
   font-size: 13px;
   outline: none;
   transition: border-color .15s;
+  background: var(--c-surface);
+  color: var(--c-text);
 }
 .qn-input input:focus { border-color: var(--c-primary); }
 .qn-item {
@@ -397,6 +450,7 @@ body {
   gap: 12px;
   margin-bottom: 16px;
   flex-wrap: wrap;
+  align-items: center;
 }
 .filter-select {
   padding: 7px 12px;
@@ -410,10 +464,87 @@ body {
 }
 .filter-select:focus { border-color: var(--c-primary); }
 
+/* Search box */
+.search-box {
+  position: relative;
+  flex: 1;
+  max-width: 320px;
+  min-width: 160px;
+}
+.search-box input {
+  width: 100%;
+  padding: 7px 12px 7px 32px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  background: var(--c-surface);
+  outline: none;
+  color: var(--c-text);
+  transition: border-color .15s;
+}
+.search-box input:focus { border-color: var(--c-primary); }
+.search-box .search-icon {
+  position: absolute;
+  left: 10px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 13px;
+  color: var(--c-text-3);
+  pointer-events: none;
+}
+
+/* View toggle */
+.view-toggle {
+  display: inline-flex;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+  background: var(--c-surface);
+}
+.view-toggle button {
+  padding: 6px 14px;
+  border: none;
+  background: transparent;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--c-text-2);
+  font-weight: 500;
+}
+.view-toggle button.active { background: var(--c-primary); color: #fff; }
+
 .task-list { background: var(--c-surface); border-radius: var(--r-lg); border: 1px solid var(--c-border-2); box-shadow: var(--sh-sm); overflow: hidden; }
 .task-list .todo-row { padding: 12px 16px; border-bottom: 1px solid var(--c-border-2); }
 .task-list .todo-row:last-child { border-bottom: none; }
 .task-list .todo-row:hover { background: var(--c-bg); }
+
+/* ===== Quadrant View ===== */
+.quadrant-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  grid-template-rows: 1fr 1fr;
+  gap: 16px;
+}
+.quadrant {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border-2);
+  box-shadow: var(--sh-sm);
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  min-height: 220px;
+}
+.quadrant .q-head { padding: 12px 16px; border-bottom: 1px solid var(--c-border-2); }
+.quadrant .q-title { font-size: 14px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.quadrant .q-sub { font-size: 11px; color: var(--c-text-3); margin-top: 2px; }
+.quadrant .q-count { margin-left: auto; font-size: 12px; color: var(--c-text-3); font-weight: 400; }
+.quadrant .q-body { padding: 4px 12px; flex: 1; }
+.quadrant .q-body .todo-row { padding: 8px 4px; }
+.quadrant .q-body .todo-actions { opacity: 1; }
+.quadrant .q-empty { padding: 16px; text-align: center; color: var(--c-text-3); font-size: 12px; }
+.quadrant.q1 { border-top: 3px solid var(--c-danger); }
+.quadrant.q2 { border-top: 3px solid var(--c-primary); }
+.quadrant.q3 { border-top: 3px solid var(--c-warning); }
+.quadrant.q4 { border-top: 3px solid var(--c-success); }
 
 /* ===== Weekly View ===== */
 .week-nav {
@@ -421,6 +552,7 @@ body {
   align-items: center;
   gap: 12px;
   margin-bottom: 20px;
+  flex-wrap: wrap;
 }
 .week-nav button {
   width: 32px; height: 32px;
@@ -484,7 +616,10 @@ body {
   padding: 20px;
   position: relative;
   overflow: hidden;
+  cursor: pointer;
+  transition: all .2s;
 }
+.ai-card:hover { box-shadow: var(--sh-md); transform: translateY(-2px); }
 .ai-card::before {
   content: '';
   position: absolute;
@@ -509,7 +644,8 @@ body {
   border-radius: 999px;
 }
 
-.ai-chat-mock {
+/* AI Chat (interactive) */
+.ai-chat {
   background: var(--c-surface);
   border-radius: var(--r-lg);
   border: 1px solid var(--c-border-2);
@@ -517,15 +653,48 @@ body {
   overflow: hidden;
   margin-bottom: 24px;
 }
-.ai-chat-mock .chat-head { padding: 14px 20px; border-bottom: 1px solid var(--c-border-2); display: flex; align-items: center; gap: 8px; }
-.ai-chat-mock .chat-head h4 { font-size: 15px; font-weight: 600; }
-.ai-chat-mock .chat-body { padding: 24px 20px; min-height: 200px; }
-.ai-chat-mock .chat-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--c-text-3); text-align: center; padding: 40px 0; }
-.ai-chat-mock .chat-placeholder .ph-icon { font-size: 40px; margin-bottom: 12px; opacity: .5; }
-.ai-chat-mock .chat-input-bar { padding: 12px 20px; border-top: 1px solid var(--c-border-2); display: flex; gap: 8px; }
-.ai-chat-mock .chat-input-bar input { flex: 1; padding: 10px 14px; border: 1px solid var(--c-border); border-radius: var(--r-md); font-size: 13px; outline: none; }
-.ai-chat-mock .chat-input-bar input:disabled { background: var(--c-bg); cursor: not-allowed; }
-.ai-chat-mock .chat-input-bar button { padding: 10px 20px; border: none; border-radius: var(--r-md); background: var(--c-border-2); color: var(--c-text-3); font-size: 13px; font-weight: 500; cursor: not-allowed; }
+.ai-chat .chat-head { padding: 14px 20px; border-bottom: 1px solid var(--c-border-2); display: flex; align-items: center; gap: 8px; }
+.ai-chat .chat-head h4 { font-size: 15px; font-weight: 600; }
+.ai-chat .chat-body { padding: 20px; min-height: 280px; max-height: 460px; overflow-y: auto; }
+.ai-chat .chat-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--c-text-3); text-align: center; padding: 40px 0; }
+.ai-chat .chat-placeholder .ph-icon { font-size: 40px; margin-bottom: 12px; opacity: .5; }
+.ai-chat .chat-suggest { display: flex; flex-wrap: wrap; gap: 8px; justify-content: center; margin-top: 16px; }
+.ai-chat .chat-suggest button {
+  padding: 6px 12px; border: 1px solid var(--c-border); border-radius: 999px;
+  background: var(--c-surface); color: var(--c-text-2); font-size: 12px; cursor: pointer;
+  transition: all .15s;
+}
+.ai-chat .chat-suggest button:hover { border-color: var(--c-ai); color: var(--c-ai); background: var(--c-ai-bg); }
+.chat-msg { display: flex; gap: 10px; margin-bottom: 16px; }
+.chat-msg.user { flex-direction: row-reverse; }
+.chat-msg .chat-avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 16px; flex-shrink: 0; }
+.chat-msg.ai .chat-avatar { background: var(--c-ai-bg); }
+.chat-msg.user .chat-avatar { background: var(--c-primary-bg); color: var(--c-primary); }
+.chat-msg .chat-bubble { max-width: 82%; padding: 10px 14px; border-radius: var(--r-lg); font-size: 13px; line-height: 1.7; word-break: break-word; }
+.chat-msg.ai .chat-bubble { background: var(--c-bg); border: 1px solid var(--c-border-2); }
+.chat-msg.user .chat-bubble { background: var(--c-primary); color: #fff; }
+.chat-msg .chat-bubble pre { white-space: pre-wrap; font-family: inherit; font-size: 12.5px; }
+.chat-msg .chat-bubble .parsed-card {
+  margin-top: 10px; padding: 10px; background: var(--c-surface); border: 1px dashed var(--c-border);
+  border-radius: var(--r-md); font-size: 12px;
+}
+.chat-msg .chat-bubble .parsed-card .pc-row { display: flex; gap: 6px; margin: 3px 0; }
+.chat-msg .chat-bubble .parsed-card .pc-row .pc-k { color: var(--c-text-3); min-width: 50px; }
+.chat-msg .chat-bubble .parsed-card .pc-actions { margin-top: 8px; display: flex; gap: 6px; }
+.chat-msg .chat-bubble .parsed-card .pc-actions button {
+  padding: 4px 10px; border: none; border-radius: var(--r-sm); font-size: 11px; font-weight: 600; cursor: pointer;
+}
+.ai-chat .chat-input-bar { padding: 12px 20px; border-top: 1px solid var(--c-border-2); display: flex; gap: 8px; }
+.ai-chat .chat-input-bar input { flex: 1; padding: 10px 14px; border: 1px solid var(--c-border); border-radius: var(--r-md); font-size: 13px; outline: none; background: var(--c-surface); color: var(--c-text); }
+.ai-chat .chat-input-bar input:focus { border-color: var(--c-ai); }
+.ai-chat .chat-input-bar button { padding: 10px 20px; border: none; border-radius: var(--r-md); background: var(--c-ai); color: #fff; font-size: 13px; font-weight: 600; cursor: pointer; }
+.ai-chat .chat-input-bar button:hover { background: var(--c-primary); }
+.ai-chat .chat-input-bar button:disabled { background: var(--c-border-2); color: var(--c-text-3); cursor: not-allowed; }
+.typing-dots { display: inline-flex; gap: 3px; }
+.typing-dots span { width: 6px; height: 6px; border-radius: 50%; background: var(--c-text-3); animation: blink 1.2s infinite both; }
+.typing-dots span:nth-child(2) { animation-delay: .2s; }
+.typing-dots span:nth-child(3) { animation-delay: .4s; }
+@keyframes blink { 0%,80%,100% { opacity:.3; } 40% { opacity:1; } }
 
 /* Version Roadmap */
 .roadmap {
@@ -558,10 +727,19 @@ body {
   margin-bottom: 16px;
 }
 .settings-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
-.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--c-border-2); }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--c-border-2); gap: 12px; }
 .settings-row:last-child { border-bottom: none; }
 .settings-row label { font-size: 14px; }
 .settings-row .sr-desc { font-size: 12px; color: var(--c-text-3); margin-top: 2px; }
+.settings-row .sr-val { font-size: 13px; color: var(--c-text-2); }
+
+/* Theme switch */
+.switch { position: relative; display: inline-block; width: 44px; height: 24px; }
+.switch input { opacity: 0; width: 0; height: 0; }
+.switch .slider { position: absolute; cursor: pointer; inset: 0; background: var(--c-border); border-radius: 999px; transition: .2s; }
+.switch .slider::before { content: ''; position: absolute; height: 18px; width: 18px; left: 3px; top: 3px; background: #fff; border-radius: 50%; transition: .2s; }
+.switch input:checked + .slider { background: var(--c-primary); }
+.switch input:checked + .slider::before { transform: translateX(20px); }
 
 /* ===== Buttons ===== */
 .btn {
@@ -578,6 +756,7 @@ body {
 }
 .btn-primary { background: var(--c-primary); color: #fff; }
 .btn-primary:hover { background: #4f46e5; }
+[data-theme="dark"] .btn-primary:hover { background: #6366f1; }
 .btn-secondary { background: var(--c-surface); color: var(--c-text-2); border: 1px solid var(--c-border); }
 .btn-secondary:hover { background: var(--c-bg); }
 .btn-danger { background: var(--c-danger); color: #fff; }
@@ -588,12 +767,13 @@ body {
 .modal-backdrop {
   position: fixed;
   top: 0; left: 0; right: 0; bottom: 0;
-  background: rgba(0,0,0,.4);
+  background: var(--backdrop);
   z-index: 1000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 20px;
+  animation: fadeIn .15s ease;
 }
 .modal {
   background: var(--c-surface);
@@ -628,11 +808,19 @@ body {
   outline: none;
   font-family: inherit;
   transition: border-color .15s;
+  background: var(--c-surface);
+  color: var(--c-text);
 }
 .form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--c-primary); }
 .form-group textarea { resize: vertical; min-height: 60px; }
 .form-row { display: flex; gap: 12px; }
 .form-row .form-group { flex: 1; }
+
+/* Shortcuts help */
+.shortcut-list { display: flex; flex-direction: column; gap: 8px; }
+.shortcut-list .sc-row { display: flex; justify-content: space-between; align-items: center; padding: 8px 12px; border-radius: var(--r-md); background: var(--c-bg); }
+.shortcut-list .sc-row .sc-desc { font-size: 13px; color: var(--c-text-2); }
+.shortcut-list .sc-row kbd { font-family: ui-monospace, SFMono-Regular, monospace; font-size: 11px; padding: 3px 8px; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--r-sm); color: var(--c-text); font-weight: 600; }
 
 /* ===== Toast ===== */
 #toast-container {
@@ -670,7 +858,22 @@ body {
 /* Mobile toggle */
 .mobile-menu-btn { display: none; }
 
+/* Mobile backdrop */
+.mobile-backdrop {
+  display: none;
+  position: fixed;
+  inset: 0;
+  background: var(--backdrop);
+  z-index: 90;
+}
+.mobile-backdrop.show { display: block; }
+
 /* Responsive */
+@media (max-width: 900px) {
+  .dash-bottom { flex-direction: column; }
+  .dash-bottom .dash-side { width: 100%; }
+}
+
 @media (max-width: 768px) {
   .sidebar { transform: translateX(-100%); }
   .sidebar.open { transform: translateX(0); }
@@ -680,21 +883,36 @@ body {
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px; height: 36px;
+    width: 40px; height: 40px;
     border: 1px solid var(--c-border);
     border-radius: var(--r-md);
     background: var(--c-surface);
     cursor: pointer;
-    font-size: 18px;
+    font-size: 20px;
+    flex-shrink: 0;
   }
-  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .page-header { align-items: center; }
   .split-view { flex-direction: column; }
   .split-left { width: 100%; }
   .kr-grid { grid-template-columns: 1fr; }
   .roadmap-timeline { flex-direction: column; }
   .ai-grid { grid-template-columns: 1fr; }
-  .dash-bottom { flex-direction: column; }
-  .dash-bottom .dash-side { width: 100%; }
+  .quadrant-grid { grid-template-columns: 1fr; grid-template-rows: auto; }
+  .quadrant { min-height: auto; }
+  .filter-bar { gap: 8px; }
+  .search-box { max-width: 100%; }
+  .todo-actions { opacity: 1; }
+  .nav-item .shortcut { display: none; }
+  .page-title { font-size: 20px; }
+  .modal { max-width: 100%; }
+  .modal-body, .modal-head, .modal-foot { padding: 16px; }
+}
+
+@media (max-width: 480px) {
+  .page { padding: 12px; }
+  .filter-bar { flex-direction: column; align-items: stretch; }
+  .filter-select { width: 100%; }
+  .ai-hero { padding: 24px 16px; }
 }
 </style>
 </head>
@@ -704,23 +922,23 @@ body {
   <aside class="sidebar" id="sidebar">
     <div class="sidebar-header">
       <h1>OKR Todo</h1>
-      <div class="ver">V1 · 本地版</div>
+      <div class="ver">V1.1 · 本地版</div>
     </div>
     <nav class="nav" id="nav">
       <div class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
-        <span class="icon">🏠</span> 首页
+        <span class="icon">🏠</span> 首页 <span class="shortcut">1</span>
       </div>
       <div class="nav-item" data-view="krs" onclick="switchView('krs')">
-        <span class="icon">📂</span> KR管理
+        <span class="icon">📂</span> KR管理 <span class="shortcut">2</span>
       </div>
       <div class="nav-item" data-view="tasks" onclick="switchView('tasks')">
-        <span class="icon">📋</span> 任务看板
+        <span class="icon">📋</span> 任务看板 <span class="shortcut">3</span>
       </div>
       <div class="nav-item" data-view="weekly" onclick="switchView('weekly')">
-        <span class="icon">📅</span> 周视图
+        <span class="icon">📅</span> 周视图 <span class="shortcut">4</span>
       </div>
       <div class="nav-item" data-view="ai" onclick="switchView('ai')">
-        <span class="icon">🤖</span> AI能力 <span class="badge">开发中</span>
+        <span class="icon">🤖</span> AI能力 <span class="badge">体验</span>
       </div>
       <div class="nav-item" data-view="settings" onclick="switchView('settings')">
         <span class="icon">⚙️</span> 设置
@@ -731,6 +949,7 @@ body {
       V2 云端同步 · V3 AI能力 即将上线
     </div>
   </aside>
+  <div class="mobile-backdrop" id="mobile-backdrop" onclick="closeSidebar()"></div>
 
   <!-- Main Content -->
   <main class="main">
@@ -754,10 +973,15 @@ let state = {
   currentKRId: null,
   weekOffset: 0,
   filters: { domain: 'all', priority: 'all', status: 'all' },
-  data: { domains: [], krs: [], todos: [], quickNotes: [], checkins: {} }
+  searchQuery: '',
+  taskView: 'list',
+  data: { domains: [], krs: [], todos: [], quickNotes: [], checkins: {} },
+  prefs: { theme: 'light' },
+  aiChat: []
 };
 
 const STORAGE_KEY = 'okr-todo-app-v1';
+const PREFS_KEY = 'okr-todo-app-v1-prefs';
 
 /* ===== Data Layer ===== */
 function loadData() {
@@ -766,6 +990,7 @@ function loadData() {
     if (raw) {
       state.data = JSON.parse(raw);
       if (!state.data.checkins) state.data.checkins = {};
+      if (!state.data.quickNotes) state.data.quickNotes = [];
     }
   } catch(e) { console.error('Load failed', e); }
 }
@@ -774,13 +999,39 @@ function saveData() {
   localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
 }
 
+function loadPrefs() {
+  try {
+    const raw = localStorage.getItem(PREFS_KEY);
+    if (raw) state.prefs = Object.assign(state.prefs, JSON.parse(raw));
+  } catch(e) {}
+}
+
+function savePrefs() {
+  localStorage.setItem(PREFS_KEY, JSON.stringify(state.prefs));
+}
+
 function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
 
-/* ===== Sample Data ===== */
+/* ===== Theme ===== */
+function applyTheme() {
+  document.documentElement.setAttribute('data-theme', state.prefs.theme);
+  const btn = document.getElementById('theme-toggle-btn');
+  if (btn) btn.textContent = state.prefs.theme === 'dark' ? '☀️' : '🌙';
+}
+function toggleTheme() {
+  state.prefs.theme = state.prefs.theme === 'dark' ? 'light' : 'dark';
+  savePrefs();
+  applyTheme();
+  if (state.view === 'settings') render();
+  toast(state.prefs.theme === 'dark' ? '已切换深色模式' : '已切换浅色模式', 'info');
+}
+
+/* ===== Sample Data (generic) ===== */
 function initData() {
   const now = new Date();
   const yesterdayStr = dateStr(new Date(now.getTime() - 86400000));
   const d2ago = dateStr(new Date(now.getTime() - 86400000 * 2));
+  const d3ago = dateStr(new Date(now.getTime() - 86400000 * 3));
 
   state.data = {
     domains: [
@@ -789,20 +1040,21 @@ function initData() {
       { id: 'd3', name: '生活健康', order: 2, hidden: false }
     ],
     krs: [
-      { id: 'k1', domainId: 'd1', name: '季度OKR', type: 'project', goal: '完成本季度核心目标', priority: 'P0', status: '进行中', progress: 30, deadline: '', notes: '点击 ✏️ 编辑KR，点击 🗑 删除', nextStep: '拆解子任务', checklist: [] },
-      { id: 'k2', domainId: 'd2', name: '每日阅读', type: 'habit', goal: '每天读30分钟', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '点击打卡按钮记录每日习惯', nextStep: '', checklist: [] },
-      { id: 'k3', domainId: 'd3', name: '早睡早起', type: 'habit', goal: '11点前入睡', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '', nextStep: '', checklist: [] }
+      { id: 'k1', domainId: 'd1', name: '季度项目交付', type: 'project', goal: '按时完成本季度核心项目', priority: 'P0', status: '进行中', progress: 30, deadline: '', notes: '项目型KR：进度由子任务完成度自动计算', nextStep: '拆解关键里程碑', checklist: [] },
+      { id: 'k2', domainId: 'd2', name: '每日阅读', type: 'habit', goal: '每天阅读30分钟', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '习惯型KR：点击打卡按钮记录每日完成', nextStep: '', checklist: [] },
+      { id: 'k3', domainId: 'd3', name: '规律作息', type: 'habit', goal: '23点前入睡', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '', nextStep: '', checklist: [] }
     ],
     todos: [
-      { id: 't1', krId: 'k1', domainId: 'd1', title: '示例：撰写周报', priority: 'P0', ddl: '', ddlText: '本周', category: '需要记录', nextStep: '收集本周工作内容', notes: '这是一条示例任务，可以编辑或删除', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't2', krId: 'k1', domainId: 'd1', title: '示例：项目复盘', priority: 'P1', ddl: '', ddlText: '下周一', category: '需要记录', nextStep: '整理数据和结论', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't3', krId: 'k2', domainId: 'd2', title: '示例：读完一本书', priority: 'P2', ddl: '', ddlText: '本月', category: '需要记录', nextStep: '选一本想读的书', notes: '', status: '进行中', done: false, createdAt: now.getTime() }
+      { id: 't1', krId: 'k1', domainId: 'd1', title: '撰写项目周报', priority: 'P0', ddl: '', ddlText: '本周', category: '需要记录', nextStep: '汇总本周进展与风险', notes: '示例任务，可自由编辑或删除', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't2', krId: 'k1', domainId: 'd1', title: '组织项目复盘会议', priority: 'P1', ddl: '', ddlText: '下周一', category: '需要记录', nextStep: '提前发送议程', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't3', krId: 'k2', domainId: 'd2', title: '读完一本专业书籍', priority: 'P2', ddl: '', ddlText: '本月', category: '需要记录', nextStep: '选定书目并制定阅读计划', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't4', krId: '', domainId: 'd3', title: '整理桌面文件', priority: 'P3', ddl: '', ddlText: '有空', category: '', nextStep: '', notes: '不紧急不重要事项', status: '待开始', done: false, createdAt: now.getTime() }
     ],
     quickNotes: [
-      { id: 'q1', content: '欢迎使用！这是一条示例闪念笔记，随时可以删除。', createdAt: now.getTime() - 3600000 }
+      { id: 'q1', content: '欢迎使用 OKR Todo！这是一条示例闪念笔记，随时可以删除。', createdAt: now.getTime() - 3600000 }
     ],
     checkins: {
-      'k2': { [d2ago]: true, [yesterdayStr]: true },
+      'k2': { [d3ago]: true, [d2ago]: true, [yesterdayStr]: true },
       'k3': {}
     }
   };
@@ -886,9 +1138,10 @@ function switchView(view) {
   document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
   document.getElementById('page-' + view).classList.add('active');
   document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
-  document.querySelector(`.nav-item[data-view="${view}"]`).classList.add('active');
+  const navEl = document.querySelector(`.nav-item[data-view="${view}"]`);
+  if (navEl) navEl.classList.add('active');
   render();
-  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+  closeSidebar();
 }
 
 /* ===== Render ===== */
@@ -902,19 +1155,31 @@ function render() {
     settings: renderSettings
   };
   (r[state.view] || r.dashboard)();
+  applyTheme();
+}
+
+function pageHeader(title, subtitle) {
+  return `<div class="page-header">
+    <div style="display:flex;align-items:center;gap:12px;">
+      <button class="mobile-menu-btn" onclick="openSidebar()">☰</button>
+      <div>
+        <div class="page-title">${title}</div>
+        <div class="page-subtitle">${subtitle}</div>
+      </div>
+    </div>
+    <div class="page-header-actions">
+      <button class="theme-toggle" id="theme-toggle-btn" onclick="toggleTheme()" title="切换主题 (T)">${state.prefs.theme === 'dark' ? '☀️' : '🌙'}</button>
+    </div>
+  </div>`;
 }
 
 /* ===== Dashboard ===== */
 function renderDashboard() {
   const domains = state.data.domains.filter(d => !d.hidden);
   if (!state.currentDomainId && domains.length > 0) state.currentDomainId = domains[0].id;
-  
+
   const krs = getKRsByDomain(state.currentDomainId);
-  
-  // Weekly todos (top by priority)
-  const weekDates = getWeekDates(0);
-  const weekStart = weekDates[0].getTime();
-  const weekEnd = weekDates[6].getTime() + 86400000;
+
   const weekTodos = state.data.todos.filter(t => !t.done).sort((a,b) => {
     const pri = { P0:0, P1:1, P2:2, P3:3 };
     return (pri[a.priority] ?? 4) - (pri[b.priority] ?? 4);
@@ -923,13 +1188,7 @@ function renderDashboard() {
   const priLabel = p => `<span class="kr-pri pri-${esc(p)}">${esc(p)}</span>`;
 
   const html = `
-    <div class="page-header" style="flex-direction:row;align-items:center;">
-      <div>
-        <div class="page-title">首页</div>
-        <div class="page-subtitle">概览你的目标与待办</div>
-      </div>
-      <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-    </div>
+    ${pageHeader('首页', '概览你的目标与待办')}
 
     <div class="domain-tabs">
       ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectDomain('${d.id}')">${esc(d.name)}</div>`).join('')}
@@ -1014,13 +1273,14 @@ function renderDashboard() {
   document.getElementById('page-dashboard').innerHTML = html;
 }
 
-function renderTodoRow(t) {
+function renderTodoRow(t, re) {
   const domain = getDomain(t.domainId);
   const kr = t.krId ? getKR(t.krId) : null;
-  return `<div class="todo-row">
+  const h = !!re;
+  return `<div class="todo-row ${h?'highlight':''}">
     <div class="todo-check ${t.done?'done':''}" onclick="toggleTodo('${t.id}')"></div>
     <div class="todo-info">
-      <div class="todo-title ${t.done?'done':''}">${esc(t.title)}</div>
+      <div class="todo-title ${t.done?'done':''}">${highlightHtml(t.title, re)}</div>
       <div class="todo-meta">
         ${t.priority ? `<span class="kr-pri pri-${esc(t.priority)}">${esc(t.priority)}</span>` : ''}
         ${kr ? `<span>${esc(kr.name)}</span>` : ''}
@@ -1045,19 +1305,13 @@ function selectDomain(id) {
 function renderKRs() {
   const domains = state.data.domains.filter(d => !d.hidden);
   if (!state.currentDomainId && domains.length > 0) state.currentDomainId = domains[0].id;
-  
+
   const krs = getKRsByDomain(state.currentDomainId);
   if (!state.currentKRId && krs.length > 0) state.currentKRId = krs[0].id;
   const kr = state.currentKRId ? getKR(state.currentKRId) : null;
 
   const html = `
-    <div class="page-header" style="flex-direction:row;align-items:center;">
-      <div>
-        <div class="page-title">KR 管理</div>
-        <div class="page-subtitle">管理各领域下的关键结果</div>
-      </div>
-      <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-    </div>
+    ${pageHeader('KR 管理', '管理各领域下的关键结果')}
 
     <div class="domain-tabs">
       ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectDomain('${d.id}')">${esc(d.name)}</div>`).join('')}
@@ -1153,7 +1407,7 @@ function renderKRDetail(kr) {
       ${todos.length > 0 ? todos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">暂无待办</div></div>'}
     </div>
 
-    <div style="margin-top:20px;display:flex;gap:8px;">
+    <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">
       <button class="btn btn-secondary" onclick="openKRModal('${kr.id}')">✏️ 编辑</button>
       <button class="btn btn-danger" onclick="deleteKR('${kr.id}')">🗑 删除</button>
     </div>
@@ -1169,11 +1423,21 @@ function selectKR(id) {
 function renderTasks() {
   const domains = state.data.domains.filter(d => !d.hidden);
   let todos = state.data.todos.slice();
-  
+
   if (state.filters.domain !== 'all') todos = todos.filter(t => t.domainId === state.filters.domain);
   if (state.filters.priority !== 'all') todos = todos.filter(t => t.priority === state.filters.priority);
   if (state.filters.status === 'active') todos = todos.filter(t => !t.done);
   if (state.filters.status === 'done') todos = todos.filter(t => t.done);
+
+  if (state.searchQuery) {
+    const q = state.searchQuery.toLowerCase();
+    todos = todos.filter(t => {
+      const kr = t.krId ? getKR(t.krId) : null;
+      const domain = getDomain(t.domainId);
+      return [t.title, t.notes, t.nextStep, t.category, t.ddlText, kr?.name, domain?.name]
+        .filter(Boolean).some(s => String(s).toLowerCase().includes(q));
+    });
+  }
 
   const priOrder = { P0: 0, P1: 1, P2: 2, P3: 3 };
   todos.sort((a, b) => {
@@ -1181,17 +1445,13 @@ function renderTasks() {
     return (priOrder[a.priority] ?? 4) - (priOrder[b.priority] ?? 4);
   });
 
+  const q = state.searchQuery ? state.searchQuery.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') : '';
+  const re = q ? new RegExp(`(${q})`, 'gi') : null;
+  const highlight = !!state.searchQuery;
+  const emptyText = state.searchQuery ? '没有匹配的任务' : '暂无符合条件的任务';
+
   const html = `
-    <div class="page-header" style="flex-direction:row;align-items:center;">
-      <div>
-        <div class="page-title">任务看板</div>
-        <div class="page-subtitle">所有待办一览</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="btn btn-primary" onclick="openTodoModal(null)">+ 新建Todo</button>
-        <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-      </div>
-    </div>
+    ${pageHeader('任务看板', '所有待办一览')}
 
     <div class="filter-bar">
       <select class="filter-select" onchange="setFilter('domain',this.value)">
@@ -1210,14 +1470,69 @@ function renderTasks() {
         <option value="active" ${state.filters.status==='active'?'selected':''}>未完成</option>
         <option value="done" ${state.filters.status==='done'?'selected':''}>已完成</option>
       </select>
+      <div class="search-box">
+        <span class="search-icon">🔍</span>
+        <input type="text" id="task-search" value="${esc(state.searchQuery)}" placeholder="搜索任务标题/备注/标签... (/)" oninput="onSearchInput(this.value)">
+      </div>
+      <div class="view-toggle">
+        <button class="${state.taskView==='list'?'active':''}" onclick="setTaskView('list')">📋 列表</button>
+        <button class="${state.taskView==='quadrant'?'active':''}" onclick="setTaskView('quadrant')">⊞ 四象限</button>
+      </div>
+      <button class="btn btn-primary" onclick="openTodoModal(null)">+ 新建Todo</button>
       <span style="font-size:13px;color:var(--c-text-3);margin-left:auto;">共 ${todos.length} 项</span>
     </div>
 
-    <div class="task-list">
-      ${todos.length > 0 ? todos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state"><div class="es-icon">📭</div><div class="es-text">暂无符合条件的任务</div></div>'}
-    </div>
+    ${state.taskView === 'quadrant' ? renderQuadrant(todos, re, highlight) : `
+      <div class="task-list">
+        ${todos.length > 0 ? todos.map(t => renderTodoRow(t, highlight ? re : null)).join('') : `<div class="empty-state"><div class="es-icon">📭</div><div class="es-text">${emptyText}</div></div>`}
+      </div>
+    `}
   `;
   document.getElementById('page-tasks').innerHTML = html;
+  // keep focus on search after render
+  if (state.view === 'tasks') {
+    const si = document.getElementById('task-search');
+    if (si && document.activeElement !== si && state._searchFocused) {
+      const pos = si.value.length;
+      si.focus();
+      try { si.setSelectionRange(pos, pos); } catch(e) {}
+    }
+  }
+}
+
+function highlightHtml(text, re) {
+  if (!text || !re) return esc(text);
+  const parts = String(text).split(re);
+  return parts.map((p, i) => i % 2 === 1 ? `<mark style="background:var(--c-warning-bg);color:var(--c-warning);padding:0 2px;border-radius:2px;">${esc(p)}</mark>` : esc(p)).join('');
+}
+
+function renderQuadrant(todos, re, highlight) {
+  const quadrants = {
+    q1: { title: '🔴 紧急且重要', sub: 'P0 · 立即做', items: [] },
+    q2: { title: '🟣 重要不紧急', sub: 'P1 · 计划做', items: [] },
+    q3: { title: '🟡 紧急不重要', sub: 'P2 · 快速做', items: [] },
+    q4: { title: '🟢 不重要不紧急', sub: 'P3 · 稍后做', items: [] }
+  };
+  todos.forEach(t => {
+    if (t.priority === 'P0') quadrants.q1.items.push(t);
+    else if (t.priority === 'P1') quadrants.q2.items.push(t);
+    else if (t.priority === 'P2') quadrants.q3.items.push(t);
+    else quadrants.q4.items.push(t);
+  });
+
+  return `<div class="quadrant-grid">
+    ${Object.entries(quadrants).map(([key, q]) => `
+      <div class="quadrant ${key}">
+        <div class="q-head">
+          <div class="q-title">${q.title} <span class="q-count">${q.items.length}项</span></div>
+          <div class="q-sub">${q.sub}</div>
+        </div>
+        <div class="q-body">
+          ${q.items.length > 0 ? q.items.map(t => renderTodoRow(t, highlight ? re : null)).join('') : '<div class="q-empty">暂无任务</div>'}
+        </div>
+      </div>
+    `).join('')}
+  </div>`;
 }
 
 function setFilter(key, val) {
@@ -1225,14 +1540,25 @@ function setFilter(key, val) {
   render();
 }
 
+function onSearchInput(val) {
+  state.searchQuery = val;
+  state._searchFocused = true;
+  render();
+  state._searchFocused = false;
+}
+
+function setTaskView(mode) {
+  state.taskView = mode;
+  render();
+}
+
 /* ===== Weekly View ===== */
 function renderWeekly() {
   const dates = getWeekDates(state.weekOffset);
   const dayNames = ['周一','周二','周三','周四','周五','周六','周日'];
-  
+
   let total = 0, done = 0;
   const dayGroups = dates.map((d, i) => {
-    const ds = dateStr(d);
     const isWeekend = i >= 4;
     const dayTodos = state.data.todos.filter(t => {
       if (!t.ddlText) return false;
@@ -1249,22 +1575,13 @@ function renderWeekly() {
     return { date: d, dayName: dayNames[i], todos: dayTodos };
   });
 
-  // Also show all active todos sorted by priority for the week
   const activeTodos = state.data.todos.filter(t => !t.done).sort((a,b) => {
     const pri = { P0:0, P1:1, P2:2, P3:3 };
     return (pri[a.priority] ?? 4) - (pri[b.priority] ?? 4);
   });
 
   const html = `
-    <div class="page-header" style="flex-direction:row;align-items:center;">
-      <div>
-        <div class="page-title">周视图</div>
-        <div class="page-subtitle">按周组织你的待办</div>
-      </div>
-      <div style="display:flex;gap:8px;align-items:center;">
-        <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-      </div>
-    </div>
+    ${pageHeader('周视图', '按周组织你的待办')}
 
     <div class="week-nav">
       <button onclick="state.weekOffset--;render()">‹</button>
@@ -1296,59 +1613,61 @@ function renderWeekly() {
   document.getElementById('page-weekly').innerHTML = html;
 }
 
-/* ===== AI Page ===== */
+/* ===== AI Page (interactive) ===== */
 function renderAI() {
   const aiFeatures = [
-    { icon: '💬', title: '对话式输入', desc: '和AI对话，说出你的想法，AI自动帮你拆解成结构化的todo，挂到对应的领域和KR下。', status: '开发中' },
-    { icon: '📋', title: '自动分类', desc: '根据内容自动匹配领域和KR，无需手动选择分类，减少使用摩擦。', status: '开发中' },
-    { icon: '📊', title: '周报生成', desc: '一键生成本周总结：完成了什么、未完成的原因、下周建议重点。', status: '开发中' },
-    { icon: '🧠', title: '思路梳理', desc: '把碎片化的闪念笔记整理成结构化的计划，发现笔记之间的关联。', status: '开发中' },
-    { icon: '🔄', title: 'SOP生成', desc: '把重复性任务自动化为标准操作流程，下次一键执行。', status: '开发中' },
-    { icon: '⭐', title: '优先级推荐', desc: '根据ddl和重要性，AI推荐本周最该优先处理的事项。', status: '开发中' }
+    { icon: '💬', title: '对话式输入', desc: '用自然语言描述想法，自动拆解为结构化 todo 并归类。', status: '体验中' },
+    { icon: '📋', title: '自动分类', desc: '根据内容关键词自动匹配领域和 KR，减少手动选择。', status: '体验中' },
+    { icon: '📊', title: '周报生成', desc: '一键汇总本周完成情况、优先级分布与建议重点。', status: '体验中' },
+    { icon: '🧠', title: '思路梳理', desc: '把碎片化闪念笔记整理成结构化计划。', status: '开发中' },
+    { icon: '🔄', title: 'SOP生成', desc: '把重复性任务自动化为标准操作流程。', status: '开发中' },
+    { icon: '⭐', title: '优先级推荐', desc: '根据 ddl 和重要性推荐本周最该优先处理的事项。', status: '开发中' }
   ];
 
   const html = `
-    <div class="page-header" style="flex-direction:row;align-items:center;">
-      <div>
-        <div class="page-title">AI 能力</div>
-        <div class="page-subtitle">接入AI后，产品将变得更智能</div>
-      </div>
-      <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-    </div>
+    ${pageHeader('AI 能力', '本地智能助手 · 体验版')}
 
     <div class="ai-hero">
       <h2>🤖 AI 驱动的目标管理</h2>
-      <p>不只是记todo，而是让AI帮你把碎片化的思路与目标关联起来</p>
-      <span class="ai-badge">⚡ V3 版本即将上线</span>
+      <p>本地规则引擎体验版：自然语言解析、自动分类、周报生成均已可用，无需联网</p>
+      <span class="ai-badge">⚡ V1.1 体验版</span>
     </div>
 
     <div class="ai-grid">
       ${aiFeatures.map(f => `
-        <div class="ai-card">
+        <div class="ai-card" onclick="aiFeatureClick('${f.title}')">
           <div class="ai-icon">${f.icon}</div>
           <h4>${f.title}</h4>
           <p>${f.desc}</p>
-          <span class="ai-status">🔒 ${f.status}</span>
+          <span class="ai-status">${f.status === '体验中' ? '✅ ' : '🔒 '}${f.status}</span>
         </div>
       `).join('')}
     </div>
 
-    <div class="ai-chat-mock">
+    <div class="ai-chat">
       <div class="chat-head">
         <span style="font-size:18px;">🤖</span>
         <h4>AI 助手</h4>
-        <span class="ai-badge" style="margin-left:auto;">开发中</span>
+        <span class="ai-badge" style="margin-left:auto;">本地引擎</span>
       </div>
-      <div class="chat-body">
-        <div class="chat-placeholder">
-          <div class="ph-icon">💭</div>
-          <div style="font-size:14px;font-weight:500;margin-bottom:4px;">AI助手将在 V3 版本上线</div>
-          <div style="font-size:13px;max-width:360px;">届时你可以直接用自然语言输入想法，AI会帮你自动拆解成todo、分类到对应领域、生成周报和优先级建议。</div>
-        </div>
+      <div class="chat-body" id="ai-chat-body">
+        ${state.aiChat.length === 0 ? `
+          <div class="chat-placeholder">
+            <div class="ph-icon">💭</div>
+            <div style="font-size:14px;font-weight:500;margin-bottom:4px;">试试用自然语言描述一个任务</div>
+            <div style="font-size:13px;max-width:380px;">例如："明天要交项目周报，很紧急" —— AI 会解析出标题、优先级、截止时间并自动匹配领域</div>
+            <div class="chat-suggest">
+              <button onclick="fillAIExample('明天要交项目周报，很紧急')">明天要交项目周报，很紧急</button>
+              <button onclick="fillAIExample('本周读完一本书')">本周读完一本书</button>
+              <button onclick="fillAIExample('下周一组织复盘会议')">下周一组织复盘会议</button>
+              <button onclick="generateReport()">📊 生成本周周报</button>
+            </div>
+          </div>
+        ` : state.aiChat.map(m => renderChatMsg(m)).join('')}
       </div>
       <div class="chat-input-bar">
-        <input type="text" placeholder="输入你的想法，AI帮你整理成todo..." disabled>
-        <button disabled>发送</button>
+        <input type="text" id="ai-input" placeholder="描述你的任务，AI帮你拆解..." onkeydown="if(event.key==='Enter')sendAIMessage()">
+        <button onclick="sendAIMessage()">发送</button>
       </div>
     </div>
 
@@ -1357,16 +1676,16 @@ function renderAI() {
       <div class="roadmap-timeline">
         <div class="roadmap-item current">
           <span class="rm-status current">当前版本</span>
-          <div class="rm-ver">V1</div>
-          <div style="font-size:13px;color:var(--c-text-2);margin-top:4px;">本地版</div>
+          <div class="rm-ver">V1.1</div>
+          <div style="font-size:13px;color:var(--c-text-2);margin-top:4px;">本地增强版</div>
           <ul>
             <li>完整的 O-KR-Todo 三层结构</li>
             <li>项目型 / 习惯型 KR</li>
             <li>习惯打卡 + 热力图</li>
-            <li>Dashboard + 周视图 + 任务看板</li>
-            <li>闪念笔记</li>
-            <li>本地数据存储 (localStorage)</li>
-            <li>AI能力前端展示 (未接入)</li>
+            <li>深色模式 + 键盘快捷键</li>
+            <li>任务搜索 + 四象限视图</li>
+            <li>CSV 导出 + 移动端适配</li>
+            <li>AI 本地引擎体验（解析/周报）</li>
           </ul>
         </div>
         <div class="roadmap-item">
@@ -1377,7 +1696,7 @@ function renderAI() {
             <li>云端服务器 + 数据同步</li>
             <li>手机 / 网页多端使用</li>
             <li>用户账号体系</li>
-            <li>数据隐私隔离（每人只看自己）</li>
+            <li>数据隐私隔离</li>
             <li>数据备份与恢复</li>
           </ul>
         </div>
@@ -1386,8 +1705,8 @@ function renderAI() {
           <div class="rm-ver">V3</div>
           <div style="font-size:13px;color:var(--c-text-2);margin-top:4px;">AI 智能版</div>
           <ul>
-            <li>对话式输入 → 自动拆解todo</li>
-            <li>自动分类与领域匹配</li>
+            <li>大模型对话式输入</li>
+            <li>智能分类与领域匹配</li>
             <li>周报 / 月报自动生成</li>
             <li>思路梳理与关联推荐</li>
             <li>SOP自动化</li>
@@ -1398,6 +1717,214 @@ function renderAI() {
     </div>
   `;
   document.getElementById('page-ai').innerHTML = html;
+  const body = document.getElementById('ai-chat-body');
+  if (body) body.scrollTop = body.scrollHeight;
+}
+
+function renderChatMsg(m) {
+  if (m.type === 'typing') {
+    return `<div class="chat-msg ai"><div class="chat-avatar">🤖</div><div class="chat-bubble"><span class="typing-dots"><span></span><span></span><span></span></span></div></div>`;
+  }
+  if (m.type === 'text') {
+    return `<div class="chat-msg ${m.role}"><div class="chat-avatar">${m.role === 'ai' ? '🤖' : '🧑'}</div><div class="chat-bubble">${esc(m.content)}</div></div>`;
+  }
+  if (m.type === 'parsed') {
+    const p = m.parsed;
+    const domain = getDomain(p.domainId);
+    const kr = p.krId ? getKR(p.krId) : null;
+    return `<div class="chat-msg ai"><div class="chat-avatar">🤖</div><div class="chat-bubble">
+      已解析你的输入，建议如下：
+      <div class="parsed-card">
+        <div class="pc-row"><span class="pc-k">标题</span><span>${esc(p.title)}</span></div>
+        <div class="pc-row"><span class="pc-k">优先级</span><span class="kr-pri pri-${esc(p.priority)}">${esc(p.priority)}</span></div>
+        <div class="pc-row"><span class="pc-k">截止</span><span>${esc(p.ddlText) || '—'}</span></div>
+        <div class="pc-row"><span class="pc-k">领域</span><span>${domain ? esc(domain.name) : '默认'}</span></div>
+        <div class="pc-row"><span class="pc-k">KR</span><span>${kr ? esc(kr.name) : '无（独立Todo）'}</span></div>
+        <div class="pc-actions">
+          <button class="btn-primary" onclick="addParsedTodo('${m.id}')">＋ 添加为Todo</button>
+          <button class="btn-secondary" onclick="openTodoModalParsed('${m.id}')" style="background:var(--c-bg);color:var(--c-text-2);border:1px solid var(--c-border);">编辑后添加</button>
+        </div>
+      </div>
+    </div></div>`;
+  }
+  if (m.type === 'report') {
+    return `<div class="chat-msg ai"><div class="chat-avatar">🤖</div><div class="chat-bubble"><pre>${esc(m.content)}</pre></div></div>`;
+  }
+  return '';
+}
+
+/* Local AI engine: parse natural language into a structured task */
+function parseNLTask(text) {
+  const result = { title: text, priority: 'P2', ddlText: '', domainId: null, krId: '', status: '进行中', category: '', nextStep: '', notes: '' };
+
+  // Priority detection
+  if (/P0|紧急且重要|非常紧急|十万火急|马上|立刻/i.test(text)) result.priority = 'P0';
+  else if (/P1|重要|尽快|赶紧/i.test(text)) result.priority = 'P1';
+  else if (/P3|不急|有空|闲着|以后|回头/i.test(text)) result.priority = 'P3';
+  else result.priority = 'P2';
+
+  // Deadline detection
+  if (/(今天|今日)/.test(text)) result.ddlText = '今天';
+  else if (/明天/.test(text)) result.ddlText = '明天';
+  else if (/(本周末|这周末)/.test(text)) result.ddlText = '本周末';
+  else if (/(本周|这周)/.test(text)) result.ddlText = '本周';
+  else if (/下个?周/.test(text)) result.ddlText = '下周';
+  else if (/本月/.test(text)) result.ddlText = '本月';
+  else if (/下个月|下月/.test(text)) result.ddlText = '下个月';
+  else {
+    const m = text.match(/(\d{1,2})[.\/-](\d{1,2})/);
+    if (m) result.ddlText = `${m[1]}.${m[2]}`;
+  }
+
+  // Domain detection by keyword map
+  const domains = state.data.domains.filter(d => !d.hidden);
+  const kwMap = [
+    { name: '工作', kw: ['工作','项目','会议','周报','汇报','客户','需求','上线','交付','复盘','排期'] },
+    { name: '学习成长', kw: ['学习','读书','阅读','课程','复习','考试','作业','笔记','书'] },
+    { name: '生活健康', kw: ['健身','运动','跑步','睡觉','早起','买菜','做饭','家务','健康','作息','整理'] }
+  ];
+  let bestDomain = null;
+  for (const d of domains) {
+    if (text.includes(d.name)) { bestDomain = d.id; break; }
+    const km = kwMap.find(k => k.name === d.name);
+    if (km && km.kw.some(k => text.includes(k))) { bestDomain = d.id; break; }
+  }
+  if (!bestDomain && domains.length) bestDomain = domains[0].id;
+  result.domainId = bestDomain;
+
+  // KR detection within domain
+  const krs = bestDomain ? getKRsByDomain(bestDomain) : [];
+  for (const k of krs) {
+    if (text.includes(k.name)) { result.krId = k.id; break; }
+  }
+
+  // Clean title: strip detected markers
+  let title = text
+    .replace(/P[0-3]/gi, '')
+    .replace(/(今天|今日|明天|本周末|这周末|本周|这周|下个?周|本月|下个月|下月)/g, '')
+    .replace(/(紧急且重要|非常紧急|十万火急|马上|立刻|重要|尽快|赶紧|不急|有空|闲着|以后|回头)/g, '')
+    .replace(/[，,。、！!？?]+$/g, '')
+    .replace(/^\s*[要需得应该该]+/g, '')
+    .trim();
+  result.title = title || text.trim();
+
+  return result;
+}
+
+function generateWeeklyReportContent() {
+  const todos = state.data.todos;
+  const done = todos.filter(t => t.done);
+  const active = todos.filter(t => !t.done);
+  const total = todos.length;
+  const rate = total ? Math.round(done.length / total * 100) : 0;
+  const L = [];
+  L.push(`📊 本周总结 (${dateStr(new Date())})`);
+  L.push('');
+  L.push('—— 数据概览 ——');
+  L.push(`总任务: ${total} | 已完成: ${done.length} | 待完成: ${active.length}`);
+  L.push(`完成率: ${rate}%`);
+  L.push('');
+  L.push('—— 领域分布 ——');
+  state.data.domains.forEach(d => {
+    const dt = todos.filter(t => t.domainId === d.id);
+    const dd = dt.filter(t => t.done).length;
+    if (dt.length) L.push(`${d.name}: ${dd}/${dt.length} 完成`);
+  });
+  L.push('');
+  L.push('—— 待办优先级分布 ——');
+  let hasP = false;
+  ['P0','P1','P2','P3'].forEach(p => {
+    const pt = active.filter(t => t.priority === p);
+    if (pt.length) { hasP = true; L.push(`${p}: ${pt.length} 项`); }
+  });
+  if (!hasP) L.push('暂无待办');
+  L.push('');
+  L.push('—— 建议重点关注 ——');
+  const p0 = active.filter(t => t.priority === 'P0');
+  if (p0.length) {
+    p0.slice(0, 3).forEach(t => L.push(`• ${t.title}${t.ddlText ? ' (⏰' + t.ddlText + ')' : ''}`));
+  } else {
+    const p1 = active.filter(t => t.priority === 'P1');
+    if (p1.length) p1.slice(0, 3).forEach(t => L.push(`• ${t.title}`));
+    else L.push('暂无紧急任务，可推进重要不紧急事项 🎉');
+  }
+  L.push('');
+  L.push('—— 习惯打卡 ——');
+  state.data.krs.filter(k => k.type === 'habit').forEach(k => {
+    L.push(`${k.name}: 连续 ${getStreak(k.id)} 天${isHabitCheckedToday(k.id) ? ' ✅ 今日已打卡' : ''}`);
+  });
+  return L.join('\n');
+}
+
+function aiFeatureClick(title) {
+  if (title === '对话式输入' || title === '自动分类') {
+    document.getElementById('ai-input')?.focus();
+    toast('在下方输入框试试自然语言描述任务', 'info');
+  } else if (title === '周报生成') {
+    generateReport();
+  } else {
+    toast('该能力将在 V3 接入大模型后上线', 'info');
+  }
+}
+
+function fillAIExample(text) {
+  const input = document.getElementById('ai-input');
+  if (input) { input.value = text; input.focus(); }
+}
+
+function sendAIMessage() {
+  const input = document.getElementById('ai-input');
+  const text = input ? input.value.trim() : '';
+  if (!text) return;
+  input.value = '';
+  state.aiChat.push({ type: 'text', role: 'user', content: text });
+  // typing indicator
+  const typingId = uid();
+  state.aiChat.push({ type: 'typing', id: typingId });
+  renderAI();
+  setTimeout(() => {
+    state.aiChat = state.aiChat.filter(m => !(m.type === 'typing' && m.id === typingId));
+    if (text.includes('周报') || text.includes('总结') || text.includes('汇总') || text.includes('report')) {
+      const report = generateWeeklyReportContent();
+      state.aiChat.push({ type: 'report', content: report });
+    } else {
+      const parsed = parseNLTask(text);
+      const msgId = uid();
+      state.aiChat.push({ type: 'parsed', id: msgId, parsed });
+    }
+    renderAI();
+  }, 600);
+}
+
+function generateReport() {
+  if (state.view !== 'ai') switchView('ai');
+  state.aiChat.push({ type: 'text', role: 'user', content: '生成本周周报' });
+  const typingId = uid();
+  state.aiChat.push({ type: 'typing', id: typingId });
+  renderAI();
+  setTimeout(() => {
+    state.aiChat = state.aiChat.filter(m => !(m.type === 'typing' && m.id === typingId));
+    state.aiChat.push({ type: 'report', content: generateWeeklyReportContent() });
+    renderAI();
+  }, 700);
+}
+
+function addParsedTodo(msgId) {
+  const m = state.aiChat.find(x => x.id === msgId);
+  if (!m || !m.parsed) return;
+  const p = m.parsed;
+  state.data.todos.push({ id: uid(), title: p.title, domainId: p.domainId, krId: p.krId, priority: p.priority, status: p.status, ddl: '', ddlText: p.ddlText, category: p.category, nextStep: p.nextStep, notes: p.notes, done: false, createdAt: Date.now() });
+  saveData();
+  toast('已添加为 Todo ✓', 'success');
+  // mark as added
+  m.added = true;
+  renderAI();
+}
+
+function openTodoModalParsed(msgId) {
+  const m = state.aiChat.find(x => x.id === msgId);
+  if (!m || !m.parsed) return;
+  openTodoModal(null, m.parsed.krId, m.parsed);
 }
 
 /* ===== Settings ===== */
@@ -1406,23 +1933,26 @@ function renderSettings() {
   const totalTodos = state.data.todos.length;
   const totalKRs = state.data.krs.length;
   const totalNotes = state.data.quickNotes.length;
+  const doneTodos = state.data.todos.filter(t => t.done).length;
 
   const html = `
-    <div class="page-header" style="flex-direction:row;align-items:center;">
-      <div>
-        <div class="page-title">设置</div>
-        <div class="page-subtitle">数据管理与领域配置</div>
-      </div>
-      <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
-    </div>
+    ${pageHeader('设置', '数据管理 · 外观 · 快捷键')}
 
     <div class="settings-section">
       <h3>📊 数据概览</h3>
-      <div class="settings-row"><label>领域数</label><span style="font-size:14px;font-weight:600;">${domains.length}</span></div>
-      <div class="settings-row"><label>KR 数</label><span style="font-size:14px;font-weight:600;">${totalKRs}</span></div>
-      <div class="settings-row"><label>Todo 数</label><span style="font-size:14px;font-weight:600;">${totalTodos}</span></div>
-      <div class="settings-row"><label>闪念笔记数</label><span style="font-size:14px;font-weight:600;">${totalNotes}</span></div>
-      <div class="settings-row"><label>存储方式</label><span style="font-size:13px;color:var(--c-text-2);">本地存储 (localStorage)</span></div>
+      <div class="settings-row"><label>领域数</label><span class="sr-val">${domains.length}</span></div>
+      <div class="settings-row"><label>KR 数</label><span class="sr-val">${totalKRs}</span></div>
+      <div class="settings-row"><label>Todo 数</label><span class="sr-val">${totalTodos}（已完成 ${doneTodos}）</span></div>
+      <div class="settings-row"><label>闪念笔记数</label><span class="sr-val">${totalNotes}</span></div>
+      <div class="settings-row"><label>存储方式</label><span class="sr-val">本地存储 (localStorage)</span></div>
+    </div>
+
+    <div class="settings-section">
+      <h3>🎨 外观</h3>
+      <div class="settings-row">
+        <div><label>深色模式</label><div class="sr-desc">护眼，夜间使用更舒适</div></div>
+        <label class="switch"><input type="checkbox" id="theme-switch" ${state.prefs.theme==='dark'?'checked':''} onchange="toggleTheme()"><span class="slider"></span></label>
+      </div>
     </div>
 
     <div class="settings-section">
@@ -1445,8 +1975,12 @@ function renderSettings() {
     <div class="settings-section">
       <h3>💾 数据管理</h3>
       <div class="settings-row">
-        <div><label>导出数据</label><div class="sr-desc">导出为 JSON 文件备份</div></div>
+        <div><label>导出 JSON</label><div class="sr-desc">完整备份所有数据</div></div>
         <button class="btn btn-secondary btn-sm" onclick="exportData()">导出</button>
+      </div>
+      <div class="settings-row">
+        <div><label>导出 CSV</label><div class="sr-desc">导出 Todo 列表，可用 Excel 打开</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="exportCSV()">导出</button>
       </div>
       <div class="settings-row">
         <div><label>导入数据</label><div class="sr-desc">从 JSON 文件恢复数据</div></div>
@@ -1460,11 +1994,25 @@ function renderSettings() {
     </div>
 
     <div class="settings-section">
+      <h3>⌨️ 键盘快捷键</h3>
+      <div class="shortcut-list">
+        <div class="sc-row"><span class="sc-desc">切换页面</span><span><kbd>1</kbd> ~ <kbd>6</kbd></span></div>
+        <div class="sc-row"><span class="sc-desc">新建 Todo</span><kbd>N</kbd></div>
+        <div class="sc-row"><span class="sc-desc">聚焦任务搜索</span><kbd>/</kbd></div>
+        <div class="sc-row"><span class="sc-desc">切换深色/浅色模式</span><kbd>T</kbd></div>
+        <div class="sc-row"><span class="sc-desc">列表/四象限切换</span><kbd>Q</kbd></div>
+        <div class="sc-row"><span class="sc-desc">生成本周周报</span><kbd>R</kbd></div>
+        <div class="sc-row"><span class="sc-desc">关闭弹窗</span><kbd>Esc</kbd></div>
+        <div class="sc-row"><span class="sc-desc">显示快捷键帮助</span><kbd>?</kbd></div>
+      </div>
+    </div>
+
+    <div class="settings-section">
       <h3>ℹ️ 关于</h3>
-      <div class="settings-row"><label>版本</label><span style="font-size:13px;color:var(--c-text-2);">V1.0 本地版</span></div>
-      <div class="settings-row"><label>数据存储</label><span style="font-size:13px;color:var(--c-text-2);">仅当前设备 · localStorage</span></div>
-      <div class="settings-row"><label>下一版本</label><span style="font-size:13px;color:var(--c-text-2);">V2: 云端同步 · 多端使用</span></div>
-      <div class="settings-row"><label>未来规划</label><span style="font-size:13px;color:var(--c-text-2);">V3: AI能力 · 智能整理</span></div>
+      <div class="settings-row"><label>版本</label><span class="sr-val">V1.1 本地增强版</span></div>
+      <div class="settings-row"><label>数据存储</label><span class="sr-val">仅当前设备 · localStorage</span></div>
+      <div class="settings-row"><label>下一版本</label><span class="sr-val">V2: 云端同步 · 多端使用</span></div>
+      <div class="settings-row"><label>未来规划</label><span class="sr-val">V3: AI能力 · 大模型智能整理</span></div>
     </div>
   `;
   document.getElementById('page-settings').innerHTML = html;
@@ -1532,7 +2080,31 @@ function exportData() {
   a.download = `okr-todo-backup-${dateStr(new Date())}.json`;
   a.click();
   URL.revokeObjectURL(url);
-  toast('数据已导出', 'success');
+  toast('JSON 数据已导出', 'success');
+}
+
+function exportCSV() {
+  const headers = ['标题','优先级','状态','完成','截止时间','领域','KR','类别','下一步','备注','创建时间'];
+  const rows = state.data.todos.map(t => {
+    const domain = getDomain(t.domainId);
+    const kr = t.krId ? getKR(t.krId) : null;
+    return [t.title, t.priority, t.status, t.done ? '是' : '否', t.ddlText, domain ? domain.name : '', kr ? kr.name : '', t.category, t.nextStep, t.notes, new Date(t.createdAt).toLocaleString('zh-CN')];
+  });
+  const csv = [headers, ...rows].map(r => r.map(csvCell).join(',')).join('\n');
+  const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `okr-todo-${dateStr(new Date())}.csv`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('CSV 已导出（' + rows.length + ' 条任务）', 'success');
+}
+
+function csvCell(v) {
+  const s = v == null ? '' : String(v);
+  if (/[",\n]/.test(s)) return '"' + s.replace(/"/g, '""') + '"';
+  return s;
 }
 
 function importData(event) {
@@ -1550,6 +2122,7 @@ function importData(event) {
     } catch(err) { toast('导入失败：文件格式错误', 'error'); }
   };
   reader.readAsText(file);
+  event.target.value = '';
 }
 
 function clearAllData() {
@@ -1559,6 +2132,7 @@ function clearAllData() {
   state.data = { domains: [], krs: [], todos: [], quickNotes: [], checkins: {} };
   state.currentDomainId = null;
   state.currentKRId = null;
+  state.aiChat = [];
   initData();
   render(); toast('数据已重置为示例数据', 'info');
 }
@@ -1574,7 +2148,6 @@ function closeModal() {
 
 function openDomainModal(id) {
   const d = id ? getDomain(id) : null;
-  const domains = id ? state.data.domains : state.data.domains;
   showModal(`
     <div class="modal-head">
       <h3>${d ? '编辑领域' : '新建领域'}</h3>
@@ -1583,7 +2156,7 @@ function openDomainModal(id) {
     <div class="modal-body">
       <div class="form-group">
         <label>领域名称</label>
-        <input type="text" id="dm-name" value="${d ? esc(d.name) : ''}" placeholder="如：毕业&工作" autofocus>
+        <input type="text" id="dm-name" value="${d ? esc(d.name) : ''}" placeholder="如：工作 / 学习成长 / 生活健康" autofocus>
       </div>
     </div>
     <div class="modal-foot">
@@ -1611,7 +2184,7 @@ function openKRModal(id) {
   const kr = id ? getKR(id) : null;
   const domains = state.data.domains.filter(d => !d.hidden);
   const defaultDomain = state.currentDomainId || (domains[0] ? domains[0].id : '');
-  
+
   showModal(`
     <div class="modal-head">
       <h3>${kr ? '编辑 KR' : '新建 KR'}</h3>
@@ -1620,7 +2193,7 @@ function openKRModal(id) {
     <div class="modal-body">
       <div class="form-group">
         <label>KR 名称</label>
-        <input type="text" id="kr-name" value="${kr ? esc(kr.name) : ''}" placeholder="如：找到工作">
+        <input type="text" id="kr-name" value="${kr ? esc(kr.name) : ''}" placeholder="如：季度项目交付">
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -1653,15 +2226,15 @@ function openKRModal(id) {
       </div>
       <div class="form-group">
         <label>目标</label>
-        <input type="text" id="kr-goal" value="${kr ? esc(kr.goal) : ''}" placeholder="如：秋招拿到心仪offer">
+        <input type="text" id="kr-goal" value="${kr ? esc(kr.goal) : ''}" placeholder="如：按时完成本季度核心项目">
       </div>
       <div class="form-group">
         <label>截止时间（选填）</label>
-        <input type="text" id="kr-deadline" value="${kr ? esc(kr.deadline) : ''}" placeholder="如：2024年12月">
+        <input type="text" id="kr-deadline" value="${kr ? esc(kr.deadline) : ''}" placeholder="如：2026年12月">
       </div>
       <div class="form-group">
         <label>下一步</label>
-        <input type="text" id="kr-nextstep" value="${kr ? esc(kr.nextStep) : ''}" placeholder="如：补充工作日记&todo">
+        <input type="text" id="kr-nextstep" value="${kr ? esc(kr.nextStep) : ''}" placeholder="如：拆解关键里程碑">
       </div>
       <div class="form-group">
         <label>笔记区</label>
@@ -1679,7 +2252,7 @@ function openKRModal(id) {
 function saveKR(id) {
   const name = document.getElementById('kr-name').value.trim();
   if (!name) { toast('请输入KR名称', 'error'); return; }
-  
+
   const data = {
     name,
     type: document.getElementById('kr-type').value,
@@ -1691,7 +2264,7 @@ function saveKR(id) {
     nextStep: document.getElementById('kr-nextstep').value.trim(),
     notes: document.getElementById('kr-notes').value.trim()
   };
-  
+
   if (id) {
     const kr = getKR(id);
     Object.assign(kr, data);
@@ -1702,12 +2275,12 @@ function saveKR(id) {
   saveData(); closeModal(); render(); toast('已保存', 'success');
 }
 
-function openTodoModal(id, krId) {
+function openTodoModal(id, krId, preset) {
   const t = id ? state.data.todos.find(x => x.id === id) : null;
   const domains = state.data.domains.filter(d => !d.hidden);
   const krs = state.data.krs;
-  const defaultDomain = t ? t.domainId : (krId ? (getKR(krId)?.domainId || state.currentDomainId) : state.currentDomainId);
-  
+  const defaultDomain = t ? t.domainId : (preset ? preset.domainId : (krId ? (getKR(krId)?.domainId || state.currentDomainId) : state.currentDomainId));
+
   showModal(`
     <div class="modal-head">
       <h3>${t ? '编辑 Todo' : '新建 Todo'}</h3>
@@ -1716,7 +2289,7 @@ function openTodoModal(id, krId) {
     <div class="modal-body">
       <div class="form-group">
         <label>任务标题</label>
-        <input type="text" id="td-title" value="${t ? esc(t.title) : ''}" placeholder="如：改简历-快手" autofocus>
+        <input type="text" id="td-title" value="${t ? esc(t.title) : (preset ? esc(preset.title) : '')}" placeholder="如：撰写项目周报" autofocus>
       </div>
       <div class="form-row">
         <div class="form-group">
@@ -1729,7 +2302,7 @@ function openTodoModal(id, krId) {
           <label>所属 KR（选填）</label>
           <select id="td-kr">
             <option value="">无（独立Todo）</option>
-            ${krs.map(k => `<option value="${k.id}" ${t && t.krId === k.id ? 'selected' : (krId === k.id ? 'selected' : '')}>${esc(k.name)}</option>`).join('')}
+            ${krs.map(k => `<option value="${k.id}" ${t && t.krId === k.id ? 'selected' : (preset && preset.krId === k.id ? 'selected' : (krId === k.id ? 'selected' : ''))}>${esc(k.name)}</option>`).join('')}
           </select>
         </div>
       </div>
@@ -1737,33 +2310,33 @@ function openTodoModal(id, krId) {
         <div class="form-group">
           <label>优先级</label>
           <select id="td-priority">
-            ${['P0','P1','P2','P3'].map(p => `<option value="${p}" ${t && t.priority === p ? 'selected' : (p === 'P2' ? 'selected' : '')}>${p}</option>`).join('')}
+            ${['P0','P1','P2','P3'].map(p => `<option value="${p}" ${t && t.priority === p ? 'selected' : (preset && preset.priority === p ? 'selected' : (p === 'P2' ? 'selected' : ''))}>${p}</option>`).join('')}
           </select>
         </div>
         <div class="form-group">
           <label>状态</label>
           <select id="td-status">
-            ${['进行中','待开始','已归档','hold'].map(s => `<option value="${s}" ${t && t.status === s ? 'selected' : (s === '进行中' ? 'selected' : '')}>${s}</option>`).join('')}
+            ${['进行中','待开始','已归档','hold'].map(s => `<option value="${s}" ${t && t.status === s ? 'selected' : (preset && preset.status === s ? 'selected' : (s === '进行中' ? 'selected' : ''))}>${s}</option>`).join('')}
           </select>
         </div>
       </div>
       <div class="form-row">
         <div class="form-group">
           <label>截止时间（文字描述）</label>
-          <input type="text" id="td-ddl" value="${t ? esc(t.ddlText) : ''}" placeholder="如：8.21 / 本周末 / 下周">
+          <input type="text" id="td-ddl" value="${t ? esc(t.ddlText) : (preset ? esc(preset.ddlText) : '')}" placeholder="如：8.21 / 本周末 / 下周">
         </div>
         <div class="form-group">
           <label>类别标签</label>
-          <input type="text" id="td-category" value="${t ? esc(t.category) : ''}" placeholder="如：需要记录 / 习惯 / doc">
+          <input type="text" id="td-category" value="${t ? esc(t.category) : (preset ? esc(preset.category) : '')}" placeholder="如：需要记录 / 习惯 / doc">
         </div>
       </div>
       <div class="form-group">
         <label>下一步</label>
-        <input type="text" id="td-nextstep" value="${t ? esc(t.nextStep) : ''}" placeholder="如：补充背景&todo">
+        <input type="text" id="td-nextstep" value="${t ? esc(t.nextStep) : (preset ? esc(preset.nextStep) : '')}" placeholder="如：补充背景&todo">
       </div>
       <div class="form-group">
         <label>备注</label>
-        <textarea id="td-notes" placeholder="备注信息...">${t ? esc(t.notes) : ''}</textarea>
+        <textarea id="td-notes" placeholder="备注信息...">${t ? esc(t.notes) : (preset ? esc(preset.notes) : '')}</textarea>
       </div>
     </div>
     <div class="modal-foot">
@@ -1785,7 +2358,7 @@ function updateKROptions() {
 function saveTodo(id) {
   const title = document.getElementById('td-title').value.trim();
   if (!title) { toast('请输入任务标题', 'error'); return; }
-  
+
   const data = {
     title,
     domainId: document.getElementById('td-domain').value,
@@ -1797,7 +2370,7 @@ function saveTodo(id) {
     nextStep: document.getElementById('td-nextstep').value.trim(),
     notes: document.getElementById('td-notes').value.trim()
   };
-  
+
   if (id) {
     const t = state.data.todos.find(x => x.id === id);
     Object.assign(t, data);
@@ -1812,17 +2385,115 @@ function openKRDetailed(krId) {
   switchView('krs');
 }
 
+/* ===== Sidebar (mobile) ===== */
+function openSidebar() {
+  document.getElementById('sidebar').classList.add('open');
+  document.getElementById('mobile-backdrop').classList.add('show');
+}
+function closeSidebar() {
+  document.getElementById('sidebar').classList.remove('open');
+  document.getElementById('mobile-backdrop').classList.remove('show');
+}
+
+/* ===== Keyboard Shortcuts ===== */
+function isTextInput(el) {
+  if (!el) return false;
+  const tag = el.tagName;
+  return tag === 'INPUT' || tag === 'TEXTAREA' || tag === 'SELECT' || el.isContentEditable;
+}
+
+document.addEventListener('keydown', (e) => {
+  // Esc always closes modal first
+  if (e.key === 'Escape') {
+    const modal = document.getElementById('modal-container');
+    if (modal.innerHTML.trim()) { closeModal(); return; }
+    if (document.getElementById('sidebar').classList.contains('open')) { closeSidebar(); return; }
+    return;
+  }
+  // Shortcut to show help
+  if (e.key === '?' && !isTextInput(e.target)) {
+    e.preventDefault();
+    showShortcutsModal();
+    return;
+  }
+  // If typing in a text field, ignore the rest (except Cmd/Ctrl combos)
+  if (isTextInput(e.target)) return;
+  if (e.ctrlKey || e.metaKey || e.altKey) return;
+
+  const views = ['dashboard','krs','tasks','weekly','ai','settings'];
+  if (e.key >= '1' && e.key <= '6') {
+    e.preventDefault();
+    switchView(views[parseInt(e.key) - 1]);
+    return;
+  }
+  switch (e.key.toLowerCase()) {
+    case 'n':
+      e.preventDefault();
+      openTodoModal(null);
+      break;
+    case 't':
+      e.preventDefault();
+      toggleTheme();
+      break;
+    case 'q':
+      e.preventDefault();
+      if (state.view !== 'tasks') switchView('tasks');
+      else { state.taskView = state.taskView === 'list' ? 'quadrant' : 'list'; render(); }
+      break;
+    case 'r':
+      e.preventDefault();
+      generateReport();
+      break;
+    case '/':
+      e.preventDefault();
+      if (state.view !== 'tasks') { switchView('tasks'); setTimeout(() => document.getElementById('task-search')?.focus(), 50); }
+      else document.getElementById('task-search')?.focus();
+      break;
+  }
+});
+
+function showShortcutsModal() {
+  showModal(`
+    <div class="modal-head">
+      <h3>⌨️ 键盘快捷键</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="shortcut-list">
+        <div class="sc-row"><span class="sc-desc">切换页面（首页→设置）</span><span><kbd>1</kbd> ~ <kbd>6</kbd></span></div>
+        <div class="sc-row"><span class="sc-desc">新建 Todo</span><kbd>N</kbd></div>
+        <div class="sc-row"><span class="sc-desc">聚焦任务搜索</span><kbd>/</kbd></div>
+        <div class="sc-row"><span class="sc-desc">切换深色/浅色模式</span><kbd>T</kbd></div>
+        <div class="sc-row"><span class="sc-desc">任务看板列表/四象限切换</span><kbd>Q</kbd></div>
+        <div class="sc-row"><span class="sc-desc">生成本周周报</span><kbd>R</kbd></div>
+        <div class="sc-row"><span class="sc-desc">关闭弹窗/侧边栏</span><kbd>Esc</kbd></div>
+        <div class="sc-row"><span class="sc-desc">显示本帮助</span><kbd>?</kbd></div>
+      </div>
+      <div style="margin-top:14px;font-size:12px;color:var(--c-text-3);">在输入框中输入时快捷键会自动禁用。</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-primary" onclick="closeModal()">知道了</button>
+    </div>
+  `);
+}
+
 /* ===== Toast ===== */
 function toast(msg, type = 'info') {
   const el = document.createElement('div');
   el.className = `toast ${type}`;
   el.textContent = msg;
   document.getElementById('toast-container').appendChild(el);
-  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2000);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity .3s'; setTimeout(() => el.remove(), 300); }, 2000);
 }
 
 /* ===== Init ===== */
 function init() {
+  loadPrefs();
+  // first visit: respect system preference
+  if (!localStorage.getItem(PREFS_KEY)) {
+    state.prefs.theme = window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+  }
+  applyTheme();
   loadData();
   if (state.data.domains.length === 0) initData();
   render();
