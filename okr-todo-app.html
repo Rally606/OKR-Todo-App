@@ -1,0 +1,1850 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>OKR Todo - 目标与待办管理</title>
+<style>
+:root {
+  --c-primary: #6366f1;
+  --c-primary-light: #818cf8;
+  --c-primary-bg: #eef2ff;
+  --c-bg: #f8fafc;
+  --c-surface: #ffffff;
+  --c-text: #1e293b;
+  --c-text-2: #64748b;
+  --c-text-3: #94a3b8;
+  --c-border: #e2e8f0;
+  --c-border-2: #f1f5f9;
+  --c-success: #10b981;
+  --c-success-bg: #ecfdf5;
+  --c-warning: #f59e0b;
+  --c-warning-bg: #fffbeb;
+  --c-danger: #ef4444;
+  --c-danger-bg: #fef2f2;
+  --c-ai: #8b5cf6;
+  --c-ai-bg: #f5f3ff;
+  --r-sm: 6px;
+  --r-md: 8px;
+  --r-lg: 12px;
+  --r-xl: 16px;
+  --sh-sm: 0 1px 2px rgba(0,0,0,.05);
+  --sh-md: 0 4px 6px rgba(0,0,0,.07);
+  --sh-lg: 0 10px 15px rgba(0,0,0,.1);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  background: var(--c-bg);
+  color: var(--c-text);
+  font-size: 14px;
+  line-height: 1.6;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* ===== Layout ===== */
+#app { display: flex; min-height: 100vh; }
+
+.sidebar {
+  width: 220px;
+  background: var(--c-surface);
+  border-right: 1px solid var(--c-border);
+  display: flex;
+  flex-direction: column;
+  position: fixed;
+  top: 0; left: 0; bottom: 0;
+  z-index: 100;
+  transition: transform .3s;
+}
+
+.sidebar-header {
+  padding: 20px 16px 16px;
+  border-bottom: 1px solid var(--c-border-2);
+}
+
+.sidebar-header h1 {
+  font-size: 18px;
+  font-weight: 700;
+  background: linear-gradient(135deg, var(--c-primary), var(--c-ai));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.sidebar-header .ver { font-size: 11px; color: var(--c-text-3); margin-top: 2px; }
+
+.nav { flex: 1; padding: 12px 8px; overflow-y: auto; }
+
+.nav-item {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 12px;
+  border-radius: var(--r-md);
+  cursor: pointer;
+  color: var(--c-text-2);
+  font-size: 14px;
+  font-weight: 500;
+  transition: all .15s;
+  margin-bottom: 2px;
+}
+
+.nav-item:hover { background: var(--c-border-2); color: var(--c-text); }
+.nav-item.active { background: var(--c-primary-bg); color: var(--c-primary); }
+.nav-item .icon { font-size: 16px; width: 20px; text-align: center; }
+.nav-item .badge {
+  margin-left: auto;
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--c-ai-bg);
+  color: var(--c-ai);
+  font-weight: 600;
+}
+
+.sidebar-footer {
+  padding: 12px 16px;
+  border-top: 1px solid var(--c-border-2);
+  font-size: 11px;
+  color: var(--c-text-3);
+}
+
+.main {
+  flex: 1;
+  margin-left: 220px;
+  padding: 0;
+  min-height: 100vh;
+}
+
+.page { display: none; padding: 24px 32px; max-width: 1400px; }
+.page.active { display: block; }
+
+.page-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 24px;
+}
+.page-title { font-size: 22px; font-weight: 700; }
+.page-subtitle { font-size: 13px; color: var(--c-text-2); margin-top: 2px; }
+
+/* ===== Domain Tabs ===== */
+.domain-tabs {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 20px;
+  overflow-x: auto;
+  padding-bottom: 4px;
+  scrollbar-width: thin;
+}
+.domain-tab {
+  padding: 7px 16px;
+  border-radius: 999px;
+  background: var(--c-surface);
+  border: 1px solid var(--c-border);
+  cursor: pointer;
+  white-space: nowrap;
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--c-text-2);
+  transition: all .15s;
+}
+.domain-tab:hover { border-color: var(--c-primary-light); }
+.domain-tab.active { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
+.domain-tab.add { border-style: dashed; color: var(--c-text-3); }
+
+/* ===== Cards ===== */
+.card {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  box-shadow: var(--sh-sm);
+  border: 1px solid var(--c-border-2);
+  overflow: hidden;
+  transition: box-shadow .2s, transform .2s;
+}
+.card:hover { box-shadow: var(--sh-md); }
+.card-body { padding: 16px; }
+
+/* KR Card Grid */
+.kr-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+  gap: 16px;
+  margin-bottom: 24px;
+}
+
+.kr-card {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border-2);
+  box-shadow: var(--sh-sm);
+  padding: 16px;
+  cursor: pointer;
+  transition: all .2s;
+  position: relative;
+}
+.kr-card:hover { box-shadow: var(--sh-md); transform: translateY(-2px); }
+.kr-card .kr-top { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 12px; }
+.kr-card .kr-name { font-size: 15px; font-weight: 600; }
+.kr-card .kr-type-tag { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 600; }
+.kr-card .kr-type-tag.project { background: var(--c-primary-bg); color: var(--c-primary); }
+.kr-card .kr-type-tag.habit { background: var(--c-success-bg); color: var(--c-success); }
+.kr-card .kr-pri { font-size: 11px; padding: 2px 8px; border-radius: var(--r-sm); font-weight: 600; }
+
+.pri-P0 { background: var(--c-danger-bg); color: var(--c-danger); }
+.pri-P1 { background: var(--c-warning-bg); color: var(--c-warning); }
+.pri-P2 { background: var(--c-primary-bg); color: var(--c-primary); }
+.pri-P3 { background: var(--c-border-2); color: var(--c-text-2); }
+
+/* Progress bar */
+.progress-bar { height: 6px; background: var(--c-border-2); border-radius: 999px; overflow: hidden; margin: 10px 0; }
+.progress-fill { height: 100%; background: var(--c-primary); border-radius: 999px; transition: width .3s; }
+
+/* Habit heatmap strip */
+.heatmap {
+  display: flex;
+  gap: 3px;
+  margin: 10px 0;
+}
+.heatmap .day {
+  width: 28px; height: 28px;
+  border-radius: var(--r-sm);
+  background: var(--c-border-2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 9px;
+  color: var(--c-text-3);
+}
+.heatmap .day.checked { background: var(--c-success); color: #fff; }
+.heatmap .day.today { border: 2px solid var(--c-primary); }
+.heatmap .day.future { background: var(--c-border-2); opacity: .4; }
+
+.kr-card .kr-foot { display: flex; align-items: center; gap: 8px; font-size: 12px; color: var(--c-text-3); }
+.kr-card .kr-next { font-size: 12px; color: var(--c-text-2); margin-top: 8px; padding: 6px 8px; background: var(--c-border-2); border-radius: var(--r-sm); }
+
+/* KR add card */
+.kr-card-add {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 140px;
+  border: 2px dashed var(--c-border);
+  background: transparent;
+  box-shadow: none;
+  color: var(--c-text-3);
+  font-size: 14px;
+  cursor: pointer;
+  border-radius: var(--r-lg);
+  transition: all .15s;
+}
+.kr-card-add:hover { border-color: var(--c-primary-light); color: var(--c-primary); background: var(--c-primary-bg); }
+
+/* ===== Weekly Todo Overview ===== */
+.weekly-overview {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border-2);
+  box-shadow: var(--sh-sm);
+  padding: 20px;
+  margin-bottom: 24px;
+}
+.weekly-overview h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
+.weekly-overview h3 .count { font-size: 12px; color: var(--c-text-3); font-weight: 400; }
+.todo-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 0;
+  border-bottom: 1px solid var(--c-border-2);
+}
+.todo-row:last-child { border-bottom: none; }
+.todo-check {
+  width: 18px; height: 18px;
+  border: 2px solid var(--c-border);
+  border-radius: 4px;
+  cursor: pointer;
+  flex-shrink: 0;
+  display: flex; align-items: center; justify-content: center;
+  transition: all .15s;
+}
+.todo-check:hover { border-color: var(--c-primary); }
+.todo-check.done { background: var(--c-success); border-color: var(--c-success); color: #fff; }
+.todo-check.done::after { content: '✓'; font-size: 11px; }
+.todo-info { flex: 1; min-width: 0; }
+.todo-title { font-size: 14px; font-weight: 500; }
+.todo-title.done { text-decoration: line-through; color: var(--c-text-3); }
+.todo-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 4px 8px; font-size: 11px; color: var(--c-text-3); margin-top: 2px; }
+.todo-ddl { color: var(--c-danger); font-weight: 500; }
+.todo-actions { display: flex; gap: 4px; opacity: 0; transition: opacity .15s; }
+.todo-row:hover .todo-actions { opacity: 1; }
+.todo-action-btn {
+  width: 26px; height: 26px;
+  border: none; background: var(--c-border-2);
+  border-radius: var(--r-sm);
+  cursor: pointer;
+  font-size: 12px;
+  color: var(--c-text-2);
+  display: flex; align-items: center; justify-content: center;
+}
+.todo-action-btn:hover { background: var(--c-border); }
+
+/* ===== Quick Notes ===== */
+.quick-notes {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border-2);
+  box-shadow: var(--sh-sm);
+  padding: 16px;
+}
+.quick-notes h3 { font-size: 14px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 6px; }
+.qn-input {
+  display: flex; gap: 8px; margin-bottom: 12px;
+}
+.qn-input input {
+  flex: 1;
+  padding: 8px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  outline: none;
+  transition: border-color .15s;
+}
+.qn-input input:focus { border-color: var(--c-primary); }
+.qn-item {
+  padding: 8px 10px;
+  background: var(--c-bg);
+  border-radius: var(--r-md);
+  margin-bottom: 6px;
+  font-size: 13px;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+}
+.qn-item .qn-text { flex: 1; word-break: break-word; }
+.qn-item .qn-time { font-size: 10px; color: var(--c-text-3); flex-shrink: 0; }
+.qn-item .qn-del { color: var(--c-text-3); cursor: pointer; font-size: 12px; }
+.qn-item .qn-del:hover { color: var(--c-danger); }
+
+/* ===== Split View (KR Management) ===== */
+.split-view { display: flex; gap: 16px; min-height: calc(100vh - 120px); }
+.split-left { width: 300px; flex-shrink: 0; }
+.split-right { flex: 1; }
+
+.kr-list-panel {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border-2);
+  box-shadow: var(--sh-sm);
+  overflow: hidden;
+}
+.kr-list-panel .panel-head {
+  padding: 14px 16px;
+  border-bottom: 1px solid var(--c-border-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.kr-list-panel .panel-head h3 { font-size: 14px; font-weight: 600; }
+.kr-list-item {
+  padding: 12px 16px;
+  border-bottom: 1px solid var(--c-border-2);
+  cursor: pointer;
+  transition: background .15s;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.kr-list-item:hover { background: var(--c-bg); }
+.kr-list-item.active { background: var(--c-primary-bg); }
+.kr-list-item .ki-name { flex: 1; font-size: 14px; font-weight: 500; }
+.kr-list-item .ki-pri { font-size: 10px; padding: 1px 6px; border-radius: var(--r-sm); font-weight: 600; }
+
+.kr-detail-panel {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border-2);
+  box-shadow: var(--sh-sm);
+  padding: 24px;
+}
+.kr-detail-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 400px;
+  color: var(--c-text-3);
+  font-size: 14px;
+}
+.kr-detail-head { margin-bottom: 20px; padding-bottom: 16px; border-bottom: 1px solid var(--c-border-2); }
+.kr-detail-head h2 { font-size: 20px; font-weight: 700; }
+.kr-detail-meta { display: flex; align-items: center; gap: 12px; margin-top: 8px; flex-wrap: wrap; }
+.meta-chip { font-size: 12px; padding: 3px 10px; border-radius: 999px; background: var(--c-bg); color: var(--c-text-2); }
+
+.section-label {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
+  margin: 20px 0 10px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+/* ===== Task Board ===== */
+.filter-bar {
+  display: flex;
+  gap: 12px;
+  margin-bottom: 16px;
+  flex-wrap: wrap;
+}
+.filter-select {
+  padding: 7px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  font-size: 13px;
+  background: var(--c-surface);
+  cursor: pointer;
+  outline: none;
+  color: var(--c-text-2);
+}
+.filter-select:focus { border-color: var(--c-primary); }
+
+.task-list { background: var(--c-surface); border-radius: var(--r-lg); border: 1px solid var(--c-border-2); box-shadow: var(--sh-sm); overflow: hidden; }
+.task-list .todo-row { padding: 12px 16px; border-bottom: 1px solid var(--c-border-2); }
+.task-list .todo-row:last-child { border-bottom: none; }
+.task-list .todo-row:hover { background: var(--c-bg); }
+
+/* ===== Weekly View ===== */
+.week-nav {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 20px;
+}
+.week-nav button {
+  width: 32px; height: 32px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  background: var(--c-surface);
+  cursor: pointer;
+  font-size: 14px;
+  color: var(--c-text-2);
+  display: flex; align-items: center; justify-content: center;
+}
+.week-nav button:hover { background: var(--c-bg); }
+.week-nav .week-label { font-size: 15px; font-weight: 600; }
+.week-nav .week-stats { margin-left: auto; font-size: 13px; color: var(--c-text-2); }
+
+.week-day {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border-2);
+  box-shadow: var(--sh-sm);
+  margin-bottom: 12px;
+  overflow: hidden;
+}
+.week-day .day-head {
+  padding: 10px 16px;
+  background: var(--c-bg);
+  border-bottom: 1px solid var(--c-border-2);
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--c-text-2);
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.week-day .day-head .day-count { font-size: 11px; color: var(--c-text-3); }
+.week-day .day-todos { padding: 4px 12px; }
+.week-day .day-todos .todo-row { padding: 8px 4px; }
+.week-day.empty { background: transparent; border: none; box-shadow: none; }
+.week-day.empty .day-head { background: transparent; border: none; padding: 4px 16px; opacity: .5; }
+.week-day.empty .day-todos { display: none; }
+
+/* ===== AI Page ===== */
+.ai-hero {
+  background: linear-gradient(135deg, var(--c-ai-bg), var(--c-primary-bg));
+  border-radius: var(--r-xl);
+  padding: 32px;
+  text-align: center;
+  margin-bottom: 24px;
+}
+.ai-hero h2 { font-size: 24px; font-weight: 700; background: linear-gradient(135deg, var(--c-ai), var(--c-primary)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+.ai-hero p { color: var(--c-text-2); margin-top: 8px; font-size: 14px; }
+.ai-hero .ai-badge { display: inline-flex; align-items: center; gap: 6px; padding: 4px 12px; background: var(--c-ai); color: #fff; border-radius: 999px; font-size: 12px; font-weight: 600; margin-top: 12px; }
+
+.ai-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 16px; margin-bottom: 32px; }
+.ai-card {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border-2);
+  border-top: 3px solid var(--c-ai);
+  box-shadow: var(--sh-sm);
+  padding: 20px;
+  position: relative;
+  overflow: hidden;
+}
+.ai-card::before {
+  content: '';
+  position: absolute;
+  top: 0; right: 0;
+  width: 80px; height: 80px;
+  background: radial-gradient(circle, var(--c-ai-bg) 0%, transparent 70%);
+  pointer-events: none;
+}
+.ai-card .ai-icon { font-size: 28px; margin-bottom: 12px; }
+.ai-card h4 { font-size: 15px; font-weight: 600; margin-bottom: 6px; }
+.ai-card p { font-size: 13px; color: var(--c-text-2); line-height: 1.6; }
+.ai-card .ai-status {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  margin-top: 12px;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--c-ai);
+  background: var(--c-ai-bg);
+  padding: 3px 10px;
+  border-radius: 999px;
+}
+
+.ai-chat-mock {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border-2);
+  box-shadow: var(--sh-sm);
+  overflow: hidden;
+  margin-bottom: 24px;
+}
+.ai-chat-mock .chat-head { padding: 14px 20px; border-bottom: 1px solid var(--c-border-2); display: flex; align-items: center; gap: 8px; }
+.ai-chat-mock .chat-head h4 { font-size: 15px; font-weight: 600; }
+.ai-chat-mock .chat-body { padding: 24px 20px; min-height: 200px; }
+.ai-chat-mock .chat-placeholder { display: flex; flex-direction: column; align-items: center; justify-content: center; color: var(--c-text-3); text-align: center; padding: 40px 0; }
+.ai-chat-mock .chat-placeholder .ph-icon { font-size: 40px; margin-bottom: 12px; opacity: .5; }
+.ai-chat-mock .chat-input-bar { padding: 12px 20px; border-top: 1px solid var(--c-border-2); display: flex; gap: 8px; }
+.ai-chat-mock .chat-input-bar input { flex: 1; padding: 10px 14px; border: 1px solid var(--c-border); border-radius: var(--r-md); font-size: 13px; outline: none; }
+.ai-chat-mock .chat-input-bar input:disabled { background: var(--c-bg); cursor: not-allowed; }
+.ai-chat-mock .chat-input-bar button { padding: 10px 20px; border: none; border-radius: var(--r-md); background: var(--c-border-2); color: var(--c-text-3); font-size: 13px; font-weight: 500; cursor: not-allowed; }
+
+/* Version Roadmap */
+.roadmap {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border-2);
+  box-shadow: var(--sh-sm);
+  padding: 24px;
+}
+.roadmap h3 { font-size: 16px; font-weight: 700; margin-bottom: 20px; }
+.roadmap-timeline { display: flex; gap: 24px; }
+.roadmap-item { flex: 1; padding: 20px; border-radius: var(--r-lg); border: 1px solid var(--c-border-2); position: relative; }
+.roadmap-item.current { border-color: var(--c-primary); background: var(--c-primary-bg); }
+.roadmap-item .rm-ver { font-size: 20px; font-weight: 700; }
+.roadmap-item .rm-status { font-size: 11px; font-weight: 600; padding: 2px 8px; border-radius: 999px; margin-bottom: 8px; display: inline-block; }
+.roadmap-item .rm-status.done { background: var(--c-success-bg); color: var(--c-success); }
+.roadmap-item .rm-status.current { background: var(--c-primary-bg); color: var(--c-primary); }
+.roadmap-item .rm-status.planned { background: var(--c-border-2); color: var(--c-text-2); }
+.roadmap-item ul { list-style: none; margin-top: 12px; }
+.roadmap-item ul li { font-size: 12px; color: var(--c-text-2); padding: 4px 0; padding-left: 16px; position: relative; }
+.roadmap-item ul li::before { content: '•'; position: absolute; left: 0; color: var(--c-text-3); }
+
+/* ===== Settings ===== */
+.settings-section {
+  background: var(--c-surface);
+  border-radius: var(--r-lg);
+  border: 1px solid var(--c-border-2);
+  box-shadow: var(--sh-sm);
+  padding: 24px;
+  margin-bottom: 16px;
+}
+.settings-section h3 { font-size: 15px; font-weight: 600; margin-bottom: 16px; }
+.settings-row { display: flex; align-items: center; justify-content: space-between; padding: 10px 0; border-bottom: 1px solid var(--c-border-2); }
+.settings-row:last-child { border-bottom: none; }
+.settings-row label { font-size: 14px; }
+.settings-row .sr-desc { font-size: 12px; color: var(--c-text-3); margin-top: 2px; }
+
+/* ===== Buttons ===== */
+.btn {
+  padding: 8px 16px;
+  border: none;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all .15s;
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+}
+.btn-primary { background: var(--c-primary); color: #fff; }
+.btn-primary:hover { background: #4f46e5; }
+.btn-secondary { background: var(--c-surface); color: var(--c-text-2); border: 1px solid var(--c-border); }
+.btn-secondary:hover { background: var(--c-bg); }
+.btn-danger { background: var(--c-danger); color: #fff; }
+.btn-danger:hover { background: #dc2626; }
+.btn-sm { padding: 5px 10px; font-size: 12px; }
+
+/* ===== Modal ===== */
+.modal-backdrop {
+  position: fixed;
+  top: 0; left: 0; right: 0; bottom: 0;
+  background: rgba(0,0,0,.4);
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+}
+.modal {
+  background: var(--c-surface);
+  border-radius: var(--r-xl);
+  box-shadow: var(--sh-lg);
+  width: 100%;
+  max-width: 500px;
+  max-height: 90vh;
+  overflow-y: auto;
+}
+.modal-head {
+  padding: 20px 24px;
+  border-bottom: 1px solid var(--c-border-2);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.modal-head h3 { font-size: 16px; font-weight: 700; }
+.modal-close { width: 28px; height: 28px; border: none; background: var(--c-bg); border-radius: var(--r-sm); cursor: pointer; font-size: 16px; color: var(--c-text-2); display: flex; align-items: center; justify-content: center; }
+.modal-close:hover { background: var(--c-border); }
+.modal-body { padding: 20px 24px; }
+.modal-foot { padding: 16px 24px; border-top: 1px solid var(--c-border-2); display: flex; justify-content: flex-end; gap: 8px; }
+
+.form-group { margin-bottom: 16px; }
+.form-group label { display: block; font-size: 13px; font-weight: 500; margin-bottom: 6px; color: var(--c-text-2); }
+.form-group input, .form-group select, .form-group textarea {
+  width: 100%;
+  padding: 8px 12px;
+  border: 1px solid var(--c-border);
+  border-radius: var(--r-md);
+  font-size: 14px;
+  outline: none;
+  font-family: inherit;
+  transition: border-color .15s;
+}
+.form-group input:focus, .form-group select:focus, .form-group textarea:focus { border-color: var(--c-primary); }
+.form-group textarea { resize: vertical; min-height: 60px; }
+.form-row { display: flex; gap: 12px; }
+.form-row .form-group { flex: 1; }
+
+/* ===== Toast ===== */
+#toast-container {
+  position: fixed;
+  bottom: 24px; right: 24px;
+  z-index: 2000;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.toast {
+  padding: 10px 16px;
+  border-radius: var(--r-md);
+  font-size: 13px;
+  font-weight: 500;
+  color: #fff;
+  box-shadow: var(--sh-lg);
+  animation: toastIn .3s ease;
+}
+.toast.success { background: var(--c-success); }
+.toast.error { background: var(--c-danger); }
+.toast.info { background: var(--c-primary); }
+@keyframes toastIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+/* Empty state */
+.empty-state { text-align: center; padding: 48px 20px; color: var(--c-text-3); }
+.empty-state .es-icon { font-size: 40px; margin-bottom: 12px; opacity: .4; }
+.empty-state .es-text { font-size: 14px; }
+
+/* Dashboard bottom section */
+.dash-bottom { display: flex; gap: 16px; align-items: flex-start; }
+.dash-bottom .dash-main { flex: 1; min-width: 0; }
+.dash-bottom .dash-side { width: 280px; flex-shrink: 0; }
+
+/* Mobile toggle */
+.mobile-menu-btn { display: none; }
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar { transform: translateX(-100%); }
+  .sidebar.open { transform: translateX(0); }
+  .main { margin-left: 0; }
+  .page { padding: 16px; }
+  .mobile-menu-btn {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 36px; height: 36px;
+    border: 1px solid var(--c-border);
+    border-radius: var(--r-md);
+    background: var(--c-surface);
+    cursor: pointer;
+    font-size: 18px;
+  }
+  .page-header { flex-direction: column; align-items: flex-start; gap: 12px; }
+  .split-view { flex-direction: column; }
+  .split-left { width: 100%; }
+  .kr-grid { grid-template-columns: 1fr; }
+  .roadmap-timeline { flex-direction: column; }
+  .ai-grid { grid-template-columns: 1fr; }
+  .dash-bottom { flex-direction: column; }
+  .dash-bottom .dash-side { width: 100%; }
+}
+</style>
+</head>
+<body>
+<div id="app">
+  <!-- Sidebar -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-header">
+      <h1>OKR Todo</h1>
+      <div class="ver">V1 · 本地版</div>
+    </div>
+    <nav class="nav" id="nav">
+      <div class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
+        <span class="icon">🏠</span> 首页
+      </div>
+      <div class="nav-item" data-view="krs" onclick="switchView('krs')">
+        <span class="icon">📂</span> KR管理
+      </div>
+      <div class="nav-item" data-view="tasks" onclick="switchView('tasks')">
+        <span class="icon">📋</span> 任务看板
+      </div>
+      <div class="nav-item" data-view="weekly" onclick="switchView('weekly')">
+        <span class="icon">📅</span> 周视图
+      </div>
+      <div class="nav-item" data-view="ai" onclick="switchView('ai')">
+        <span class="icon">🤖</span> AI能力 <span class="badge">开发中</span>
+      </div>
+      <div class="nav-item" data-view="settings" onclick="switchView('settings')">
+        <span class="icon">⚙️</span> 设置
+      </div>
+    </nav>
+    <div class="sidebar-footer">
+      本地存储 · 数据仅存于当前设备<br>
+      V2 云端同步 · V3 AI能力 即将上线
+    </div>
+  </aside>
+
+  <!-- Main Content -->
+  <main class="main">
+    <div class="page active" id="page-dashboard"></div>
+    <div class="page" id="page-krs"></div>
+    <div class="page" id="page-tasks"></div>
+    <div class="page" id="page-weekly"></div>
+    <div class="page" id="page-ai"></div>
+    <div class="page" id="page-settings"></div>
+  </main>
+</div>
+
+<div id="modal-container"></div>
+<div id="toast-container"></div>
+
+<script>
+/* ===== State ===== */
+let state = {
+  view: 'dashboard',
+  currentDomainId: null,
+  currentKRId: null,
+  weekOffset: 0,
+  filters: { domain: 'all', priority: 'all', status: 'all' },
+  data: { domains: [], krs: [], todos: [], quickNotes: [], checkins: {} }
+};
+
+const STORAGE_KEY = 'okr-todo-app-v1';
+
+/* ===== Data Layer ===== */
+function loadData() {
+  try {
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if (raw) {
+      state.data = JSON.parse(raw);
+      if (!state.data.checkins) state.data.checkins = {};
+    }
+  } catch(e) { console.error('Load failed', e); }
+}
+
+function saveData() {
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state.data));
+}
+
+function uid() { return Date.now().toString(36) + Math.random().toString(36).slice(2, 6); }
+
+/* ===== Sample Data ===== */
+function initData() {
+  const now = new Date();
+  const todayStr = dateStr(now);
+  const yesterdayStr = dateStr(new Date(now.getTime() - 86400000));
+  const d2ago = dateStr(new Date(now.getTime() - 86400000 * 2));
+
+  state.data = {
+    domains: [
+      { id: 'd1', name: '毕业&工作', order: 0, hidden: false },
+      { id: 'd2', name: '输出&口语', order: 1, hidden: false },
+      { id: 'd3', name: '健康生活', order: 2, hidden: false },
+      { id: 'd4', name: '旅游', order: 3, hidden: false },
+      { id: 'd5', name: '日常清理', order: 4, hidden: false }
+    ],
+    krs: [
+      { id: 'k1', domainId: 'd1', name: '找到工作', type: 'project', goal: '秋招拿到心仪offer', priority: 'P0', status: '进行中', progress: 40, deadline: '', notes: '面试复盘+简历修改+投递', nextStep: '补充工作日记&todo，完成快手简历', checklist: [] },
+      { id: 'k2', domainId: 'd1', name: '毕业论文', type: 'project', goal: '完成毕业论文', priority: 'P2', status: '待开始', progress: 0, deadline: '', notes: '', nextStep: '子方向之后再拆', checklist: [] },
+      { id: 'k3', domainId: 'd2', name: '养成学英语习惯', type: 'habit', goal: '保持每日英语学习', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '多邻国每天打卡', nextStep: '', checklist: [] },
+      { id: 'k4', domainId: 'd2', name: '小红书运营', type: 'project', goal: '一个月至少发一个帖子', priority: 'P2', status: '进行中', progress: 30, deadline: '', notes: '探索适合的主题方向', nextStep: '整理演唱会照片+AI文案', checklist: [] },
+      { id: 'k5', domainId: 'd3', name: '早睡早起', type: 'habit', goal: '8月目标1点前睡', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '', nextStep: '', checklist: [] },
+      { id: 'k6', domainId: 'd3', name: '运动', type: 'habit', goal: '体重-5kg，体态改善', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '一周2-3练：普拉提+爬坡+力量', nextStep: '', checklist: [] },
+      { id: 'k7', domainId: 'd4', name: '西藏-国庆', type: 'project', goal: '国庆西藏旅行', priority: 'P3', status: '进行中', progress: 20, deadline: '', notes: '确认路线✅', nextStep: '与领队沟通，确定后sop化', checklist: [] }
+    ],
+    todos: [
+      { id: 't1', krId: 'k1', domainId: 'd1', title: '改简历-快手（双佣金+AI）', priority: 'P0', ddl: '', ddlText: '本周末', category: '需要记录', nextStep: '双佣金：工作日记+周报+调研收集', notes: '双佣金、净成交、全站直播、QCPX、投放工具', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't2', krId: 'k1', domainId: 'd1', title: '简历投递', priority: 'P1', ddl: '', ddlText: '下周', category: '需要记录', nextStep: '选岗位，明确简历修改方向', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't3', krId: 'k1', domainId: 'd1', title: '面试复盘-百度一面&二面', priority: 'P2', ddl: '', ddlText: '8.23', category: '需要记录', nextStep: '从二面录音出发复盘', notes: '分成两块：1）AI产出文档完善 2）录音复盘', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't4', krId: 'k1', domainId: 'd1', title: '改简历-美团产品', priority: 'P1', ddl: '', ddlText: '8.21', category: '需要记录', nextStep: '预算控制&混排确定文字', notes: '广告策略产品-一页纸', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't5', krId: 'k3', domainId: 'd2', title: '多邻国每天打卡', priority: 'P3', ddl: '', ddlText: '每天', category: '习惯', nextStep: '', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't6', krId: 'k4', domainId: 'd2', title: '解解演唱会分享', priority: 'P1', ddl: '', ddlText: '8.16', category: '需要记录', nextStep: '手机照片+AI文案', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't7', krId: 'k5', domainId: 'd3', title: '早睡打卡', priority: 'P3', ddl: '', ddlText: '每天', category: '习惯', nextStep: '', notes: '目标1点前', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't8', krId: 'k7', domainId: 'd4', title: '与领队沟通确认', priority: 'P2', ddl: '', ddlText: '本周', category: '需要记录', nextStep: '确定后sop化', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't9', krId: '', domainId: 'd5', title: '清理手机相册&备忘录', priority: 'P3', ddl: '', ddlText: '换脑子时', category: '', nextStep: '', notes: '', status: '待开始', done: false, createdAt: now.getTime() },
+      { id: 't10', krId: 'k1', domainId: 'd1', title: '百度三面准备', priority: 'P0', ddl: '', ddlText: '8.24', category: '需要记录', nextStep: '复盘之前面试&三面准备', notes: '', status: '进行中', done: false, createdAt: now.getTime() }
+    ],
+    quickNotes: [
+      { id: 'q1', content: '试试用vibecoding进行产品化的方式', createdAt: now.getTime() - 3600000 },
+      { id: 'q2', content: '小红书分析：看看竞品怎么发帖的', createdAt: now.getTime() - 7200000 },
+      { id: 'q3', content: 'obsidian vs 飞书：需要探索哪个更适合知识管理', createdAt: now.getTime() - 86400000 }
+    ],
+    checkins: {
+      'k3': { [d2ago]: true, [yesterdayStr]: true },
+      'k5': { [yesterdayStr]: true },
+      'k6': {}
+    }
+  };
+  saveData();
+}
+
+/* ===== Helpers ===== */
+function dateStr(d) {
+  return d.getFullYear() + '-' + String(d.getMonth()+1).padStart(2,'0') + '-' + String(d.getDate()).padStart(2,'0');
+}
+
+function formatDate(ts) {
+  const d = new Date(ts);
+  return `${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}`;
+}
+
+function getWeekDates(offset) {
+  const now = new Date();
+  const day = now.getDay() || 7;
+  const monday = new Date(now);
+  monday.setDate(now.getDate() - day + 1 + offset * 7);
+  monday.setHours(0,0,0,0);
+  const dates = [];
+  for (let i = 0; i < 7; i++) {
+    const d = new Date(monday);
+    d.setDate(monday.getDate() + i);
+    dates.push(d);
+  }
+  return dates;
+}
+
+function weekLabel(offset) {
+  const dates = getWeekDates(offset);
+  const s = dates[0], e = dates[6];
+  const fmt = d => `${d.getMonth()+1}.${d.getDate()}`;
+  if (offset === 0) return `本周 ${fmt(s)} - ${fmt(e)}`;
+  if (offset === -1) return `上周 ${fmt(s)} - ${fmt(e)}`;
+  if (offset === 1) return `下周 ${fmt(s)} - ${fmt(e)}`;
+  return `${fmt(s)} - ${fmt(e)}`;
+}
+
+function esc(s) {
+  if (!s) return '';
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function getDomain(id) { return state.data.domains.find(d => d.id === id); }
+function getKR(id) { return state.data.krs.find(k => k.id === id); }
+function getTodosByKR(krId) { return state.data.todos.filter(t => t.krId === krId); }
+function getTodosByDomain(domainId) { return state.data.todos.filter(t => t.domainId === domainId); }
+function getKRsByDomain(domainId) { return state.data.krs.filter(k => k.domainId === domainId); }
+
+function calcProgress(kr) {
+  if (kr.type === 'habit') return 0;
+  const todos = getTodosByKR(kr.id);
+  if (todos.length === 0) return kr.progress || 0;
+  const done = todos.filter(t => t.done).length;
+  return Math.round(done / todos.length * 100);
+}
+
+function getStreak(krId) {
+  const checkins = state.data.checkins[krId] || {};
+  let streak = 0;
+  const today = new Date();
+  for (let i = 0; i < 30; i++) {
+    const d = new Date(today);
+    d.setDate(today.getDate() - i);
+    if (checkins[dateStr(d)]) streak++;
+    else if (i > 0) break;
+  }
+  return streak;
+}
+
+function isHabitCheckedToday(krId) {
+  return !!(state.data.checkins[krId] || {})[dateStr(new Date())];
+}
+
+/* ===== View Switching ===== */
+function switchView(view) {
+  state.view = view;
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + view).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.querySelector(`.nav-item[data-view="${view}"]`).classList.add('active');
+  render();
+  if (window.innerWidth <= 768) document.getElementById('sidebar').classList.remove('open');
+}
+
+/* ===== Render ===== */
+function render() {
+  const r = {
+    dashboard: renderDashboard,
+    krs: renderKRs,
+    tasks: renderTasks,
+    weekly: renderWeekly,
+    ai: renderAI,
+    settings: renderSettings
+  };
+  (r[state.view] || r.dashboard)();
+}
+
+/* ===== Dashboard ===== */
+function renderDashboard() {
+  const domains = state.data.domains.filter(d => !d.hidden);
+  if (!state.currentDomainId && domains.length > 0) state.currentDomainId = domains[0].id;
+  
+  const krs = getKRsByDomain(state.currentDomainId);
+  
+  // Weekly todos (top by priority)
+  const weekDates = getWeekDates(0);
+  const weekStart = weekDates[0].getTime();
+  const weekEnd = weekDates[6].getTime() + 86400000;
+  const weekTodos = state.data.todos.filter(t => !t.done).sort((a,b) => {
+    const pri = { P0:0, P1:1, P2:2, P3:3 };
+    return (pri[a.priority] ?? 4) - (pri[b.priority] ?? 4);
+  }).slice(0, 6);
+
+  const priLabel = p => `<span class="kr-pri pri-${esc(p)}">${esc(p)}</span>`;
+
+  const html = `
+    <div class="page-header" style="flex-direction:row;align-items:center;">
+      <div>
+        <div class="page-title">首页</div>
+        <div class="page-subtitle">概览你的目标与待办</div>
+      </div>
+      <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    </div>
+
+    <div class="domain-tabs">
+      ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectDomain('${d.id}')">${esc(d.name)}</div>`).join('')}
+      <div class="domain-tab add" onclick="openDomainModal()">+ 新建领域</div>
+    </div>
+
+    <div class="kr-grid">
+      ${krs.map(kr => {
+        if (kr.type === 'habit') {
+          const streak = getStreak(kr.id);
+          const checked = isHabitCheckedToday(kr.id);
+          const today = new Date();
+          const heatDays = [];
+          for (let i = 6; i >= 0; i--) {
+            const d = new Date(today);
+            d.setDate(today.getDate() - i);
+            const ds = dateStr(d);
+            const isChecked = (state.data.checkins[kr.id] || {})[ds];
+            const isToday = i === 0;
+            heatDays.push(`<div class="day ${isChecked?'checked':''} ${isToday?'today':''}">${d.getDate()}</div>`);
+          }
+          return `<div class="kr-card" onclick="openKRDetailed('${kr.id}')">
+            <div class="kr-top">
+              <div class="kr-name">${esc(kr.name)}</div>
+              <span class="kr-type-tag habit">习惯</span>
+            </div>
+            <div class="heatmap">${heatDays.join('')}</div>
+            <div class="kr-foot">
+              ${priLabel(kr.priority)}
+              <span>🔥连续 ${streak} 天</span>
+              ${checked ? '<span style="color:var(--c-success)">✅ 今日已打卡</span>' : `<span class="btn btn-sm btn-primary" style="padding:2px 10px;" onclick="event.stopPropagation();checkIn('${kr.id}')">打卡</span>`}
+            </div>
+            ${kr.nextStep ? `<div class="kr-next">📍 ${esc(kr.nextStep)}</div>` : ''}
+          </div>`;
+        } else {
+          const prog = calcProgress(kr);
+          const todoCount = getTodosByKR(kr.id).length;
+          const doneCount = getTodosByKR(kr.id).filter(t => t.done).length;
+          return `<div class="kr-card" onclick="openKRDetailed('${kr.id}')">
+            <div class="kr-top">
+              <div class="kr-name">${esc(kr.name)}</div>
+              <span class="kr-type-tag project">项目</span>
+            </div>
+            <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
+            <div class="kr-foot">
+              ${priLabel(kr.priority)}
+              <span>${doneCount}/${todoCount} 完成 · ${prog}%</span>
+              <span>${esc(kr.status)}</span>
+            </div>
+            ${kr.nextStep ? `<div class="kr-next">📍 ${esc(kr.nextStep)}</div>` : ''}
+          </div>`;
+        }
+      }).join('')}
+      <div class="kr-card-add" onclick="openKRModal()">+ 新建 KR</div>
+    </div>
+
+    <div class="dash-bottom">
+      <div class="dash-main">
+        <div class="weekly-overview">
+          <h3>📌 本周待办 <span class="count">(${weekTodos.length}项)</span></h3>
+          ${weekTodos.length > 0 ? weekTodos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">暂无待办，去添加吧</div></div>'}
+        </div>
+      </div>
+      <div class="dash-side">
+        <div class="quick-notes">
+          <h3>💡 闪念笔记</h3>
+          <div class="qn-input">
+            <input type="text" id="qn-input" placeholder="随手记下想法..." onkeydown="if(event.key==='Enter')addQuickNote()">
+            <button class="btn btn-primary btn-sm" onclick="addQuickNote()">+</button>
+          </div>
+          ${state.data.quickNotes.slice(0, 5).map(q => `
+            <div class="qn-item">
+              <span class="qn-text">${esc(q.content)}</span>
+              <span class="qn-time">${formatDate(q.createdAt).split(' ')[0]}</span>
+              <span class="qn-del" onclick="deleteQuickNote('${q.id}')">✕</span>
+            </div>
+          `).join('') || '<div class="empty-state" style="padding:12px;"><div class="es-text">还没有笔记</div></div>'}
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('page-dashboard').innerHTML = html;
+}
+
+function renderTodoRow(t) {
+  const domain = getDomain(t.domainId);
+  const kr = t.krId ? getKR(t.krId) : null;
+  return `<div class="todo-row">
+    <div class="todo-check ${t.done?'done':''}" onclick="toggleTodo('${t.id}')"></div>
+    <div class="todo-info">
+      <div class="todo-title ${t.done?'done':''}">${esc(t.title)}</div>
+      <div class="todo-meta">
+        ${t.priority ? `<span class="kr-pri pri-${esc(t.priority)}">${esc(t.priority)}</span>` : ''}
+        ${kr ? `<span>${esc(kr.name)}</span>` : ''}
+        ${domain ? `<span>${esc(domain.name)}</span>` : ''}
+        ${t.ddlText ? `<span class="todo-ddl">⏰ ${esc(t.ddlText)}</span>` : ''}
+        ${t.nextStep ? `<span>📍 ${esc(t.nextStep)}</span>` : ''}
+      </div>
+    </div>
+    <div class="todo-actions">
+      <button class="todo-action-btn" onclick="event.stopPropagation();openTodoModal('${t.id}')" title="编辑">✏️</button>
+      <button class="todo-action-btn" onclick="event.stopPropagation();deleteTodo('${t.id}')" title="删除">🗑</button>
+    </div>
+  </div>`;
+}
+
+/* ===== KR Management ===== */
+function selectDomain(id) {
+  state.currentDomainId = id;
+  render();
+}
+
+function renderKRs() {
+  const domains = state.data.domains.filter(d => !d.hidden);
+  if (!state.currentDomainId && domains.length > 0) state.currentDomainId = domains[0].id;
+  
+  const krs = getKRsByDomain(state.currentDomainId);
+  if (!state.currentKRId && krs.length > 0) state.currentKRId = krs[0].id;
+  const kr = state.currentKRId ? getKR(state.currentKRId) : null;
+
+  const html = `
+    <div class="page-header" style="flex-direction:row;align-items:center;">
+      <div>
+        <div class="page-title">KR 管理</div>
+        <div class="page-subtitle">管理各领域下的关键结果</div>
+      </div>
+      <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    </div>
+
+    <div class="domain-tabs">
+      ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectDomain('${d.id}')">${esc(d.name)}</div>`).join('')}
+      <div class="domain-tab add" onclick="openDomainModal()">+ 新建领域</div>
+    </div>
+
+    <div class="split-view">
+      <div class="split-left">
+        <div class="kr-list-panel">
+          <div class="panel-head">
+            <h3>KR 列表</h3>
+            <button class="btn btn-primary btn-sm" onclick="openKRModal()">+ KR</button>
+          </div>
+          ${krs.length > 0 ? krs.map(k => `
+            <div class="kr-list-item ${k.id===state.currentKRId?'active':''}" onclick="selectKR('${k.id}')">
+              <span class="kr-type-tag ${k.type}" style="font-size:9px;">${k.type==='project'?'项目':'习惯'}</span>
+              <span class="ki-name">${esc(k.name)}</span>
+              <span class="ki-pri pri-${esc(k.priority)}">${esc(k.priority)}</span>
+            </div>
+          `).join('') : '<div class="empty-state"><div class="es-text">暂无KR</div></div>'}
+        </div>
+      </div>
+      <div class="split-right">
+        ${kr ? renderKRDetail(kr) : '<div class="kr-detail-panel"><div class="kr-detail-empty">选择一个 KR 查看详情，或点击 + KR 新建</div></div>'}
+      </div>
+    </div>
+  `;
+  document.getElementById('page-krs').innerHTML = html;
+}
+
+function renderKRDetail(kr) {
+  const todos = getTodosByKR(kr.id);
+  const doneCount = todos.filter(t => t.done).length;
+  const prog = kr.type === 'project' ? calcProgress(kr) : 0;
+  const streak = kr.type === 'habit' ? getStreak(kr.id) : 0;
+
+  let habitHeatmap = '';
+  if (kr.type === 'habit') {
+    const today = new Date();
+    const days = [];
+    for (let i = 29; i >= 0; i--) {
+      const d = new Date(today);
+      d.setDate(today.getDate() - i);
+      const ds = dateStr(d);
+      const isChecked = (state.data.checkins[kr.id] || {})[ds];
+      const isToday = i === 0;
+      days.push(`<div class="day ${isChecked?'checked':''} ${isToday?'today':''}" style="width:20px;height:20px;font-size:8px;" title="${ds}">${d.getDate()}</div>`);
+    }
+    habitHeatmap = `
+      <div class="section-label">📊 打卡记录 (连续${streak}天)</div>
+      <div class="heatmap" style="flex-wrap:wrap;gap:2px;">${days.join('')}</div>
+      <div style="margin-top:12px;">
+        <button class="btn ${isHabitCheckedToday(kr.id)?'btn-secondary':'btn-primary'}" onclick="checkIn('${kr.id}')">
+          ${isHabitCheckedToday(kr.id)?'✅ 今日已打卡':'📅 今日打卡'}
+        </button>
+      </div>
+    `;
+  }
+
+  return `<div class="kr-detail-panel">
+    <div class="kr-detail-head">
+      <h2>${esc(kr.name)}</h2>
+      <div class="kr-detail-meta">
+        <span class="meta-chip">${kr.type==='project'?'项目型':'习惯型'}</span>
+        <span class="kr-pri pri-${esc(kr.priority)}">${esc(kr.priority)}</span>
+        <span class="meta-chip">${esc(kr.status)}</span>
+        ${kr.goal ? `<span class="meta-chip">🎯 ${esc(kr.goal)}</span>` : ''}
+        ${kr.deadline ? `<span class="meta-chip">⏰ ${esc(kr.deadline)}</span>` : ''}
+      </div>
+    </div>
+
+    ${kr.type === 'project' ? `
+      <div class="section-label">进度</div>
+      <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
+      <div style="font-size:12px;color:var(--c-text-3);">${doneCount}/${todos.length} 子任务完成 · ${prog}%</div>
+    ` : ''}
+
+    ${habitHeatmap}
+
+    ${kr.nextStep ? `
+      <div class="section-label">📍 下一步</div>
+      <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;">${esc(kr.nextStep)}</div>
+    ` : ''}
+
+    <div class="section-label">📝 笔记区</div>
+    <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;min-height:40px;white-space:pre-wrap;">${esc(kr.notes) || '暂无笔记'}</div>
+
+    <div class="section-label">
+      📋 待办 (${todos.length})
+      <button class="btn btn-primary btn-sm" style="margin-left:auto;" onclick="openTodoModal(null,'${kr.id}')">+ Todo</button>
+    </div>
+    <div class="task-list">
+      ${todos.length > 0 ? todos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">暂无待办</div></div>'}
+    </div>
+
+    <div style="margin-top:20px;display:flex;gap:8px;">
+      <button class="btn btn-secondary" onclick="openKRModal('${kr.id}')">✏️ 编辑</button>
+      <button class="btn btn-danger" onclick="deleteKR('${kr.id}')">🗑 删除</button>
+    </div>
+  </div>`;
+}
+
+function selectKR(id) {
+  state.currentKRId = id;
+  render();
+}
+
+/* ===== Task Board ===== */
+function renderTasks() {
+  const domains = state.data.domains.filter(d => !d.hidden);
+  let todos = state.data.todos.slice();
+  
+  if (state.filters.domain !== 'all') todos = todos.filter(t => t.domainId === state.filters.domain);
+  if (state.filters.priority !== 'all') todos = todos.filter(t => t.priority === state.filters.priority);
+  if (state.filters.status === 'active') todos = todos.filter(t => !t.done);
+  if (state.filters.status === 'done') todos = todos.filter(t => t.done);
+
+  const priOrder = { P0: 0, P1: 1, P2: 2, P3: 3 };
+  todos.sort((a, b) => {
+    if (a.done !== b.done) return a.done ? 1 : -1;
+    return (priOrder[a.priority] ?? 4) - (priOrder[b.priority] ?? 4);
+  });
+
+  const html = `
+    <div class="page-header" style="flex-direction:row;align-items:center;">
+      <div>
+        <div class="page-title">任务看板</div>
+        <div class="page-subtitle">所有待办一览</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="btn btn-primary" onclick="openTodoModal(null)">+ 新建Todo</button>
+        <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      </div>
+    </div>
+
+    <div class="filter-bar">
+      <select class="filter-select" onchange="setFilter('domain',this.value)">
+        <option value="all">全部领域</option>
+        ${domains.map(d => `<option value="${d.id}" ${state.filters.domain===d.id?'selected':''}>${esc(d.name)}</option>`).join('')}
+      </select>
+      <select class="filter-select" onchange="setFilter('priority',this.value)">
+        <option value="all">全部优先级</option>
+        <option value="P0" ${state.filters.priority==='P0'?'selected':''}>P0</option>
+        <option value="P1" ${state.filters.priority==='P1'?'selected':''}>P1</option>
+        <option value="P2" ${state.filters.priority==='P2'?'selected':''}>P2</option>
+        <option value="P3" ${state.filters.priority==='P3'?'selected':''}>P3</option>
+      </select>
+      <select class="filter-select" onchange="setFilter('status',this.value)">
+        <option value="all">全部状态</option>
+        <option value="active" ${state.filters.status==='active'?'selected':''}>未完成</option>
+        <option value="done" ${state.filters.status==='done'?'selected':''}>已完成</option>
+      </select>
+      <span style="font-size:13px;color:var(--c-text-3);margin-left:auto;">共 ${todos.length} 项</span>
+    </div>
+
+    <div class="task-list">
+      ${todos.length > 0 ? todos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state"><div class="es-icon">📭</div><div class="es-text">暂无符合条件的任务</div></div>'}
+    </div>
+  `;
+  document.getElementById('page-tasks').innerHTML = html;
+}
+
+function setFilter(key, val) {
+  state.filters[key] = val;
+  render();
+}
+
+/* ===== Weekly View ===== */
+function renderWeekly() {
+  const dates = getWeekDates(state.weekOffset);
+  const dayNames = ['周一','周二','周三','周四','周五','周六','周日'];
+  
+  let total = 0, done = 0;
+  const dayGroups = dates.map((d, i) => {
+    const ds = dateStr(d);
+    const isWeekend = i >= 4;
+    const dayTodos = state.data.todos.filter(t => {
+      if (!t.ddlText) return false;
+      const ddl = t.ddlText;
+      if (ddl.includes(`${d.getMonth()+1}.${d.getDate()}`) || ddl.includes(`${d.getMonth()+1}/${d.getDate()}`)) return true;
+      if (ddl.includes('每天') || ddl.includes('每日')) return true;
+      if (ddl.includes('本周末') || ddl.includes('这周末')) return isWeekend;
+      if (ddl.includes('本周') && !ddl.includes('末')) return true;
+      if (i === 0 && (ddl.includes('今天') || ddl.includes('今日'))) return true;
+      return false;
+    });
+    total += dayTodos.length;
+    done += dayTodos.filter(t => t.done).length;
+    return { date: d, dayName: dayNames[i], todos: dayTodos };
+  });
+
+  // Also show all active todos sorted by priority for the week
+  const activeTodos = state.data.todos.filter(t => !t.done).sort((a,b) => {
+    const pri = { P0:0, P1:1, P2:2, P3:3 };
+    return (pri[a.priority] ?? 4) - (pri[b.priority] ?? 4);
+  });
+
+  const html = `
+    <div class="page-header" style="flex-direction:row;align-items:center;">
+      <div>
+        <div class="page-title">周视图</div>
+        <div class="page-subtitle">按周组织你的待办</div>
+      </div>
+      <div style="display:flex;gap:8px;align-items:center;">
+        <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+      </div>
+    </div>
+
+    <div class="week-nav">
+      <button onclick="state.weekOffset--;render()">‹</button>
+      <span class="week-label">${weekLabel(state.weekOffset)}</span>
+      <button onclick="state.weekOffset++;render()">›</button>
+      ${state.weekOffset !== 0 ? `<button class="btn btn-secondary btn-sm" onclick="state.weekOffset=0;render()">回到本周</button>` : ''}
+      <span class="week-stats">${done}/${total} 已完成</span>
+    </div>
+
+    <div class="weekly-overview" style="margin-bottom:20px;">
+      <h3>📌 本周全部待办（按优先级）<span class="count">${activeTodos.length}项</span></h3>
+      ${activeTodos.length > 0 ? activeTodos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">🎉 全部完成！</div></div>'}
+    </div>
+
+    <div class="section-label" style="margin-bottom:8px;">📅 按天分布</div>
+    ${dayGroups.map(g => `
+      <div class="week-day ${g.todos.length === 0 ? 'empty' : ''}">
+        <div class="day-head">
+          <span>${g.dayName}</span>
+          <span>${g.date.getMonth()+1}.${g.date.getDate()}</span>
+          <span class="day-count">${g.todos.length > 0 ? g.todos.length + '项' : '无待办'}</span>
+        </div>
+        <div class="day-todos">
+          ${g.todos.length > 0 ? g.todos.map(t => renderTodoRow(t)).join('') : ''}
+        </div>
+      </div>
+    `).join('')}
+  `;
+  document.getElementById('page-weekly').innerHTML = html;
+}
+
+/* ===== AI Page ===== */
+function renderAI() {
+  const aiFeatures = [
+    { icon: '💬', title: '对话式输入', desc: '和AI对话，说出你的想法，AI自动帮你拆解成结构化的todo，挂到对应的领域和KR下。', status: '开发中' },
+    { icon: '📋', title: '自动分类', desc: '根据内容自动匹配领域和KR，无需手动选择分类，减少使用摩擦。', status: '开发中' },
+    { icon: '📊', title: '周报生成', desc: '一键生成本周总结：完成了什么、未完成的原因、下周建议重点。', status: '开发中' },
+    { icon: '🧠', title: '思路梳理', desc: '把碎片化的闪念笔记整理成结构化的计划，发现笔记之间的关联。', status: '开发中' },
+    { icon: '🔄', title: 'SOP生成', desc: '把重复性任务自动化为标准操作流程，下次一键执行。', status: '开发中' },
+    { icon: '⭐', title: '优先级推荐', desc: '根据ddl和重要性，AI推荐本周最该优先处理的事项。', status: '开发中' }
+  ];
+
+  const html = `
+    <div class="page-header" style="flex-direction:row;align-items:center;">
+      <div>
+        <div class="page-title">AI 能力</div>
+        <div class="page-subtitle">接入AI后，产品将变得更智能</div>
+      </div>
+      <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    </div>
+
+    <div class="ai-hero">
+      <h2>🤖 AI 驱动的目标管理</h2>
+      <p>不只是记todo，而是让AI帮你把碎片化的思路与目标关联起来</p>
+      <span class="ai-badge">⚡ V3 版本即将上线</span>
+    </div>
+
+    <div class="ai-grid">
+      ${aiFeatures.map(f => `
+        <div class="ai-card">
+          <div class="ai-icon">${f.icon}</div>
+          <h4>${f.title}</h4>
+          <p>${f.desc}</p>
+          <span class="ai-status">🔒 ${f.status}</span>
+        </div>
+      `).join('')}
+    </div>
+
+    <div class="ai-chat-mock">
+      <div class="chat-head">
+        <span style="font-size:18px;">🤖</span>
+        <h4>AI 助手</h4>
+        <span class="ai-badge" style="margin-left:auto;">开发中</span>
+      </div>
+      <div class="chat-body">
+        <div class="chat-placeholder">
+          <div class="ph-icon">💭</div>
+          <div style="font-size:14px;font-weight:500;margin-bottom:4px;">AI助手将在 V3 版本上线</div>
+          <div style="font-size:13px;max-width:360px;">届时你可以直接用自然语言输入想法，AI会帮你自动拆解成todo、分类到对应领域、生成周报和优先级建议。</div>
+        </div>
+      </div>
+      <div class="chat-input-bar">
+        <input type="text" placeholder="输入你的想法，AI帮你整理成todo..." disabled>
+        <button disabled>发送</button>
+      </div>
+    </div>
+
+    <div class="roadmap">
+      <h3>📋 版本路线图</h3>
+      <div class="roadmap-timeline">
+        <div class="roadmap-item current">
+          <span class="rm-status current">当前版本</span>
+          <div class="rm-ver">V1</div>
+          <div style="font-size:13px;color:var(--c-text-2);margin-top:4px;">本地版</div>
+          <ul>
+            <li>完整的 O-KR-Todo 三层结构</li>
+            <li>项目型 / 习惯型 KR</li>
+            <li>习惯打卡 + 热力图</li>
+            <li>Dashboard + 周视图 + 任务看板</li>
+            <li>闪念笔记</li>
+            <li>本地数据存储 (localStorage)</li>
+            <li>AI能力前端展示 (未接入)</li>
+          </ul>
+        </div>
+        <div class="roadmap-item">
+          <span class="rm-status planned">规划中</span>
+          <div class="rm-ver">V2</div>
+          <div style="font-size:13px;color:var(--c-text-2);margin-top:4px;">云端同步版</div>
+          <ul>
+            <li>云端服务器 + 数据同步</li>
+            <li>手机 / 网页多端使用</li>
+            <li>用户账号体系</li>
+            <li>数据隐私隔离（每人只看自己）</li>
+            <li>数据备份与恢复</li>
+          </ul>
+        </div>
+        <div class="roadmap-item">
+          <span class="rm-status planned">规划中</span>
+          <div class="rm-ver">V3</div>
+          <div style="font-size:13px;color:var(--c-text-2);margin-top:4px;">AI 智能版</div>
+          <ul>
+            <li>对话式输入 → 自动拆解todo</li>
+            <li>自动分类与领域匹配</li>
+            <li>周报 / 月报自动生成</li>
+            <li>思路梳理与关联推荐</li>
+            <li>SOP自动化</li>
+            <li>智能优先级推荐</li>
+          </ul>
+        </div>
+      </div>
+    </div>
+  `;
+  document.getElementById('page-ai').innerHTML = html;
+}
+
+/* ===== Settings ===== */
+function renderSettings() {
+  const domains = state.data.domains;
+  const totalTodos = state.data.todos.length;
+  const totalKRs = state.data.krs.length;
+  const totalNotes = state.data.quickNotes.length;
+
+  const html = `
+    <div class="page-header" style="flex-direction:row;align-items:center;">
+      <div>
+        <div class="page-title">设置</div>
+        <div class="page-subtitle">数据管理与领域配置</div>
+      </div>
+      <button class="mobile-menu-btn" onclick="document.getElementById('sidebar').classList.toggle('open')">☰</button>
+    </div>
+
+    <div class="settings-section">
+      <h3>📊 数据概览</h3>
+      <div class="settings-row"><label>领域数</label><span style="font-size:14px;font-weight:600;">${domains.length}</span></div>
+      <div class="settings-row"><label>KR 数</label><span style="font-size:14px;font-weight:600;">${totalKRs}</span></div>
+      <div class="settings-row"><label>Todo 数</label><span style="font-size:14px;font-weight:600;">${totalTodos}</span></div>
+      <div class="settings-row"><label>闪念笔记数</label><span style="font-size:14px;font-weight:600;">${totalNotes}</span></div>
+      <div class="settings-row"><label>存储方式</label><span style="font-size:13px;color:var(--c-text-2);">本地存储 (localStorage)</span></div>
+    </div>
+
+    <div class="settings-section">
+      <h3>📁 领域管理</h3>
+      ${domains.map(d => `
+        <div class="settings-row">
+          <div>
+            <label>${esc(d.name)}</label>
+            <div class="sr-desc">${getKRsByDomain(d.id).length} 个KR · ${getTodosByDomain(d.id).length} 个Todo</div>
+          </div>
+          <div style="display:flex;gap:6px;">
+            <button class="btn btn-secondary btn-sm" onclick="openDomainModal('${d.id}')">编辑</button>
+            <button class="btn btn-danger btn-sm" onclick="deleteDomain('${d.id}')">删除</button>
+          </div>
+        </div>
+      `).join('')}
+      <button class="btn btn-primary btn-sm" style="margin-top:12px;" onclick="openDomainModal()">+ 新建领域</button>
+    </div>
+
+    <div class="settings-section">
+      <h3>💾 数据管理</h3>
+      <div class="settings-row">
+        <div><label>导出数据</label><div class="sr-desc">导出为 JSON 文件备份</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="exportData()">导出</button>
+      </div>
+      <div class="settings-row">
+        <div><label>导入数据</label><div class="sr-desc">从 JSON 文件恢复数据</div></div>
+        <button class="btn btn-secondary btn-sm" onclick="document.getElementById('import-file').click()">导入</button>
+        <input type="file" id="import-file" accept=".json" style="display:none;" onchange="importData(event)">
+      </div>
+      <div class="settings-row">
+        <div><label>清空所有数据</label><div class="sr-desc">删除所有本地数据，不可恢复</div></div>
+        <button class="btn btn-danger btn-sm" onclick="clearAllData()">清空</button>
+      </div>
+    </div>
+
+    <div class="settings-section">
+      <h3>ℹ️ 关于</h3>
+      <div class="settings-row"><label>版本</label><span style="font-size:13px;color:var(--c-text-2);">V1.0 本地版</span></div>
+      <div class="settings-row"><label>数据存储</label><span style="font-size:13px;color:var(--c-text-2);">仅当前设备 · localStorage</span></div>
+      <div class="settings-row"><label>下一版本</label><span style="font-size:13px;color:var(--c-text-2);">V2: 云端同步 · 多端使用</span></div>
+      <div class="settings-row"><label>未来规划</label><span style="font-size:13px;color:var(--c-text-2);">V3: AI能力 · 智能整理</span></div>
+    </div>
+  `;
+  document.getElementById('page-settings').innerHTML = html;
+}
+
+/* ===== Actions ===== */
+function toggleTodo(id) {
+  const t = state.data.todos.find(x => x.id === id);
+  if (t) { t.done = !t.done; saveData(); render(); toast(t.done ? '已完成 ✓' : '已取消完成', 'success'); }
+}
+
+function deleteTodo(id) {
+  state.data.todos = state.data.todos.filter(t => t.id !== id);
+  saveData(); render(); toast('已删除', 'info');
+}
+
+function addQuickNote() {
+  const input = document.getElementById('qn-input');
+  const text = input.value.trim();
+  if (!text) return;
+  state.data.quickNotes.unshift({ id: uid(), content: text, createdAt: Date.now() });
+  saveData(); render(); toast('已添加笔记', 'success');
+}
+
+function deleteQuickNote(id) {
+  state.data.quickNotes = state.data.quickNotes.filter(q => q.id !== id);
+  saveData(); render();
+}
+
+function checkIn(krId) {
+  const today = dateStr(new Date());
+  if (!state.data.checkins[krId]) state.data.checkins[krId] = {};
+  if (state.data.checkins[krId][today]) {
+    delete state.data.checkins[krId][today];
+    toast('已取消今日打卡', 'info');
+  } else {
+    state.data.checkins[krId][today] = true;
+    toast('打卡成功 🔥', 'success');
+  }
+  saveData(); render();
+}
+
+function deleteDomain(id) {
+  if (!confirm('删除领域将同时删除其下所有KR和Todo，确认删除？')) return;
+  state.data.todos = state.data.todos.filter(t => t.domainId !== id);
+  state.data.krs = state.data.krs.filter(k => k.domainId !== id);
+  state.data.domains = state.data.domains.filter(d => d.id !== id);
+  if (state.currentDomainId === id) state.currentDomainId = null;
+  saveData(); render(); toast('领域已删除', 'info');
+}
+
+function deleteKR(id) {
+  if (!confirm('删除KR将同时删除其下所有Todo，确认删除？')) return;
+  state.data.todos = state.data.todos.filter(t => t.krId !== id);
+  state.data.krs = state.data.krs.filter(k => k.id !== id);
+  if (state.currentKRId === id) state.currentKRId = null;
+  saveData(); render(); toast('KR已删除', 'info');
+}
+
+function exportData() {
+  const blob = new Blob([JSON.stringify(state.data, null, 2)], { type: 'application/json' });
+  const url = URL.createObjectURL(blob);
+  const a = document.createElement('a');
+  a.href = url;
+  a.download = `okr-todo-backup-${dateStr(new Date())}.json`;
+  a.click();
+  URL.revokeObjectURL(url);
+  toast('数据已导出', 'success');
+}
+
+function importData(event) {
+  const file = event.target.files[0];
+  if (!file) return;
+  const reader = new FileReader();
+  reader.onload = e => {
+    try {
+      const data = JSON.parse(e.target.result);
+      if (!data.domains || !data.krs) throw new Error('Invalid format');
+      state.data = data;
+      if (!state.data.checkins) state.data.checkins = {};
+      if (!state.data.quickNotes) state.data.quickNotes = [];
+      saveData(); render(); toast('数据导入成功', 'success');
+    } catch(err) { toast('导入失败：文件格式错误', 'error'); }
+  };
+  reader.readAsText(file);
+}
+
+function clearAllData() {
+  if (!confirm('确认清空所有数据？此操作不可恢复！')) return;
+  if (!confirm('再次确认：所有领域、KR、Todo和笔记都将被删除！')) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state.data = { domains: [], krs: [], todos: [], quickNotes: [], checkins: {} };
+  state.currentDomainId = null;
+  state.currentKRId = null;
+  initData();
+  render(); toast('数据已重置为示例数据', 'info');
+}
+
+/* ===== Modals ===== */
+function showModal(html) {
+  document.getElementById('modal-container').innerHTML = `<div class="modal-backdrop" onclick="if(event.target===this)closeModal()"><div class="modal">${html}</div></div>`;
+}
+
+function closeModal() {
+  document.getElementById('modal-container').innerHTML = '';
+}
+
+function openDomainModal(id) {
+  const d = id ? getDomain(id) : null;
+  const domains = id ? state.data.domains : state.data.domains;
+  showModal(`
+    <div class="modal-head">
+      <h3>${d ? '编辑领域' : '新建领域'}</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>领域名称</label>
+        <input type="text" id="dm-name" value="${d ? esc(d.name) : ''}" placeholder="如：毕业&工作" autofocus>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveDomain('${id || ''}')">保存</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('dm-name')?.focus(), 100);
+}
+
+function saveDomain(id) {
+  const name = document.getElementById('dm-name').value.trim();
+  if (!name) { toast('请输入领域名称', 'error'); return; }
+  if (id) {
+    const d = getDomain(id);
+    if (d) d.name = name;
+  } else {
+    state.data.domains.push({ id: uid(), name, order: state.data.domains.length, hidden: false });
+    state.currentDomainId = state.data.domains[state.data.domains.length - 1].id;
+  }
+  saveData(); closeModal(); render(); toast('已保存', 'success');
+}
+
+function openKRModal(id) {
+  const kr = id ? getKR(id) : null;
+  const domains = state.data.domains.filter(d => !d.hidden);
+  const defaultDomain = state.currentDomainId || (domains[0] ? domains[0].id : '');
+  
+  showModal(`
+    <div class="modal-head">
+      <h3>${kr ? '编辑 KR' : '新建 KR'}</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>KR 名称</label>
+        <input type="text" id="kr-name" value="${kr ? esc(kr.name) : ''}" placeholder="如：找到工作">
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>类型</label>
+          <select id="kr-type">
+            <option value="project" ${kr && kr.type === 'project' ? 'selected' : ''}>项目型</option>
+            <option value="habit" ${kr && kr.type === 'habit' ? 'selected' : ''}>习惯型</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>所属领域</label>
+          <select id="kr-domain">
+            ${domains.map(d => `<option value="${d.id}" ${kr && kr.domainId === d.id ? 'selected' : (defaultDomain === d.id ? 'selected' : '')}>${esc(d.name)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>优先级</label>
+          <select id="kr-priority">
+            ${['P0','P1','P2','P3'].map(p => `<option value="${p}" ${kr && kr.priority === p ? 'selected' : (p === 'P2' ? 'selected' : '')}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>状态</label>
+          <select id="kr-status">
+            ${['进行中','待开始','已归档','hold'].map(s => `<option value="${s}" ${kr && kr.status === s ? 'selected' : (s === '进行中' ? 'selected' : '')}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-group">
+        <label>目标</label>
+        <input type="text" id="kr-goal" value="${kr ? esc(kr.goal) : ''}" placeholder="如：秋招拿到心仪offer">
+      </div>
+      <div class="form-group">
+        <label>截止时间（选填）</label>
+        <input type="text" id="kr-deadline" value="${kr ? esc(kr.deadline) : ''}" placeholder="如：2024年12月">
+      </div>
+      <div class="form-group">
+        <label>下一步</label>
+        <input type="text" id="kr-nextstep" value="${kr ? esc(kr.nextStep) : ''}" placeholder="如：补充工作日记&todo">
+      </div>
+      <div class="form-group">
+        <label>笔记区</label>
+        <textarea id="kr-notes" placeholder="复盘、碎碎念、攻略、感受...">${kr ? esc(kr.notes) : ''}</textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveKR('${id || ''}')">保存</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('kr-name')?.focus(), 100);
+}
+
+function saveKR(id) {
+  const name = document.getElementById('kr-name').value.trim();
+  if (!name) { toast('请输入KR名称', 'error'); return; }
+  
+  const data = {
+    name,
+    type: document.getElementById('kr-type').value,
+    domainId: document.getElementById('kr-domain').value,
+    priority: document.getElementById('kr-priority').value,
+    status: document.getElementById('kr-status').value,
+    goal: document.getElementById('kr-goal').value.trim(),
+    deadline: document.getElementById('kr-deadline').value.trim(),
+    nextStep: document.getElementById('kr-nextstep').value.trim(),
+    notes: document.getElementById('kr-notes').value.trim()
+  };
+  
+  if (id) {
+    const kr = getKR(id);
+    Object.assign(kr, data);
+  } else {
+    state.data.krs.push({ id: uid(), ...data, progress: 0, checklist: [] });
+    state.currentKRId = state.data.krs[state.data.krs.length - 1].id;
+  }
+  saveData(); closeModal(); render(); toast('已保存', 'success');
+}
+
+function openTodoModal(id, krId) {
+  const t = id ? state.data.todos.find(x => x.id === id) : null;
+  const domains = state.data.domains.filter(d => !d.hidden);
+  const krs = state.data.krs;
+  const defaultDomain = t ? t.domainId : (krId ? (getKR(krId)?.domainId || state.currentDomainId) : state.currentDomainId);
+  
+  showModal(`
+    <div class="modal-head">
+      <h3>${t ? '编辑 Todo' : '新建 Todo'}</h3>
+      <button class="modal-close" onclick="closeModal()">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-group">
+        <label>任务标题</label>
+        <input type="text" id="td-title" value="${t ? esc(t.title) : ''}" placeholder="如：改简历-快手" autofocus>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>所属领域</label>
+          <select id="td-domain" onchange="updateKROptions()">
+            ${domains.map(d => `<option value="${d.id}" ${defaultDomain === d.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>所属 KR（选填）</label>
+          <select id="td-kr">
+            <option value="">无（独立Todo）</option>
+            ${krs.map(k => `<option value="${k.id}" ${t && t.krId === k.id ? 'selected' : (krId === k.id ? 'selected' : '')}>${esc(k.name)}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>优先级</label>
+          <select id="td-priority">
+            ${['P0','P1','P2','P3'].map(p => `<option value="${p}" ${t && t.priority === p ? 'selected' : (p === 'P2' ? 'selected' : '')}>${p}</option>`).join('')}
+          </select>
+        </div>
+        <div class="form-group">
+          <label>状态</label>
+          <select id="td-status">
+            ${['进行中','待开始','已归档','hold'].map(s => `<option value="${s}" ${t && t.status === s ? 'selected' : (s === '进行中' ? 'selected' : '')}>${s}</option>`).join('')}
+          </select>
+        </div>
+      </div>
+      <div class="form-row">
+        <div class="form-group">
+          <label>截止时间（文字描述）</label>
+          <input type="text" id="td-ddl" value="${t ? esc(t.ddlText) : ''}" placeholder="如：8.21 / 本周末 / 下周">
+        </div>
+        <div class="form-group">
+          <label>类别标签</label>
+          <input type="text" id="td-category" value="${t ? esc(t.category) : ''}" placeholder="如：需要记录 / 习惯 / doc">
+        </div>
+      </div>
+      <div class="form-group">
+        <label>下一步</label>
+        <input type="text" id="td-nextstep" value="${t ? esc(t.nextStep) : ''}" placeholder="如：补充背景&todo">
+      </div>
+      <div class="form-group">
+        <label>备注</label>
+        <textarea id="td-notes" placeholder="备注信息...">${t ? esc(t.notes) : ''}</textarea>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-secondary" onclick="closeModal()">取消</button>
+      <button class="btn btn-primary" onclick="saveTodo('${id || ''}')">保存</button>
+    </div>
+  `);
+  setTimeout(() => document.getElementById('td-title')?.focus(), 100);
+}
+
+function updateKROptions() {
+  const domainId = document.getElementById('td-domain').value;
+  const krSelect = document.getElementById('td-kr');
+  const currentVal = krSelect.value;
+  const krs = getKRsByDomain(domainId);
+  krSelect.innerHTML = '<option value="">无（独立Todo）</option>' + krs.map(k => `<option value="${k.id}" ${currentVal === k.id ? 'selected' : ''}>${esc(k.name)}</option>`).join('');
+}
+
+function saveTodo(id) {
+  const title = document.getElementById('td-title').value.trim();
+  if (!title) { toast('请输入任务标题', 'error'); return; }
+  
+  const data = {
+    title,
+    domainId: document.getElementById('td-domain').value,
+    krId: document.getElementById('td-kr').value,
+    priority: document.getElementById('td-priority').value,
+    status: document.getElementById('td-status').value,
+    ddlText: document.getElementById('td-ddl').value.trim(),
+    category: document.getElementById('td-category').value.trim(),
+    nextStep: document.getElementById('td-nextstep').value.trim(),
+    notes: document.getElementById('td-notes').value.trim()
+  };
+  
+  if (id) {
+    const t = state.data.todos.find(x => x.id === id);
+    Object.assign(t, data);
+  } else {
+    state.data.todos.push({ id: uid(), ...data, ddl: '', done: false, createdAt: Date.now() });
+  }
+  saveData(); closeModal(); render(); toast('已保存', 'success');
+}
+
+function openKRDetailed(krId) {
+  state.currentKRId = krId;
+  switchView('krs');
+}
+
+/* ===== Toast ===== */
+function toast(msg, type = 'info') {
+  const el = document.createElement('div');
+  el.className = `toast ${type}`;
+  el.textContent = msg;
+  document.getElementById('toast-container').appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; setTimeout(() => el.remove(), 300); }, 2000);
+}
+
+/* ===== Init ===== */
+function init() {
+  loadData();
+  if (state.data.domains.length === 0) initData();
+  render();
+}
+init();
+</script>
+</body>
+</html>
