@@ -329,6 +329,10 @@ body {
   border-bottom: 1px solid var(--c-border-2);
 }
 .todo-row:last-child { border-bottom: none; }
+.todo-row.dragging { opacity: 0.4; }
+.todo-row.drag-over { border-top: 2px solid var(--c-primary); }
+.todo-drag-handle { cursor: grab; color: var(--c-text-3); opacity: 0.4; padding: 4px 2px; font-size: 14px; }
+.todo-drag-handle:hover { opacity: 1; }
 .todo-check {
   width: 20px; height: 20px;
   border: 2px solid var(--c-border);
@@ -1062,16 +1066,19 @@ function loadData() {
       state.data = JSON.parse(raw);
       if (!state.data.checkins) state.data.checkins = {};
       if (!state.data.quickNotes) state.data.quickNotes = [];
-      if (state.data.todos) state.data.todos.forEach(t => {
+      if (state.data.todos) state.data.todos.forEach((t, i) => {
         if (t.ddlDate === undefined) t.ddlDate = '';
         if (t.category !== undefined) delete t.category;
         if (t.showHome === undefined) t.showHome = true;
+        if (t.order === undefined) t.order = i;
+        if (t.docLink === undefined) t.docLink = '';
       });
-      if (state.data.krs) state.data.krs.forEach(k => {
+      if (state.data.krs) state.data.krs.forEach((k, i) => {
         if (k.ddlDate === undefined) k.ddlDate = '';
         if (k.ddlText === undefined) k.ddlText = k.deadline || '';
         if (k.deadline !== undefined) delete k.deadline;
         if (k.docLink === undefined) k.docLink = '';
+        if (k.order === undefined) k.order = i;
       });
       if (state.data.quickNotes) state.data.quickNotes.forEach(q => {
         if (q.krId === undefined) q.krId = '';
@@ -1335,7 +1342,6 @@ function renderDashboard() {
             </div>
             <div class="heatmap">${heatDays.join('')}</div>
             <div class="kr-foot">
-              ${priLabel(kr.priority)}
               <span>🔥连续 ${streak} 天</span>
               ${checked ? '<span style="color:var(--c-success)">✅ 今日已打卡</span>' : `<span class="btn btn-sm btn-primary" style="padding:2px 10px;" onclick="event.stopPropagation();checkIn('${kr.id}')">打卡</span>`}
             </div>
@@ -1352,7 +1358,6 @@ function renderDashboard() {
             </div>
             <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
             <div class="kr-foot">
-              ${priLabel(kr.priority)}
               <span>${doneCount}/${todoCount} 完成 · ${prog}%</span>
               <span>${esc(kr.status)}</span>
             </div>
@@ -1413,16 +1418,17 @@ function renderTodoRow(t, re, opts) {
   const kr = t.krId ? getKR(t.krId) : null;
   const h = !!re;
   const showDelete = !opts || opts.showDelete !== false;
-  return `<div class="todo-row ${h?'highlight':''}">
+  return `<div class="todo-row ${h?'highlight':''}" draggable="true" ondragstart="onTodoDragStart(event,'${t.id}')" ondragend="onTodoDragEnd(event)" ondragover="onTodoDragOver(event)" ondrop="onTodoDrop(event,'${t.id}')" ondragleave="onTodoDragLeave(event)">
+    <span class="todo-drag-handle">⠿</span>
     <div class="todo-check ${t.done?'done':''}" onclick="toggleTodo('${t.id}')"></div>
     <div class="todo-info">
       <div class="todo-title ${t.done?'done':''}">${highlightHtml(t.title, re)}</div>
       <div class="todo-meta">
-        ${t.priority ? `<span class="kr-pri pri-${esc(t.priority)}">${esc(t.priority)}</span>` : ''}
         ${kr ? `<span>${esc(kr.name)}</span>` : ''}
         ${domain ? `<span>${esc(domain.name)}</span>` : ''}
         ${formatDDL(t) ? `<span class="todo-ddl">⏰ ${formatDDL(t)}</span>` : ''}
-        ${t.nextStep ? `<span>🔗 ${renderLinkableText(t.nextStep)}</span>` : ''}
+        ${t.docLink ? `<span>📄 ${renderLinkableText(t.docLink)}</span>` : ''}
+        ${t.nextStep ? `<span>📝 ${esc(t.nextStep)}</span>` : ''}
         ${t.notes ? `<span>📍 ${esc(t.notes)}</span>` : ''}
       </div>
     </div>
@@ -1473,7 +1479,6 @@ function renderKRs() {
             <div class="kr-list-item ${k.id===state.currentKRId?'active':''}" onclick="selectKR('${k.id}')">
               <span class="kr-type-tag ${k.type}" style="font-size:9px;">${k.type==='project'?'项目':'习惯'}</span>
               <span class="ki-name">${esc(k.name)}</span>
-              <span class="ki-pri pri-${esc(k.priority)}">${esc(k.priority)}</span>
             </div>
           `).join('') : '<div class="empty-state"><div class="es-text">暂无KR</div></div>'}
         </div>
@@ -1526,7 +1531,6 @@ function renderKRDetail(kr) {
       </div>
       <div class="kr-detail-meta">
         <span class="meta-chip">${kr.type==='project'?'项目型':'习惯型'}</span>
-        <span class="kr-pri pri-${esc(kr.priority)}">${esc(kr.priority)}</span>
         <span class="meta-chip">${esc(kr.status)}</span>
         ${kr.goal ? `<span class="meta-chip">🎯 ${esc(kr.goal)}</span>` : ''}
         ${(kr.ddlDate || kr.ddlText) ? `<span class="meta-chip">⏰ ${formatDDL(kr)}</span>` : ''}
@@ -1594,7 +1598,6 @@ function renderHabitRow(kr, re) {
     <div class="todo-info">
       <div class="todo-title ${checked?'done':''}">${highlightHtml(kr.name, re)} <span class="habit-badge">习惯</span></div>
       <div class="todo-meta">
-        <span class="kr-pri pri-${esc(kr.priority)}">${esc(kr.priority)}</span>
         ${domain ? `<span>${esc(domain.name)}</span>` : ''}
         ${streak > 0 ? `<span style="color:var(--c-warning);">🔥 ${streak}天</span>` : ''}
         ${checked ? '<span style="color:var(--c-success);">✅ 今日已打卡</span>' : '<span style="color:var(--c-text-3);">未打卡</span>'}
@@ -1959,7 +1962,6 @@ function renderChatMsg(m) {
       已解析你的输入，建议如下：
       <div class="parsed-card">
         <div class="pc-row"><span class="pc-k">标题</span><span>${esc(p.title)}</span></div>
-        <div class="pc-row"><span class="pc-k">优先级</span><span class="kr-pri pri-${esc(p.priority)}">${esc(p.priority)}</span></div>
         <div class="pc-row"><span class="pc-k">截止</span><span>${p.ddlDate ? esc(p.ddlDate) + (p.ddlText ? ' (' + esc(p.ddlText) + ')' : '') : (esc(p.ddlText) || '—')}</span></div>
         <div class="pc-row"><span class="pc-k">领域</span><span>${domain ? esc(domain.name) : '默认'}</span></div>
         <div class="pc-row"><span class="pc-k">KR</span><span>${kr ? esc(kr.name) : '无（独立Todo）'}</span></div>
@@ -2221,7 +2223,7 @@ function addParsedTodo(msgId) {
   const m = state.aiChat.find(x => x.id === msgId);
   if (!m || !m.parsed) return;
   const p = m.parsed;
-  state.data.todos.push({ id: uid(), title: p.title, domainId: p.domainId, krId: p.krId, priority: p.priority, status: p.status, ddl: '', ddlDate: p.ddlDate || '', ddlText: p.ddlText, nextStep: p.nextStep, notes: p.notes, done: false, showHome: true, createdAt: Date.now() });
+  state.data.todos.push({ id: uid(), title: p.title, domainId: p.domainId, krId: p.krId, priority: p.priority, status: p.status, ddl: '', ddlDate: p.ddlDate || '', ddlText: p.ddlText, nextStep: p.nextStep, docLink: '', notes: p.notes, done: false, showHome: true, order: state.data.todos.length, createdAt: Date.now() });
   saveData();
   toast('已添加为 Todo ✓', 'success');
   // mark as added
@@ -2325,6 +2327,42 @@ function renderSettings() {
 }
 
 /* ===== Actions ===== */
+let _dragTodoId = null;
+function onTodoDragStart(e, id) {
+  _dragTodoId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.target.closest('.todo-row').classList.add('dragging');
+}
+function onTodoDragEnd(e) {
+  document.querySelectorAll('.todo-row.dragging').forEach(r => r.classList.remove('dragging'));
+  document.querySelectorAll('.todo-row.drag-over').forEach(r => r.classList.remove('drag-over'));
+}
+function onTodoDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const row = e.target.closest('.todo-row');
+  if (row && _dragTodoId) row.classList.add('drag-over');
+}
+function onTodoDragLeave(e) {
+  const row = e.target.closest('.todo-row');
+  if (row) row.classList.remove('drag-over');
+}
+function onTodoDrop(e, targetId) {
+  e.preventDefault();
+  const row = e.target.closest('.todo-row');
+  if (row) row.classList.remove('drag-over');
+  if (!_dragTodoId || _dragTodoId === targetId) return;
+  const todos = state.data.todos;
+  const fromIdx = todos.findIndex(t => t.id === _dragTodoId);
+  const toIdx = todos.findIndex(t => t.id === targetId);
+  if (fromIdx < 0 || toIdx < 0) return;
+  const [moved] = todos.splice(fromIdx, 1);
+  todos.splice(toIdx, 0, moved);
+  todos.forEach((t, i) => t.order = i);
+  _dragTodoId = null;
+  saveData();
+  render();
+}
 function toggleTodo(id) {
   const t = state.data.todos.find(x => x.id === id);
   if (t) { t.done = !t.done; saveData(); render(); toast(t.done ? '已完成 ✓' : '已取消完成', 'success'); }
@@ -2703,8 +2741,12 @@ function openTodoModal(id, krId, preset) {
         </div>
       </div>
       <div class="form-group">
-        <label>备注/文档链接</label>
-        <input type="text" id="td-nextstep" value="${t ? esc(t.nextStep) : (preset ? esc(preset.nextStep) : '')}" placeholder="文档链接或备注，链接可点击打开">
+        <label>备注</label>
+        <textarea id="td-nextstep" rows="2" placeholder="补充说明">${t ? esc(t.nextStep) : (preset ? esc(preset.nextStep) : '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label>文档</label>
+        <textarea id="td-doclink" rows="2" placeholder="文档链接，可点击打开">${t ? esc(t.docLink || '') : (preset ? esc(preset.docLink || '') : '')}</textarea>
       </div>
       <div class="form-group">
         <label>下一步</label>
@@ -2746,6 +2788,7 @@ function saveTodo(id) {
     ddlDate: document.getElementById('td-ddldate').value.trim(),
     ddlText: document.getElementById('td-ddl').value.trim(),
     nextStep: document.getElementById('td-nextstep').value.trim(),
+    docLink: document.getElementById('td-doclink').value.trim(),
     notes: document.getElementById('td-notes').value.trim(),
     showHome: document.getElementById('td-showHome').checked
   };
