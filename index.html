@@ -1789,31 +1789,7 @@ function renderTasks() {
       </div>
     `}
 
-    <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="note-board">
-      <div class="kr-card" style="cursor:default;">
-        <div class="section-label">📝 KR 笔记区</div>
-        ${state.data.krs.filter(k => k.notes).length > 0 ? state.data.krs.filter(k => k.notes).map(k => {
-          const d = getDomain(k.domainId);
-          return `<div style="padding:8px 0;border-bottom:1px solid var(--c-border-2);">
-            <div style="font-weight:600;font-size:13px;">${esc(k.name)} ${d ? `<span style="color:var(--c-text-3);font-weight:400;">· ${esc(d.name)}</span>` : ''}</div>
-            <div style="font-size:13px;color:var(--c-text-2);white-space:pre-wrap;margin-top:4px;">${esc(k.notes)}</div>
-          </div>`;
-        }).join('') : '<div class="empty-state" style="padding:12px;"><div class="es-text">暂无KR笔记</div></div>'}
-      </div>
-      <div class="kr-card" style="cursor:default;">
-        <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
-          <span>💡 闪念笔记</span>
-          <button class="btn btn-primary btn-sm" onclick="openQuickNoteModal()">+ 笔记</button>
-        </div>
-        ${state.data.quickNotes.length > 0 ? state.data.quickNotes.slice(0, 8).map(q => {
-          const kr = q.krId ? getKR(q.krId) : null;
-          return `<div class="qn-item" onclick="openQuickNoteModal('${q.id}')" style="cursor:pointer;">
-            <span class="qn-text">${esc(q.content)}</span>
-            <span class="qn-time">${formatDate(q.createdAt).split(' ')[0]}${kr ? ' · ' + esc(kr.name) : ''}</span>
-          </div>`;
-        }).join('') : '<div class="empty-state" style="padding:12px;"><div class="es-text">还没有闪念笔记</div></div>'}
-      </div>
-    </div>
+
   `;
   document.getElementById('page-tasks').innerHTML = html;
   // keep focus on search after render
