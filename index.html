@@ -1336,7 +1336,7 @@ function renderDashboard() {
   const krs = getKRsByDomain(state.currentDomainId);
 
   const weekDates = getWeekDates(0);
-  const weekTodos = state.data.todos.filter(t => !t.done && t.showHome !== false && todoBelongsToWeek(t, weekDates)).sort((a,b) => {
+  const weekTodos = state.data.todos.filter(t => !t.done && t.showHome !== false).sort((a,b) => {
     const pri = { P0:0, P1:1, P2:2, P3:3 };
     return (pri[a.priority] ?? 4) - (pri[b.priority] ?? 4);
   }).slice(0, 6);
