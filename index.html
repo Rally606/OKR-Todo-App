@@ -331,6 +331,12 @@ body {
 .todo-row:last-child { border-bottom: none; }
 .todo-row.dragging { opacity: 0.4; }
 .todo-row.drag-over { border-top: 2px solid var(--c-primary); }
+.domain-tab.dragging { opacity: 0.4; }
+.domain-tab.drag-over { border-top: 2px solid var(--c-primary); }
+.kr-card.dragging { opacity: 0.4; }
+.kr-card.drag-over { border-top: 2px solid var(--c-primary); }
+.ki-list-item.dragging { opacity: 0.4; }
+.ki-list-item.drag-over { border-top: 2px solid var(--c-primary); }
 .todo-drag-handle { cursor: grab; color: var(--c-text-3); opacity: 0.4; padding: 4px 2px; font-size: 14px; }
 .todo-drag-handle:hover { opacity: 1; }
 .todo-check {
@@ -983,16 +989,16 @@ body {
     </div>
     <nav class="nav" id="nav">
       <div class="nav-item active" data-view="dashboard" onclick="switchView('dashboard')">
-        <span class="icon">🏠</span> 首页 <span class="shortcut">1</span>
+        <span class="icon">🏠</span> 首页
       </div>
       <div class="nav-item" data-view="krs" onclick="switchView('krs')">
-        <span class="icon">📂</span> KR管理 <span class="shortcut">2</span>
+        <span class="icon">📂</span> KR管理
       </div>
       <div class="nav-item" data-view="tasks" onclick="switchView('tasks')">
-        <span class="icon">📋</span> 任务看板 <span class="shortcut">3</span>
+        <span class="icon">📋</span> 任务看板
       </div>
       <div class="nav-item" data-view="weekly" onclick="switchView('weekly')">
-        <span class="icon">📅</span> 周视图 <span class="shortcut">4</span>
+        <span class="icon">📅</span> 周视图
       </div>
       <div class="nav-item" data-view="ai" onclick="switchView('ai')">
         <span class="icon">🤖</span> AI能力 <span class="badge">体验</span>
@@ -1066,6 +1072,10 @@ function loadData() {
       state.data = JSON.parse(raw);
       if (!state.data.checkins) state.data.checkins = {};
       if (!state.data.quickNotes) state.data.quickNotes = [];
+      if (state.data.domains) state.data.domains.forEach((d, i) => {
+        if (d.order === undefined) d.order = i;
+        if (d.hidden === undefined) d.hidden = false;
+      });
       if (state.data.todos) state.data.todos.forEach((t, i) => {
         if (t.ddlDate === undefined) t.ddlDate = '';
         if (t.category !== undefined) delete t.category;
@@ -1312,7 +1322,7 @@ function renderDashboard() {
     ${pageHeader('首页', '概览你的目标与待办')}
 
     <div class="domain-tabs">
-      ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectDomain('${d.id}')">
+      ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" draggable="true" ondragstart="onDomainDragStart(event,'${d.id}')" ondragend="onDragEndClean(event)" ondragover="onDomainDragOver(event)" ondrop="onDomainDrop(event,'${d.id}')" ondragleave="onDragLeaveClean(event)" onclick="selectDomain('${d.id}')">
         <span>${esc(d.name)}</span>
         <span class="domain-edit-btn" onclick="event.stopPropagation();openDomainModal('${d.id}')" title="编辑领域">✏️</span>
         <span class="domain-del-btn" onclick="event.stopPropagation();deleteDomain('${d.id}')" title="删除领域">🗑</span>
@@ -1335,13 +1345,14 @@ function renderDashboard() {
             const isToday = i === 0;
             heatDays.push(`<div class="day ${isChecked?'checked':''} ${isToday?'today':''}">${d.getDate()}</div>`);
           }
-          return `<div class="kr-card" onclick="openKRDetailed('${kr.id}')">
+          return `<div class="kr-card" draggable="true" ondragstart="onKRDragStart(event,'${kr.id}')" ondragend="onDragEndClean(event)" ondragover="onKRDragOver(event)" ondrop="onKRDrop(event,'${kr.id}')" ondragleave="onDragLeaveClean(event)" onclick="openKRDetailed('${kr.id}')">
             <div class="kr-top">
               <div class="kr-name">${esc(kr.name)}</div>
               <span class="kr-type-tag habit">习惯</span>
             </div>
             <div class="heatmap">${heatDays.join('')}</div>
             <div class="kr-foot">
+              ${priLabel(kr.priority)}
               <span>🔥连续 ${streak} 天</span>
               ${checked ? '<span style="color:var(--c-success)">✅ 今日已打卡</span>' : `<span class="btn btn-sm btn-primary" style="padding:2px 10px;" onclick="event.stopPropagation();checkIn('${kr.id}')">打卡</span>`}
             </div>
@@ -1351,13 +1362,14 @@ function renderDashboard() {
           const prog = calcProgress(kr);
           const todoCount = getTodosByKR(kr.id).length;
           const doneCount = getTodosByKR(kr.id).filter(t => t.done).length;
-          return `<div class="kr-card" onclick="openKRDetailed('${kr.id}')">
+          return `<div class="kr-card" draggable="true" ondragstart="onKRDragStart(event,'${kr.id}')" ondragend="onDragEndClean(event)" ondragover="onKRDragOver(event)" ondrop="onKRDrop(event,'${kr.id}')" ondragleave="onDragLeaveClean(event)" onclick="openKRDetailed('${kr.id}')">
             <div class="kr-top">
               <div class="kr-name">${esc(kr.name)}</div>
               <span class="kr-type-tag project">项目</span>
             </div>
             <div class="progress-bar"><div class="progress-fill" style="width:${prog}%"></div></div>
             <div class="kr-foot">
+              ${priLabel(kr.priority)}
               <span>${doneCount}/${todoCount} 完成 · ${prog}%</span>
               <span>${esc(kr.status)}</span>
             </div>
@@ -1424,6 +1436,7 @@ function renderTodoRow(t, re, opts) {
     <div class="todo-info">
       <div class="todo-title ${t.done?'done':''}">${highlightHtml(t.title, re)}</div>
       <div class="todo-meta">
+        ${t.priority ? `<span class="kr-pri pri-${esc(t.priority)}">${esc(t.priority)}</span>` : ''}
         ${kr ? `<span>${esc(kr.name)}</span>` : ''}
         ${domain ? `<span>${esc(domain.name)}</span>` : ''}
         ${formatDDL(t) ? `<span class="todo-ddl">⏰ ${formatDDL(t)}</span>` : ''}
@@ -1464,7 +1477,7 @@ function renderKRs() {
     ${pageHeader('KR 管理', '管理各领域下的关键结果')}
 
     <div class="domain-tabs">
-      ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectDomain('${d.id}')">${esc(d.name)}</div>`).join('')}
+      ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" draggable="true" ondragstart="onDomainDragStart(event,'${d.id}')" ondragend="onDragEndClean(event)" ondragover="onDomainDragOver(event)" ondrop="onDomainDrop(event,'${d.id}')" ondragleave="onDragLeaveClean(event)" onclick="selectDomain('${d.id}')">${esc(d.name)}</div>`).join('')}
       <div class="domain-tab add" onclick="openDomainModal()">+ 新建领域</div>
     </div>
 
@@ -1476,9 +1489,10 @@ function renderKRs() {
             <button class="btn btn-primary btn-sm" onclick="openKRModal()">+ KR</button>
           </div>
           ${krs.length > 0 ? krs.map(k => `
-            <div class="kr-list-item ${k.id===state.currentKRId?'active':''}" onclick="selectKR('${k.id}')">
+            <div class="kr-list-item ${k.id===state.currentKRId?'active':''}" draggable="true" ondragstart="onKRDragStart(event,'${k.id}')" ondragend="onDragEndClean(event)" ondragover="onKRDragOver(event)" ondrop="onKRDrop(event,'${k.id}')" ondragleave="onDragLeaveClean(event)" onclick="selectKR('${k.id}')">
               <span class="kr-type-tag ${k.type}" style="font-size:9px;">${k.type==='project'?'项目':'习惯'}</span>
               <span class="ki-name">${esc(k.name)}</span>
+              <span class="ki-pri pri-${esc(k.priority)}">${esc(k.priority)}</span>
             </div>
           `).join('') : '<div class="empty-state"><div class="es-text">暂无KR</div></div>'}
         </div>
@@ -1531,6 +1545,7 @@ function renderKRDetail(kr) {
       </div>
       <div class="kr-detail-meta">
         <span class="meta-chip">${kr.type==='project'?'项目型':'习惯型'}</span>
+        <span class="kr-pri pri-${esc(kr.priority)}">${esc(kr.priority)}</span>
         <span class="meta-chip">${esc(kr.status)}</span>
         ${kr.goal ? `<span class="meta-chip">🎯 ${esc(kr.goal)}</span>` : ''}
         ${(kr.ddlDate || kr.ddlText) ? `<span class="meta-chip">⏰ ${formatDDL(kr)}</span>` : ''}
@@ -1598,6 +1613,7 @@ function renderHabitRow(kr, re) {
     <div class="todo-info">
       <div class="todo-title ${checked?'done':''}">${highlightHtml(kr.name, re)} <span class="habit-badge">习惯</span></div>
       <div class="todo-meta">
+        <span class="kr-pri pri-${esc(kr.priority)}">${esc(kr.priority)}</span>
         ${domain ? `<span>${esc(domain.name)}</span>` : ''}
         ${streak > 0 ? `<span style="color:var(--c-warning);">🔥 ${streak}天</span>` : ''}
         ${checked ? '<span style="color:var(--c-success);">✅ 今日已打卡</span>' : '<span style="color:var(--c-text-3);">未打卡</span>'}
@@ -1962,6 +1978,7 @@ function renderChatMsg(m) {
       已解析你的输入，建议如下：
       <div class="parsed-card">
         <div class="pc-row"><span class="pc-k">标题</span><span>${esc(p.title)}</span></div>
+        <div class="pc-row"><span class="pc-k">优先级</span><span class="kr-pri pri-${esc(p.priority)}">${esc(p.priority)}</span></div>
         <div class="pc-row"><span class="pc-k">截止</span><span>${p.ddlDate ? esc(p.ddlDate) + (p.ddlText ? ' (' + esc(p.ddlText) + ')' : '') : (esc(p.ddlText) || '—')}</span></div>
         <div class="pc-row"><span class="pc-k">领域</span><span>${domain ? esc(domain.name) : '默认'}</span></div>
         <div class="pc-row"><span class="pc-k">KR</span><span>${kr ? esc(kr.name) : '无（独立Todo）'}</span></div>
@@ -2328,14 +2345,82 @@ function renderSettings() {
 
 /* ===== Actions ===== */
 let _dragTodoId = null;
+let _dragDomainId = null;
+let _dragKRId = null;
+
+function onDragEndClean(e) {
+  document.querySelectorAll('.dragging, .drag-over').forEach(r => r.classList.remove('dragging', 'drag-over'));
+}
+function onDragLeaveClean(e) {
+  const el = e.target.closest('[draggable]');
+  if (el) el.classList.remove('drag-over');
+}
+
+/* Domain drag */
+function onDomainDragStart(e, id) {
+  _dragDomainId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  e.target.closest('.domain-tab').classList.add('dragging');
+}
+function onDomainDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const el = e.target.closest('.domain-tab:not(.add)');
+  if (el && _dragDomainId) el.classList.add('drag-over');
+}
+function onDomainDrop(e, targetId) {
+  e.preventDefault();
+  onDragLeaveClean(e);
+  if (!_dragDomainId || _dragDomainId === targetId) return;
+  const domains = state.data.domains;
+  const fromIdx = domains.findIndex(d => d.id === _dragDomainId);
+  const toIdx = domains.findIndex(d => d.id === targetId);
+  if (fromIdx < 0 || toIdx < 0) return;
+  const [moved] = domains.splice(fromIdx, 1);
+  domains.splice(toIdx, 0, moved);
+  domains.forEach((d, i) => d.order = i);
+  _dragDomainId = null;
+  saveData();
+  render();
+}
+
+/* KR drag */
+function onKRDragStart(e, id) {
+  _dragKRId = id;
+  e.dataTransfer.effectAllowed = 'move';
+  const el = e.target.closest('.kr-card, .kr-list-item');
+  if (el) el.classList.add('dragging');
+}
+function onKRDragOver(e) {
+  e.preventDefault();
+  e.dataTransfer.dropEffect = 'move';
+  const el = e.target.closest('.kr-card, .kr-list-item');
+  if (el && _dragKRId) el.classList.add('drag-over');
+}
+function onKRDrop(e, targetId) {
+  e.preventDefault();
+  onDragLeaveClean(e);
+  if (!_dragKRId || _dragKRId === targetId) return;
+  const krs = state.data.krs;
+  const fromIdx = krs.findIndex(k => k.id === _dragKRId);
+  const toIdx = krs.findIndex(k => k.id === targetId);
+  if (fromIdx < 0 || toIdx < 0) return;
+  const [moved] = krs.splice(fromIdx, 1);
+  krs.splice(toIdx, 0, moved);
+  krs.forEach((k, i) => k.order = i);
+  _dragKRId = null;
+  saveData();
+  render();
+}
+
+/* Todo drag */
 function onTodoDragStart(e, id) {
   _dragTodoId = id;
   e.dataTransfer.effectAllowed = 'move';
   e.target.closest('.todo-row').classList.add('dragging');
 }
 function onTodoDragEnd(e) {
-  document.querySelectorAll('.todo-row.dragging').forEach(r => r.classList.remove('dragging'));
-  document.querySelectorAll('.todo-row.drag-over').forEach(r => r.classList.remove('drag-over'));
+  onDragEndClean(e);
 }
 function onTodoDragOver(e) {
   e.preventDefault();
