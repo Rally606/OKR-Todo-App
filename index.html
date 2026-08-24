@@ -911,6 +911,11 @@ body {
   .page-title { font-size: 20px; }
   .modal { max-width: 100%; }
   .modal-body, .modal-head, .modal-foot { padding: 16px; }
+  .week-nav { flex-wrap: wrap; gap: 8px; }
+  .week-nav .week-stats { margin-left: 0; width: 100%; }
+  .weekly-overview { padding: 16px; }
+  .week-day .day-head { padding: 8px 12px; font-size: 12px; }
+  .week-day .day-head .day-count { font-size: 10px; }
 }
 
 @media (max-width: 480px) {
@@ -918,6 +923,12 @@ body {
   .filter-bar { flex-direction: column; align-items: stretch; }
   .filter-select { width: 100%; }
   .ai-hero { padding: 24px 16px; }
+  .week-nav > button:not(.btn) { width: 28px; height: 28px; font-size: 12px; }
+  .week-nav .week-label { font-size: 13px; }
+  .weekly-overview { padding: 12px; }
+  .weekly-overview h3 { font-size: 14px; }
+  .week-day .day-todos { padding: 4px 8px; }
+  .week-day .day-todos .todo-row { gap: 8px; padding: 6px 2px; }
 }
 </style>
 </head>
@@ -1630,9 +1641,32 @@ function todoBelongsToDay(t, d, i, isWeekend) {
   const ddl = t.ddlText;
   if (ddl.includes(`${d.getMonth()+1}.${d.getDate()}`) || ddl.includes(`${d.getMonth()+1}/${d.getDate()}`)) return true;
   if (ddl.includes('每天') || ddl.includes('每日')) return true;
-  if (ddl.includes('本周末') || ddl.includes('这周末')) return isWeekend;
-  if (ddl.includes('本周') && !ddl.includes('末')) return true;
-  if (i === 0 && (ddl.includes('今天') || ddl.includes('今日'))) return true;
+
+  var now = new Date(); now.setHours(0,0,0,0);
+  var todayIdx = now.getDay() || 7;
+  var thisMon = new Date(now); thisMon.setDate(now.getDate() - todayIdx + 1); thisMon.setHours(0,0,0,0);
+  var nextMon = new Date(thisMon); nextMon.setDate(thisMon.getDate() + 7);
+  var lastMon = new Date(thisMon); lastMon.setDate(thisMon.getDate() - 7);
+  var inThis = d >= thisMon && d < nextMon;
+  var inNext = d >= nextMon && d < new Date(nextMon.getTime() + 7*86400000);
+  var inLast = d >= lastMon && d < thisMon;
+
+  if (ddl.includes('本周末') || ddl.includes('这周末')) return isWeekend && inThis;
+  if ((ddl.includes('本周') || ddl.includes('这周')) && !ddl.includes('末')) return inThis;
+
+  if (ddl.includes('下周')) {
+    var dm = {'一':0,'二':1,'三':2,'四':3,'五':4,'六':5,'日':6,'天':6};
+    for (var ch in dm) { if (ddl.includes('下周'+ch)) return i === dm[ch] && inNext; }
+    return inNext;
+  }
+  if (ddl.includes('上周')) {
+    var dm2 = {'一':0,'二':1,'三':2,'四':3,'五':4,'六':5,'日':6,'天':6};
+    for (var ch2 in dm2) { if (ddl.includes('上周'+ch2)) return i === dm2[ch2] && inLast; }
+    return inLast;
+  }
+  if (ddl.includes('今天') || ddl.includes('今日')) return sameDay(d, now);
+  if (ddl.includes('明天')) { var tm = new Date(now); tm.setDate(now.getDate()+1); return sameDay(d, tm); }
+  if (ddl.includes('后天')) { var da = new Date(now); da.setDate(now.getDate()+2); return sameDay(d, da); }
   return false;
 }
 
@@ -1677,7 +1711,7 @@ function renderWeekly() {
       <span class="week-stats">${done}/${total} 已完成</span>
     </div>
 
-    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <label style="font-size:13px;color:var(--c-text-2);white-space:nowrap;">📅 选择日期</label>
       <input type="date" value="${esc(state.selectedDate)}" onchange="state.selectedDate=this.value;render()" style="padding:6px 10px;border:1px solid var(--c-border);border-radius:var(--r-md);background:var(--c-surface);color:var(--c-text);font-size:13px;">
       <button class="btn btn-secondary btn-sm" onclick="state.selectedDate='${isoOf(today)}';render()" style="white-space:nowrap;">回到今天</button>
