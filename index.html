@@ -1066,6 +1066,7 @@ function loadData() {
       if (state.data.todos) state.data.todos.forEach(t => {
         if (t.ddlDate === undefined) t.ddlDate = '';
         if (t.category !== undefined) delete t.category;
+        if (t.showHome === undefined) t.showHome = true;
       });
       if (state.data.krs) state.data.krs.forEach(k => {
         if (k.ddlDate === undefined) k.ddlDate = '';
@@ -1134,10 +1135,10 @@ function initData() {
       { id: 'k3', domainId: 'd3', name: '规律作息', type: 'habit', goal: '23点前入睡', priority: 'P2', status: '进行中', progress: 0, ddlDate: '', ddlText: '', notes: '', nextStep: '', docLink: '', checklist: [] }
     ],
     todos: [
-      { id: 't1', krId: 'k1', domainId: 'd1', title: '撰写项目周报', priority: 'P0', ddl: '', ddlDate: '', ddlText: '本周', nextStep: '汇总本周进展与风险', notes: '示例任务，可自由编辑或删除', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't2', krId: 'k1', domainId: 'd1', title: '组织项目复盘会议', priority: 'P1', ddl: '', ddlDate: '', ddlText: '下周一', nextStep: '提前发送议程', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't3', krId: 'k2', domainId: 'd2', title: '读完一本专业书籍', priority: 'P2', ddl: '', ddlDate: '', ddlText: '本月', nextStep: '选定书目并制定阅读计划', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't4', krId: '', domainId: 'd3', title: '整理桌面文件', priority: 'P3', ddl: '', ddlDate: '', ddlText: '有空', nextStep: '', notes: '不紧急不重要事项', status: '待开始', done: false, createdAt: now.getTime() }
+      { id: 't1', krId: 'k1', domainId: 'd1', title: '撰写项目周报', priority: 'P0', ddl: '', ddlDate: '', ddlText: '本周', nextStep: '汇总本周进展与风险', notes: '示例任务，可自由编辑或删除', status: '进行中', done: false, showHome: true, createdAt: now.getTime() },
+      { id: 't2', krId: 'k1', domainId: 'd1', title: '组织项目复盘会议', priority: 'P1', ddl: '', ddlDate: '', ddlText: '下周一', nextStep: '提前发送议程', notes: '', status: '进行中', done: false, showHome: true, createdAt: now.getTime() },
+      { id: 't3', krId: 'k2', domainId: 'd2', title: '读完一本专业书籍', priority: 'P2', ddl: '', ddlDate: '', ddlText: '本月', nextStep: '选定书目并制定阅读计划', notes: '', status: '进行中', done: false, showHome: true, createdAt: now.getTime() },
+      { id: 't4', krId: '', domainId: 'd3', title: '整理桌面文件', priority: 'P3', ddl: '', ddlDate: '', ddlText: '有空', nextStep: '', notes: '不紧急不重要事项', status: '待开始', done: false, showHome: true, createdAt: now.getTime() }
     ],
     quickNotes: [
       { id: 'q1', content: '欢迎使用 OKR Todo！这是一条示例闪念笔记，随时可以删除。', createdAt: now.getTime() - 3600000, krId: '' }
@@ -1294,7 +1295,7 @@ function renderDashboard() {
   const krs = getKRsByDomain(state.currentDomainId);
 
   const weekDates = getWeekDates(0);
-  const weekTodos = state.data.todos.filter(t => !t.done && todoBelongsToWeek(t, weekDates)).sort((a,b) => {
+  const weekTodos = state.data.todos.filter(t => !t.done && t.showHome !== false && todoBelongsToWeek(t, weekDates)).sort((a,b) => {
     const pri = { P0:0, P1:1, P2:2, P3:3 };
     return (pri[a.priority] ?? 4) - (pri[b.priority] ?? 4);
   }).slice(0, 6);
@@ -1367,7 +1368,7 @@ function renderDashboard() {
       <div class="dash-main">
         <div class="weekly-overview">
           <h3>📌 本周待办 <span class="count">(${weekTodos.length}项)</span></h3>
-          ${weekTodos.length > 0 ? weekTodos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">暂无待办，去添加吧</div></div>'}
+          ${weekTodos.length > 0 ? weekTodos.map(t => renderTodoRow(t, null, {showDelete: false})).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">暂无待办，去添加吧</div></div>'}
         </div>
       </div>
       <div class="dash-side">
@@ -1405,10 +1406,11 @@ function renderDashboard() {
   document.getElementById('page-dashboard').innerHTML = html;
 }
 
-function renderTodoRow(t, re) {
+function renderTodoRow(t, re, opts) {
   const domain = getDomain(t.domainId);
   const kr = t.krId ? getKR(t.krId) : null;
   const h = !!re;
+  const showDelete = !opts || opts.showDelete !== false;
   return `<div class="todo-row ${h?'highlight':''}">
     <div class="todo-check ${t.done?'done':''}" onclick="toggleTodo('${t.id}')"></div>
     <div class="todo-info">
@@ -1424,7 +1426,7 @@ function renderTodoRow(t, re) {
     </div>
     <div class="todo-actions">
       <button class="todo-action-btn" onclick="event.stopPropagation();openTodoModal('${t.id}')" title="编辑">✏️</button>
-      <button class="todo-action-btn" onclick="event.stopPropagation();deleteTodo('${t.id}')" title="删除">🗑</button>
+      ${showDelete ? `<button class="todo-action-btn" onclick="event.stopPropagation();deleteTodo('${t.id}')" title="删除">🗑</button>` : ''}
     </div>
   </div>`;
 }
@@ -2216,7 +2218,7 @@ function addParsedTodo(msgId) {
   const m = state.aiChat.find(x => x.id === msgId);
   if (!m || !m.parsed) return;
   const p = m.parsed;
-  state.data.todos.push({ id: uid(), title: p.title, domainId: p.domainId, krId: p.krId, priority: p.priority, status: p.status, ddl: '', ddlDate: p.ddlDate || '', ddlText: p.ddlText, nextStep: p.nextStep, notes: p.notes, done: false, createdAt: Date.now() });
+  state.data.todos.push({ id: uid(), title: p.title, domainId: p.domainId, krId: p.krId, priority: p.priority, status: p.status, ddl: '', ddlDate: p.ddlDate || '', ddlText: p.ddlText, nextStep: p.nextStep, notes: p.notes, done: false, showHome: true, createdAt: Date.now() });
   saveData();
   toast('已添加为 Todo ✓', 'success');
   // mark as added
@@ -2705,6 +2707,12 @@ function openTodoModal(id, krId, preset) {
         <label>下一步</label>
         <textarea id="td-notes" placeholder="下一步行动计划...">${t ? esc(t.notes) : (preset ? esc(preset.notes) : '')}</textarea>
       </div>
+      <div class="form-group">
+        <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
+          <input type="checkbox" id="td-showHome" ${(!t || t.showHome !== false) ? 'checked' : ''} style="width:auto;margin:0;">
+          <span>在首页展示</span>
+        </label>
+      </div>
     </div>
     <div class="modal-foot">
       <button class="btn btn-secondary" onclick="closeModal()">取消</button>
@@ -2735,7 +2743,8 @@ function saveTodo(id) {
     ddlDate: document.getElementById('td-ddldate').value.trim(),
     ddlText: document.getElementById('td-ddl').value.trim(),
     nextStep: document.getElementById('td-nextstep').value.trim(),
-    notes: document.getElementById('td-notes').value.trim()
+    notes: document.getElementById('td-notes').value.trim(),
+    showHome: document.getElementById('td-showHome').checked
   };
 
   if (id) {
