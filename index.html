@@ -1517,7 +1517,13 @@ function renderKRDetail(kr) {
 
   return `<div class="kr-detail-panel">
     <div class="kr-detail-head">
-      <h2>${esc(kr.name)}</h2>
+      <div style="display:flex;align-items:center;justify-content:space-between;">
+        <h2>${esc(kr.name)}</h2>
+        <div style="display:flex;gap:6px;">
+          <button class="btn btn-secondary btn-sm" onclick="openKRModal('${kr.id}')">✏️ 编辑</button>
+          <button class="btn btn-danger btn-sm" onclick="deleteKR('${kr.id}')">🗑 删除</button>
+        </div>
+      </div>
       <div class="kr-detail-meta">
         <span class="meta-chip">${kr.type==='project'?'项目型':'习惯型'}</span>
         <span class="kr-pri pri-${esc(kr.priority)}">${esc(kr.priority)}</span>
@@ -1568,11 +1574,6 @@ function renderKRDetail(kr) {
     </div>
     <div class="task-list">
       ${todos.length > 0 ? todos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">暂无待办</div></div>'}
-    </div>
-
-    <div style="margin-top:20px;display:flex;gap:8px;flex-wrap:wrap;">
-      <button class="btn btn-secondary" onclick="openKRModal('${kr.id}')">✏️ 编辑</button>
-      <button class="btn btn-danger" onclick="deleteKR('${kr.id}')">🗑 删除</button>
     </div>
   </div>`;
 }
