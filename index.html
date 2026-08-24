@@ -216,6 +216,14 @@ body {
 }
 .domain-tab:hover .domain-edit-btn { opacity: .7; }
 .domain-tab .domain-edit-btn:hover { opacity: 1; transform: scale(1.2); }
+.domain-del-btn {
+  font-size: 11px;
+  opacity: 0;
+  transition: opacity .15s;
+  margin-left: 2px;
+}
+.domain-tab:hover .domain-del-btn { opacity: .7; }
+.domain-tab .domain-del-btn:hover { opacity: 1; color: var(--c-danger); transform: scale(1.2); }
 
 /* ===== Cards ===== */
 .card {
@@ -391,6 +399,19 @@ body {
 .qn-item .qn-del { color: var(--c-text-3); cursor: pointer; font-size: 12px; }
 .qn-item .qn-del:hover { color: var(--c-danger); }
 
+.habit-row {
+  border-left: 3px solid var(--c-success);
+  background: var(--c-success-bg);
+}
+.habit-badge {
+  font-size: 10px;
+  padding: 1px 6px;
+  border-radius: 999px;
+  background: var(--c-success-bg);
+  color: var(--c-success);
+  font-weight: 600;
+  margin-left: 4px;
+}
 .ai-shortcut {
   margin-top: 12px;
   padding: 12px 14px;
@@ -1050,6 +1071,7 @@ function loadData() {
         if (k.ddlDate === undefined) k.ddlDate = '';
         if (k.ddlText === undefined) k.ddlText = k.deadline || '';
         if (k.deadline !== undefined) delete k.deadline;
+        if (k.docLink === undefined) k.docLink = '';
       });
       if (state.data.quickNotes) state.data.quickNotes.forEach(q => {
         if (q.krId === undefined) q.krId = '';
@@ -1107,9 +1129,9 @@ function initData() {
       { id: 'd3', name: '生活健康', order: 2, hidden: false }
     ],
     krs: [
-      { id: 'k1', domainId: 'd1', name: '季度项目交付', type: 'project', goal: '按时完成本季度核心项目', priority: 'P0', status: '进行中', progress: 30, ddlDate: '', ddlText: '', notes: '项目型KR：进度由子任务完成度自动计算', nextStep: '拆解关键里程碑', checklist: [] },
-      { id: 'k2', domainId: 'd2', name: '每日阅读', type: 'habit', goal: '每天阅读30分钟', priority: 'P2', status: '进行中', progress: 0, ddlDate: '', ddlText: '', notes: '习惯型KR：点击打卡按钮记录每日完成', nextStep: '', checklist: [] },
-      { id: 'k3', domainId: 'd3', name: '规律作息', type: 'habit', goal: '23点前入睡', priority: 'P2', status: '进行中', progress: 0, ddlDate: '', ddlText: '', notes: '', nextStep: '', checklist: [] }
+      { id: 'k1', domainId: 'd1', name: '季度项目交付', type: 'project', goal: '按时完成本季度核心项目', priority: 'P0', status: '进行中', progress: 30, ddlDate: '', ddlText: '', notes: '项目型KR：进度由子任务完成度自动计算', nextStep: '拆解关键里程碑', docLink: '', checklist: [] },
+      { id: 'k2', domainId: 'd2', name: '每日阅读', type: 'habit', goal: '每天阅读30分钟', priority: 'P2', status: '进行中', progress: 0, ddlDate: '', ddlText: '', notes: '习惯型KR：点击打卡按钮记录每日完成', nextStep: '', docLink: '', checklist: [] },
+      { id: 'k3', domainId: 'd3', name: '规律作息', type: 'habit', goal: '23点前入睡', priority: 'P2', status: '进行中', progress: 0, ddlDate: '', ddlText: '', notes: '', nextStep: '', docLink: '', checklist: [] }
     ],
     todos: [
       { id: 't1', krId: 'k1', domainId: 'd1', title: '撰写项目周报', priority: 'P0', ddl: '', ddlDate: '', ddlText: '本周', nextStep: '汇总本周进展与风险', notes: '示例任务，可自由编辑或删除', status: '进行中', done: false, createdAt: now.getTime() },
@@ -1286,6 +1308,7 @@ function renderDashboard() {
       ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectDomain('${d.id}')">
         <span>${esc(d.name)}</span>
         <span class="domain-edit-btn" onclick="event.stopPropagation();openDomainModal('${d.id}')" title="编辑领域">✏️</span>
+        <span class="domain-del-btn" onclick="event.stopPropagation();deleteDomain('${d.id}')" title="删除领域">🗑</span>
       </div>`).join('')}
       <div class="domain-tab add" onclick="openDomainModal()">+ 新建领域</div>
     </div>
@@ -1509,8 +1532,13 @@ function renderKRDetail(kr) {
     ${habitHeatmap}
 
     ${kr.nextStep ? `
-      <div class="section-label">📍 下一步</div>
+      <div class="section-label">📝 备注</div>
       <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;">${esc(kr.nextStep)}</div>
+    ` : ''}
+
+    ${kr.docLink ? `
+      <div class="section-label">📄 文档</div>
+      <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;">${renderLinkableText(kr.docLink)}</div>
     ` : ''}
 
     <div class="section-label">📝 笔记区</div>
@@ -1551,9 +1579,53 @@ function selectKR(id) {
 }
 
 /* ===== Task Board ===== */
+function renderHabitRow(kr, re) {
+  const domain = getDomain(kr.domainId);
+  const checked = isHabitCheckedToday(kr.id);
+  const streak = getStreak(kr.id);
+  const h = !!re;
+  return `<div class="todo-row habit-row ${h?'highlight':''}">
+    <div class="todo-check ${checked?'done':''}" onclick="checkIn('${kr.id}')" style="border-radius:50%;"></div>
+    <div class="todo-info">
+      <div class="todo-title ${checked?'done':''}">${highlightHtml(kr.name, re)} <span class="habit-badge">习惯</span></div>
+      <div class="todo-meta">
+        <span class="kr-pri pri-${esc(kr.priority)}">${esc(kr.priority)}</span>
+        ${domain ? `<span>${esc(domain.name)}</span>` : ''}
+        ${streak > 0 ? `<span style="color:var(--c-warning);">🔥 ${streak}天</span>` : ''}
+        ${checked ? '<span style="color:var(--c-success);">✅ 今日已打卡</span>' : '<span style="color:var(--c-text-3);">未打卡</span>'}
+        ${kr.goal ? `<span>🎯 ${esc(kr.goal)}</span>` : ''}
+      </div>
+    </div>
+    <div class="todo-actions">
+      <button class="todo-action-btn" onclick="event.stopPropagation();openKRModal('${kr.id}')" title="编辑">✏️</button>
+    </div>
+  </div>`;
+}
+
+function getHabitKRAsTodo(kr) {
+  const checked = isHabitCheckedToday(kr.id);
+  return {
+    id: kr.id, title: kr.name, priority: kr.priority,
+    domainId: kr.domainId, krId: kr.id,
+    ddlDate: kr.ddlDate || '', ddlText: kr.ddlText || '',
+    nextStep: kr.nextStep || '', docLink: kr.docLink || '',
+    notes: kr.notes || '', status: kr.status || '进行中',
+    done: checked, _isHabit: true, _kr: kr, createdAt: 0
+  };
+}
+
 function renderTasks() {
   const domains = state.data.domains.filter(d => !d.hidden);
   let todos = state.data.todos.slice();
+
+  // Include habit KRs as virtual todos
+  let habitKRs = state.data.krs.filter(k => k.type === 'habit');
+  if (state.filters.domain !== 'all') habitKRs = habitKRs.filter(k => k.domainId === state.filters.domain);
+  if (state.filters.priority !== 'all') habitKRs = habitKRs.filter(k => k.priority === state.filters.priority);
+  if (state.filters.status === 'active') habitKRs = habitKRs.filter(k => !isHabitCheckedToday(k.id));
+  if (state.filters.status === 'done') habitKRs = habitKRs.filter(k => isHabitCheckedToday(k.id));
+
+  const habitItems = habitKRs.map(k => getHabitKRAsTodo(k));
 
   if (state.filters.domain !== 'all') todos = todos.filter(t => t.domainId === state.filters.domain);
   if (state.filters.priority !== 'all') todos = todos.filter(t => t.priority === state.filters.priority);
@@ -1570,8 +1642,11 @@ function renderTasks() {
     });
   }
 
+  // Merge todos and habit items for unified display
+  const allItems = [...todos, ...habitItems];
+
   const priOrder = { P0: 0, P1: 1, P2: 2, P3: 3 };
-  todos.sort((a, b) => {
+  allItems.sort((a, b) => {
     if (a.done !== b.done) return a.done ? 1 : -1;
     return (priOrder[a.priority] ?? 4) - (priOrder[b.priority] ?? 4);
   });
@@ -1580,6 +1655,11 @@ function renderTasks() {
   const re = q ? new RegExp(`(${q})`, 'gi') : null;
   const highlight = !!state.searchQuery;
   const emptyText = state.searchQuery ? '没有匹配的任务' : '暂无符合条件的任务';
+
+  const renderItem = (item, re) => {
+    if (item._isHabit) return renderHabitRow(item._kr, re);
+    return renderTodoRow(item, re);
+  };
 
   const html = `
     ${pageHeader('任务看板', '所有待办一览')}
@@ -1610,12 +1690,12 @@ function renderTasks() {
         <button class="${state.taskView==='quadrant'?'active':''}" onclick="setTaskView('quadrant')">⊞ 四象限</button>
       </div>
       <button class="btn btn-primary" onclick="openTodoModal(null)">+ 新建Todo</button>
-      <span style="font-size:13px;color:var(--c-text-3);margin-left:auto;">共 ${todos.length} 项</span>
+      <span style="font-size:13px;color:var(--c-text-3);margin-left:auto;">共 ${allItems.length} 项</span>
     </div>
 
-    ${state.taskView === 'quadrant' ? renderQuadrant(todos, re, highlight) : `
+    ${state.taskView === 'quadrant' ? renderQuadrant(allItems, re, highlight, renderItem) : `
       <div class="task-list">
-        ${todos.length > 0 ? todos.map(t => renderTodoRow(t, highlight ? re : null)).join('') : `<div class="empty-state"><div class="es-icon">📭</div><div class="es-text">${emptyText}</div></div>`}
+        ${allItems.length > 0 ? allItems.map(t => renderItem(t, highlight ? re : null)).join('') : `<div class="empty-state"><div class="es-icon">📭</div><div class="es-text">${emptyText}</div></div>`}
       </div>
     `}
   `;
@@ -1637,7 +1717,8 @@ function highlightHtml(text, re) {
   return parts.map((p, i) => i % 2 === 1 ? `<mark style="background:var(--c-warning-bg);color:var(--c-warning);padding:0 2px;border-radius:2px;">${esc(p)}</mark>` : esc(p)).join('');
 }
 
-function renderQuadrant(todos, re, highlight) {
+function renderQuadrant(todos, re, highlight, renderItem) {
+  const renderFn = renderItem || ((t, re) => renderTodoRow(t, re));
   const quadrants = {
     q1: { title: '🔴 紧急且重要', sub: 'P0 · 立即做', items: [] },
     q2: { title: '🟣 重要不紧急', sub: 'P1 · 计划做', items: [] },
@@ -1659,7 +1740,7 @@ function renderQuadrant(todos, re, highlight) {
           <div class="q-sub">${q.sub}</div>
         </div>
         <div class="q-body">
-          ${q.items.length > 0 ? q.items.map(t => renderTodoRow(t, highlight ? re : null)).join('') : '<div class="q-empty">暂无任务</div>'}
+          ${q.items.length > 0 ? q.items.map(t => renderFn(t, highlight ? re : null)).join('') : '<div class="q-empty">暂无任务</div>'}
         </div>
       </div>
     `).join('')}
@@ -1734,12 +1815,17 @@ function renderWeekly() {
   const dayGroups = dates.map((d, i) => {
     const isWeekend = i >= 4;
     const dayTodos = state.data.todos.filter(t => todoBelongsToDay(t, d, i, isWeekend));
-    total += dayTodos.length;
-    done += dayTodos.filter(t => t.done).length;
-    return { date: d, dayName: dayNames[i], todos: dayTodos };
+    // Add habit KRs that belong to this day (every day for habits)
+    const dayHabits = state.data.krs.filter(k => k.type === 'habit').map(kr => getHabitKRAsTodo(kr));
+    const allDayItems = [...dayTodos, ...dayHabits];
+    total += allDayItems.length;
+    done += allDayItems.filter(t => t.done).length;
+    return { date: d, dayName: dayNames[i], todos: allDayItems };
   });
 
-  const activeTodos = state.data.todos.filter(t => !t.done && todoBelongsToWeek(t, dates)).sort((a,b) => {
+  const activeTodos = state.data.todos.filter(t => !t.done && todoBelongsToWeek(t, dates));
+  const activeHabits = state.data.krs.filter(k => k.type === 'habit' && !isHabitCheckedToday(k.id)).map(k => getHabitKRAsTodo(k));
+  const allActive = [...activeTodos, ...activeHabits].sort((a,b) => {
     const pri = { P0:0, P1:1, P2:2, P3:3 };
     return (pri[a.priority] ?? 4) - (pri[b.priority] ?? 4);
   });
@@ -1762,8 +1848,8 @@ function renderWeekly() {
     </div>
 
     <div class="weekly-overview" style="margin-bottom:20px;">
-      <h3>📌 本周待办（按优先级）<span class="count">${activeTodos.length}项</span></h3>
-      ${activeTodos.length > 0 ? activeTodos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">🎉 本周无待办</div></div>'}
+      <h3>📌 本周待办（按优先级）<span class="count">${allActive.length}项</span></h3>
+      ${allActive.length > 0 ? allActive.map(t => t._isHabit ? renderHabitRow(t._kr) : renderTodoRow(t)).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">🎉 本周无待办</div></div>'}
     </div>
 
     <div class="section-label" style="margin-bottom:8px;">📅 按天分布</div>
@@ -1779,7 +1865,7 @@ function renderWeekly() {
           <span class="day-count">${g.todos.length > 0 ? g.todos.length + '项' : '无待办'}</span>
         </div>
         <div class="day-todos">
-          ${g.todos.length > 0 ? g.todos.map(t => renderTodoRow(t)).join('') : ''}
+          ${g.todos.length > 0 ? g.todos.map(t => t._isHabit ? renderHabitRow(t._kr) : renderTodoRow(t)).join('') : ''}
         </div>
       </div>
     `}).join('')}
@@ -2492,16 +2578,25 @@ function openKRModal(id) {
       <div class="form-row">
         <div class="form-group">
           <label>截止日期（选填）</label>
-          <input type="date" id="kr-ddldate" value="${kr ? esc(kr.ddlDate || '') : ''}">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="date" id="kr-ddldate" value="${kr ? esc(kr.ddlDate || '') : ''}" style="flex:1;">
+            ${kr && kr.ddlDate ? '<button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById(\'kr-ddldate\').value=\'\'" title="清除日期">✕</button>' : ''}
+          </div>
         </div>
         <div class="form-group">
           <label>截止时间补充</label>
-          <input type="text" id="kr-ddltext" value="${kr ? esc(kr.ddlText || '') : ''}" placeholder="如：年底 / Q4 / 月底">
+          <input type="text" id="kr-ddltext" value="${kr ? esc(kr.ddlText || '') : ''}" placeholder="如：9.25-10.7 / Q4 / 月底">
         </div>
       </div>
-      <div class="form-group">
-        <label>备注</label>
-        <input type="text" id="kr-nextstep" value="${kr ? esc(kr.nextStep) : ''}" placeholder="如：拆解关键里程碑">
+      <div class="form-row">
+        <div class="form-group">
+          <label>备注</label>
+          <input type="text" id="kr-nextstep" value="${kr ? esc(kr.nextStep) : ''}" placeholder="如：拆解关键里程碑">
+        </div>
+        <div class="form-group">
+          <label>文档</label>
+          <input type="text" id="kr-doclink" value="${kr ? esc(kr.docLink || '') : ''}" placeholder="文档链接，可点击打开">
+        </div>
       </div>
       <div class="form-group">
         <label>笔记区</label>
@@ -2530,6 +2625,7 @@ function saveKR(id) {
     ddlDate: document.getElementById('kr-ddldate').value.trim(),
     ddlText: document.getElementById('kr-ddltext').value.trim(),
     nextStep: document.getElementById('kr-nextstep').value.trim(),
+    docLink: document.getElementById('kr-doclink').value.trim(),
     notes: document.getElementById('kr-notes').value.trim()
   };
 
@@ -2591,11 +2687,14 @@ function openTodoModal(id, krId, preset) {
       <div class="form-row">
         <div class="form-group">
           <label>截止日期（选填）</label>
-          <input type="date" id="td-ddldate" value="${t ? esc(t.ddlDate || '') : (preset ? esc(preset.ddlDate || '') : '')}">
+          <div style="display:flex;align-items:center;gap:6px;">
+            <input type="date" id="td-ddldate" value="${t ? esc(t.ddlDate || '') : (preset ? esc(preset.ddlDate || '') : '')}" style="flex:1;">
+            ${(t && t.ddlDate) ? '<button type="button" class="btn btn-secondary btn-sm" onclick="document.getElementById(\'td-ddldate\').value=\'\'" title="清除日期">✕</button>' : ''}
+          </div>
         </div>
         <div class="form-group">
           <label>截止时间补充</label>
-          <input type="text" id="td-ddl" value="${t ? esc(t.ddlText) : (preset ? esc(preset.ddlText) : '')}" placeholder="如：本周末 / 下周 / 有空">
+          <input type="text" id="td-ddl" value="${t ? esc(t.ddlText) : (preset ? esc(preset.ddlText) : '')}" placeholder="如：9.25-10.7 / 本周末 / 下周">
         </div>
       </div>
       <div class="form-group">
