@@ -578,6 +578,7 @@ body {
   margin-bottom: 12px;
   overflow: hidden;
 }
+.week-day.selected { border: 2px solid var(--c-primary); box-shadow: 0 0 0 3px var(--c-primary-bg); }
 .week-day .day-head {
   padding: 10px 16px;
   background: var(--c-bg);
@@ -993,6 +994,7 @@ let state = {
   currentDomainId: null,
   currentKRId: null,
   weekOffset: 0,
+  selectedDate: '',
   filters: { domain: 'all', priority: 'all', status: 'all' },
   searchQuery: '',
   taskView: 'list',
@@ -1012,6 +1014,10 @@ function loadData() {
       state.data = JSON.parse(raw);
       if (!state.data.checkins) state.data.checkins = {};
       if (!state.data.quickNotes) state.data.quickNotes = [];
+      if (state.data.todos) state.data.todos.forEach(t => {
+        if (t.ddlDate === undefined) t.ddlDate = '';
+        if (t.category !== undefined) delete t.category;
+      });
     }
   } catch(e) { console.error('Load failed', e); }
 }
@@ -1070,10 +1076,10 @@ function initData() {
       { id: 'k3', domainId: 'd3', name: '规律作息', type: 'habit', goal: '23点前入睡', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '', nextStep: '', checklist: [] }
     ],
     todos: [
-      { id: 't1', krId: 'k1', domainId: 'd1', title: '撰写项目周报', priority: 'P0', ddl: '', ddlText: '本周', category: '需要记录', nextStep: '汇总本周进展与风险', notes: '示例任务，可自由编辑或删除', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't2', krId: 'k1', domainId: 'd1', title: '组织项目复盘会议', priority: 'P1', ddl: '', ddlText: '下周一', category: '需要记录', nextStep: '提前发送议程', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't3', krId: 'k2', domainId: 'd2', title: '读完一本专业书籍', priority: 'P2', ddl: '', ddlText: '本月', category: '需要记录', nextStep: '选定书目并制定阅读计划', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't4', krId: '', domainId: 'd3', title: '整理桌面文件', priority: 'P3', ddl: '', ddlText: '有空', category: '', nextStep: '', notes: '不紧急不重要事项', status: '待开始', done: false, createdAt: now.getTime() }
+      { id: 't1', krId: 'k1', domainId: 'd1', title: '撰写项目周报', priority: 'P0', ddl: '', ddlDate: '', ddlText: '本周', nextStep: '汇总本周进展与风险', notes: '示例任务，可自由编辑或删除', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't2', krId: 'k1', domainId: 'd1', title: '组织项目复盘会议', priority: 'P1', ddl: '', ddlDate: '', ddlText: '下周一', nextStep: '提前发送议程', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't3', krId: 'k2', domainId: 'd2', title: '读完一本专业书籍', priority: 'P2', ddl: '', ddlDate: '', ddlText: '本月', nextStep: '选定书目并制定阅读计划', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't4', krId: '', domainId: 'd3', title: '整理桌面文件', priority: 'P3', ddl: '', ddlDate: '', ddlText: '有空', nextStep: '', notes: '不紧急不重要事项', status: '待开始', done: false, createdAt: now.getTime() }
     ],
     quickNotes: [
       { id: 'q1', content: '欢迎使用 OKR Todo！这是一条示例闪念笔记，随时可以删除。', createdAt: now.getTime() - 3600000 }
@@ -1124,6 +1130,30 @@ function weekLabel(offset) {
 function esc(s) {
   if (!s) return '';
   return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function renderLinkableText(text) {
+  if (!text) return '';
+  const urlRegex = /(https?:\/\/[^\s]+|www\.[^\s]+)/g;
+  const parts = text.split(urlRegex);
+  return parts.map(p => {
+    if (!p) return '';
+    if (/^https?:\/\/|^www\./.test(p)) {
+      const href = p.startsWith('www.') ? 'https://' + p : p;
+      return `<a href="${esc(href)}" target="_blank" rel="noopener" style="color:var(--c-primary);text-decoration:underline;">${esc(p)}</a>`;
+    }
+    return esc(p);
+  }).join('');
+}
+
+function formatDDL(t) {
+  if (!t.ddlDate && !t.ddlText) return '';
+  if (t.ddlDate) {
+    const d = new Date(t.ddlDate + 'T00:00:00');
+    const label = isNaN(d) ? t.ddlDate : `${d.getMonth()+1}/${d.getDate()}`;
+    return t.ddlText ? `${label} (${esc(t.ddlText)})` : label;
+  }
+  return esc(t.ddlText);
 }
 
 function getDomain(id) { return state.data.domains.find(d => d.id === id); }
@@ -1205,7 +1235,8 @@ function renderDashboard() {
 
   const krs = getKRsByDomain(state.currentDomainId);
 
-  const weekTodos = state.data.todos.filter(t => !t.done).sort((a,b) => {
+  const weekDates = getWeekDates(0);
+  const weekTodos = state.data.todos.filter(t => !t.done && todoBelongsToWeek(t, weekDates)).sort((a,b) => {
     const pri = { P0:0, P1:1, P2:2, P3:3 };
     return (pri[a.priority] ?? 4) - (pri[b.priority] ?? 4);
   }).slice(0, 6);
@@ -1310,8 +1341,9 @@ function renderTodoRow(t, re) {
         ${t.priority ? `<span class="kr-pri pri-${esc(t.priority)}">${esc(t.priority)}</span>` : ''}
         ${kr ? `<span>${esc(kr.name)}</span>` : ''}
         ${domain ? `<span>${esc(domain.name)}</span>` : ''}
-        ${t.ddlText ? `<span class="todo-ddl">⏰ ${esc(t.ddlText)}</span>` : ''}
-        ${t.nextStep ? `<span>📍 ${esc(t.nextStep)}</span>` : ''}
+        ${formatDDL(t) ? `<span class="todo-ddl">⏰ ${formatDDL(t)}</span>` : ''}
+        ${t.nextStep ? `<span>🔗 ${renderLinkableText(t.nextStep)}</span>` : ''}
+        ${t.notes ? `<span>📍 ${esc(t.notes)}</span>` : ''}
       </div>
     </div>
     <div class="todo-actions">
@@ -1466,7 +1498,7 @@ function renderTasks() {
     todos = todos.filter(t => {
       const kr = t.krId ? getKR(t.krId) : null;
       const domain = getDomain(t.domainId);
-      return [t.title, t.notes, t.nextStep, t.category, t.ddlText, kr?.name, domain?.name]
+      return [t.title, t.notes, t.nextStep, t.ddlDate, t.ddlText, kr?.name, domain?.name]
         .filter(Boolean).some(s => String(s).toLowerCase().includes(q));
     });
   }
@@ -1504,7 +1536,7 @@ function renderTasks() {
       </select>
       <div class="search-box">
         <span class="search-icon">🔍</span>
-        <input type="text" id="task-search" value="${esc(state.searchQuery)}" placeholder="搜索任务标题/备注/标签... (/)" oninput="onSearchInput(this.value)">
+        <input type="text" id="task-search" value="${esc(state.searchQuery)}" placeholder="搜索任务标题/备注... (/)" oninput="onSearchInput(this.value)">
       </div>
       <div class="view-toggle">
         <button class="${state.taskView==='list'?'active':''}" onclick="setTaskView('list')">📋 列表</button>
@@ -1585,29 +1617,51 @@ function setTaskView(mode) {
 }
 
 /* ===== Weekly View ===== */
+function sameDay(a, b) {
+  return a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
+}
+
+function todoBelongsToDay(t, d, i, isWeekend) {
+  if (t.ddlDate) {
+    const todoDate = new Date(t.ddlDate + 'T00:00:00');
+    if (!isNaN(todoDate) && sameDay(todoDate, d)) return true;
+  }
+  if (!t.ddlText) return false;
+  const ddl = t.ddlText;
+  if (ddl.includes(`${d.getMonth()+1}.${d.getDate()}`) || ddl.includes(`${d.getMonth()+1}/${d.getDate()}`)) return true;
+  if (ddl.includes('每天') || ddl.includes('每日')) return true;
+  if (ddl.includes('本周末') || ddl.includes('这周末')) return isWeekend;
+  if (ddl.includes('本周') && !ddl.includes('末')) return true;
+  if (i === 0 && (ddl.includes('今天') || ddl.includes('今日'))) return true;
+  return false;
+}
+
+function todoBelongsToWeek(t, dates) {
+  return dates.some((d, i) => todoBelongsToDay(t, d, i, i >= 4));
+}
+
+function isoOf(d) {
+  const pad = n => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+}
+
 function renderWeekly() {
   const dates = getWeekDates(state.weekOffset);
   const dayNames = ['周一','周二','周三','周四','周五','周六','周日'];
+  const today = new Date();
+  today.setHours(0,0,0,0);
+  if (!state.selectedDate) state.selectedDate = isoOf(today);
 
   let total = 0, done = 0;
   const dayGroups = dates.map((d, i) => {
     const isWeekend = i >= 4;
-    const dayTodos = state.data.todos.filter(t => {
-      if (!t.ddlText) return false;
-      const ddl = t.ddlText;
-      if (ddl.includes(`${d.getMonth()+1}.${d.getDate()}`) || ddl.includes(`${d.getMonth()+1}/${d.getDate()}`)) return true;
-      if (ddl.includes('每天') || ddl.includes('每日')) return true;
-      if (ddl.includes('本周末') || ddl.includes('这周末')) return isWeekend;
-      if (ddl.includes('本周') && !ddl.includes('末')) return true;
-      if (i === 0 && (ddl.includes('今天') || ddl.includes('今日'))) return true;
-      return false;
-    });
+    const dayTodos = state.data.todos.filter(t => todoBelongsToDay(t, d, i, isWeekend));
     total += dayTodos.length;
     done += dayTodos.filter(t => t.done).length;
     return { date: d, dayName: dayNames[i], todos: dayTodos };
   });
 
-  const activeTodos = state.data.todos.filter(t => !t.done).sort((a,b) => {
+  const activeTodos = state.data.todos.filter(t => !t.done && todoBelongsToWeek(t, dates)).sort((a,b) => {
     const pri = { P0:0, P1:1, P2:2, P3:3 };
     return (pri[a.priority] ?? 4) - (pri[b.priority] ?? 4);
   });
@@ -1623,16 +1677,26 @@ function renderWeekly() {
       <span class="week-stats">${done}/${total} 已完成</span>
     </div>
 
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:nowrap;">
+      <label style="font-size:13px;color:var(--c-text-2);white-space:nowrap;">📅 选择日期</label>
+      <input type="date" value="${esc(state.selectedDate)}" onchange="state.selectedDate=this.value;render()" style="padding:6px 10px;border:1px solid var(--c-border);border-radius:var(--r-md);background:var(--c-surface);color:var(--c-text);font-size:13px;">
+      <button class="btn btn-secondary btn-sm" onclick="state.selectedDate='${isoOf(today)}';render()" style="white-space:nowrap;">回到今天</button>
+    </div>
+
     <div class="weekly-overview" style="margin-bottom:20px;">
-      <h3>📌 本周全部待办（按优先级）<span class="count">${activeTodos.length}项</span></h3>
-      ${activeTodos.length > 0 ? activeTodos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">🎉 全部完成！</div></div>'}
+      <h3>📌 本周待办（按优先级）<span class="count">${activeTodos.length}项</span></h3>
+      ${activeTodos.length > 0 ? activeTodos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">🎉 本周无待办</div></div>'}
     </div>
 
     <div class="section-label" style="margin-bottom:8px;">📅 按天分布</div>
-    ${dayGroups.map(g => `
-      <div class="week-day ${g.todos.length === 0 ? 'empty' : ''}">
+    ${dayGroups.map(g => {
+      const gISO = isoOf(g.date);
+      const isSelected = state.selectedDate === gISO;
+      const isToday = sameDay(g.date, today);
+      return `
+      <div class="week-day ${g.todos.length === 0 ? 'empty' : ''} ${isSelected ? 'selected' : ''}">
         <div class="day-head">
-          <span>${g.dayName}</span>
+          <span>${g.dayName}${isToday ? ' (今天)' : ''}${isSelected ? ' ⬅️ 已选' : ''}</span>
           <span>${g.date.getMonth()+1}.${g.date.getDate()}</span>
           <span class="day-count">${g.todos.length > 0 ? g.todos.length + '项' : '无待办'}</span>
         </div>
@@ -1640,7 +1704,7 @@ function renderWeekly() {
           ${g.todos.length > 0 ? g.todos.map(t => renderTodoRow(t)).join('') : ''}
         </div>
       </div>
-    `).join('')}
+    `}).join('')}
   `;
   document.getElementById('page-weekly').innerHTML = html;
 }
@@ -1728,7 +1792,7 @@ function renderChatMsg(m) {
       <div class="parsed-card">
         <div class="pc-row"><span class="pc-k">标题</span><span>${esc(p.title)}</span></div>
         <div class="pc-row"><span class="pc-k">优先级</span><span class="kr-pri pri-${esc(p.priority)}">${esc(p.priority)}</span></div>
-        <div class="pc-row"><span class="pc-k">截止</span><span>${esc(p.ddlText) || '—'}</span></div>
+        <div class="pc-row"><span class="pc-k">截止</span><span>${p.ddlDate ? esc(p.ddlDate) + (p.ddlText ? ' (' + esc(p.ddlText) + ')' : '') : (esc(p.ddlText) || '—')}</span></div>
         <div class="pc-row"><span class="pc-k">领域</span><span>${domain ? esc(domain.name) : '默认'}</span></div>
         <div class="pc-row"><span class="pc-k">KR</span><span>${kr ? esc(kr.name) : '无（独立Todo）'}</span></div>
         <div class="pc-actions">
@@ -1746,7 +1810,7 @@ function renderChatMsg(m) {
 
 /* Local AI engine: parse natural language into a structured task */
 function parseNLTask(text) {
-  const result = { title: text, priority: 'P2', ddlText: '', domainId: null, krId: '', status: '进行中', category: '', nextStep: '', notes: '' };
+  const result = { title: text, priority: 'P2', ddlDate: '', ddlText: '', domainId: null, krId: '', status: '进行中', nextStep: '', notes: '' };
 
   // Priority detection
   if (/P0|紧急且重要|非常紧急|十万火急|马上|立刻/i.test(text)) result.priority = 'P0';
@@ -1755,16 +1819,19 @@ function parseNLTask(text) {
   else result.priority = 'P2';
 
   // Deadline detection
-  if (/(今天|今日)/.test(text)) result.ddlText = '今天';
-  else if (/明天/.test(text)) result.ddlText = '明天';
-  else if (/(本周末|这周末)/.test(text)) result.ddlText = '本周末';
-  else if (/(本周|这周)/.test(text)) result.ddlText = '本周';
-  else if (/下个?周/.test(text)) result.ddlText = '下周';
-  else if (/本月/.test(text)) result.ddlText = '本月';
-  else if (/下个月|下月/.test(text)) result.ddlText = '下个月';
+  const now = new Date();
+  const pad = n => String(n).padStart(2, '0');
+  const toISO = d => `${d.getFullYear()}-${pad(d.getMonth()+1)}-${pad(d.getDate())}`;
+  if (/(今天|今日)/.test(text)) { result.ddlText = '今天'; result.ddlDate = toISO(now); }
+  else if (/明天/.test(text)) { const d = new Date(now); d.setDate(d.getDate()+1); result.ddlText = '明天'; result.ddlDate = toISO(d); }
+  else if (/(本周末|这周末)/.test(text)) { const d = new Date(now); const day = d.getDay()||7; d.setDate(d.getDate()+(6-day)); result.ddlText = '本周末'; result.ddlDate = toISO(d); }
+  else if (/(本周|这周)/.test(text)) { result.ddlText = '本周'; }
+  else if (/下个?周/.test(text)) { result.ddlText = '下周'; }
+  else if (/本月/.test(text)) { result.ddlText = '本月'; }
+  else if (/下个月|下月/.test(text)) { result.ddlText = '下个月'; }
   else {
     const m = text.match(/(\d{1,2})[.\/-](\d{1,2})/);
-    if (m) result.ddlText = `${m[1]}.${m[2]}`;
+    if (m) { result.ddlText = `${m[1]}.${m[2]}`; const d = new Date(now.getFullYear(), parseInt(m[1])-1, parseInt(m[2])); if (!isNaN(d)) result.ddlDate = toISO(d); }
   }
 
   // Domain detection by keyword map
@@ -1833,7 +1900,7 @@ function generateWeeklyReportContent() {
   L.push('—— 建议重点关注 ——');
   const p0 = active.filter(t => t.priority === 'P0');
   if (p0.length) {
-    p0.slice(0, 3).forEach(t => L.push(`• ${t.title}${t.ddlText ? ' (⏰' + t.ddlText + ')' : ''}`));
+    p0.slice(0, 3).forEach(t => { const ddl = formatDDL(t); L.push(`• ${t.title}${ddl ? ' (⏰' + ddl + ')' : ''}`); });
   } else {
     const p1 = active.filter(t => t.priority === 'P1');
     if (p1.length) p1.slice(0, 3).forEach(t => L.push(`• ${t.title}`));
@@ -1904,7 +1971,7 @@ function addParsedTodo(msgId) {
   const m = state.aiChat.find(x => x.id === msgId);
   if (!m || !m.parsed) return;
   const p = m.parsed;
-  state.data.todos.push({ id: uid(), title: p.title, domainId: p.domainId, krId: p.krId, priority: p.priority, status: p.status, ddl: '', ddlText: p.ddlText, category: p.category, nextStep: p.nextStep, notes: p.notes, done: false, createdAt: Date.now() });
+  state.data.todos.push({ id: uid(), title: p.title, domainId: p.domainId, krId: p.krId, priority: p.priority, status: p.status, ddl: '', ddlDate: p.ddlDate || '', ddlText: p.ddlText, nextStep: p.nextStep, notes: p.notes, done: false, createdAt: Date.now() });
   saveData();
   toast('已添加为 Todo ✓', 'success');
   // mark as added
@@ -2073,11 +2140,11 @@ function exportData() {
 }
 
 function exportCSV() {
-  const headers = ['标题','优先级','状态','完成','截止时间','领域','KR','类别','下一步','备注','创建时间'];
+  const headers = ['标题','优先级','状态','完成','截止日期','截止补充','领域','KR','备注/链接','下一步','创建时间'];
   const rows = state.data.todos.map(t => {
     const domain = getDomain(t.domainId);
     const kr = t.krId ? getKR(t.krId) : null;
-    return [t.title, t.priority, t.status, t.done ? '是' : '否', t.ddlText, domain ? domain.name : '', kr ? kr.name : '', t.category, t.nextStep, t.notes, new Date(t.createdAt).toLocaleString('zh-CN')];
+    return [t.title, t.priority, t.status, t.done ? '是' : '否', t.ddlDate || '', t.ddlText || '', domain ? domain.name : '', kr ? kr.name : '', t.nextStep, t.notes, new Date(t.createdAt).toLocaleString('zh-CN')];
   });
   const csv = [headers, ...rows].map(r => r.map(csvCell).join(',')).join('\n');
   const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
@@ -2311,21 +2378,21 @@ function openTodoModal(id, krId, preset) {
       </div>
       <div class="form-row">
         <div class="form-group">
-          <label>截止时间（文字描述）</label>
-          <input type="text" id="td-ddl" value="${t ? esc(t.ddlText) : (preset ? esc(preset.ddlText) : '')}" placeholder="如：8.21 / 本周末 / 下周">
+          <label>截止日期（选填）</label>
+          <input type="date" id="td-ddldate" value="${t ? esc(t.ddlDate || '') : (preset ? esc(preset.ddlDate || '') : '')}">
         </div>
         <div class="form-group">
-          <label>类别标签</label>
-          <input type="text" id="td-category" value="${t ? esc(t.category) : (preset ? esc(preset.category) : '')}" placeholder="如：需要记录 / 习惯 / doc">
+          <label>截止时间补充</label>
+          <input type="text" id="td-ddl" value="${t ? esc(t.ddlText) : (preset ? esc(preset.ddlText) : '')}" placeholder="如：本周末 / 下周 / 有空">
         </div>
+      </div>
+      <div class="form-group">
+        <label>备注/文档链接</label>
+        <input type="text" id="td-nextstep" value="${t ? esc(t.nextStep) : (preset ? esc(preset.nextStep) : '')}" placeholder="文档链接或备注，链接可点击打开">
       </div>
       <div class="form-group">
         <label>下一步</label>
-        <input type="text" id="td-nextstep" value="${t ? esc(t.nextStep) : (preset ? esc(preset.nextStep) : '')}" placeholder="如：补充背景&todo">
-      </div>
-      <div class="form-group">
-        <label>备注</label>
-        <textarea id="td-notes" placeholder="备注信息...">${t ? esc(t.notes) : (preset ? esc(preset.notes) : '')}</textarea>
+        <textarea id="td-notes" placeholder="下一步行动计划...">${t ? esc(t.notes) : (preset ? esc(preset.notes) : '')}</textarea>
       </div>
     </div>
     <div class="modal-foot">
@@ -2354,8 +2421,8 @@ function saveTodo(id) {
     krId: document.getElementById('td-kr').value,
     priority: document.getElementById('td-priority').value,
     status: document.getElementById('td-status').value,
+    ddlDate: document.getElementById('td-ddldate').value.trim(),
     ddlText: document.getElementById('td-ddl').value.trim(),
-    category: document.getElementById('td-category').value.trim(),
     nextStep: document.getElementById('td-nextstep').value.trim(),
     notes: document.getElementById('td-notes').value.trim()
   };
