@@ -399,10 +399,6 @@ body {
 .qn-item .qn-del { color: var(--c-text-3); cursor: pointer; font-size: 12px; }
 .qn-item .qn-del:hover { color: var(--c-danger); }
 
-.habit-row {
-  border-left: 3px solid var(--c-success);
-  background: var(--c-success-bg);
-}
 .habit-badge {
   font-size: 10px;
   padding: 1px 6px;
@@ -843,7 +839,10 @@ body {
   align-items: center;
   justify-content: space-between;
 }
-.modal-head h3 { font-size: 16px; font-weight: 700; }
+.modal-head h3 { font-size: 16px; font-weight: 700; display: flex; align-items: center; gap: 6px; }
+.modal-bar { height: 4px; border-radius: 4px 4px 0 0; }
+.modal-bar.todo { background: linear-gradient(90deg, var(--c-primary), var(--c-primary-light)); }
+.modal-bar.kr { background: linear-gradient(90deg, var(--c-warning), #f59e0b); }
 .modal-close { width: 28px; height: 28px; border: none; background: var(--c-bg); border-radius: var(--r-sm); cursor: pointer; font-size: 16px; color: var(--c-text-2); display: flex; align-items: center; justify-content: center; }
 .modal-close:hover { background: var(--c-border); }
 .modal-body { padding: 20px 24px; }
@@ -1367,7 +1366,10 @@ function renderDashboard() {
     <div class="dash-bottom">
       <div class="dash-main">
         <div class="weekly-overview">
-          <h3>📌 本周待办 <span class="count">(${weekTodos.length}项)</span></h3>
+          <h3 style="display:flex;align-items:center;justify-content:space-between;">
+            <span>📌 本周待办 <span class="count">(${weekTodos.length}项)</span></span>
+            <button class="btn btn-primary btn-sm" onclick="openTodoModal(null)">+ 新建</button>
+          </h3>
           ${weekTodos.length > 0 ? weekTodos.map(t => renderTodoRow(t, null, {showDelete: false})).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">暂无待办，去添加吧</div></div>'}
         </div>
       </div>
@@ -1586,7 +1588,7 @@ function renderHabitRow(kr, re) {
   const checked = isHabitCheckedToday(kr.id);
   const streak = getStreak(kr.id);
   const h = !!re;
-  return `<div class="todo-row habit-row ${h?'highlight':''}">
+  return `<div class="todo-row ${h?'highlight':''}">
     <div class="todo-check ${checked?'done':''}" onclick="checkIn('${kr.id}')" style="border-radius:50%;"></div>
     <div class="todo-info">
       <div class="todo-title ${checked?'done':''}">${highlightHtml(kr.name, re)} <span class="habit-badge">习惯</span></div>
@@ -2535,8 +2537,9 @@ function openKRModal(id) {
   const defaultDomain = state.currentDomainId || (domains[0] ? domains[0].id : '');
 
   showModal(`
+    <div class="modal-bar kr"></div>
     <div class="modal-head">
-      <h3>${kr ? '编辑 KR' : '新建 KR'}</h3>
+      <h3>🎯 ${kr ? '编辑 KR' : '新建 KR'}</h3>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
@@ -2590,15 +2593,13 @@ function openKRModal(id) {
           <input type="text" id="kr-ddltext" value="${kr ? esc(kr.ddlText || '') : ''}" placeholder="如：9.25-10.7 / Q4 / 月底">
         </div>
       </div>
-      <div class="form-row">
-        <div class="form-group">
-          <label>备注</label>
-          <input type="text" id="kr-nextstep" value="${kr ? esc(kr.nextStep) : ''}" placeholder="如：拆解关键里程碑">
-        </div>
-        <div class="form-group">
-          <label>文档</label>
-          <input type="text" id="kr-doclink" value="${kr ? esc(kr.docLink || '') : ''}" placeholder="文档链接，可点击打开">
-        </div>
+      <div class="form-group">
+        <label>备注</label>
+        <textarea id="kr-nextstep" rows="2" placeholder="如：拆解关键里程碑">${kr ? esc(kr.nextStep) : ''}</textarea>
+      </div>
+      <div class="form-group">
+        <label>文档</label>
+        <textarea id="kr-doclink" rows="2" placeholder="文档链接，可点击打开">${kr ? esc(kr.docLink || '') : ''}</textarea>
       </div>
       <div class="form-group">
         <label>笔记区</label>
@@ -2648,8 +2649,9 @@ function openTodoModal(id, krId, preset) {
   const defaultDomain = t ? t.domainId : (preset ? preset.domainId : (krId ? (getKR(krId)?.domainId || state.currentDomainId) : state.currentDomainId));
 
   showModal(`
+    <div class="modal-bar todo"></div>
     <div class="modal-head">
-      <h3>${t ? '编辑 Todo' : '新建 Todo'}</h3>
+      <h3>📋 ${t ? '编辑 Todo' : '新建 Todo'}</h3>
       <button class="modal-close" onclick="closeModal()">✕</button>
     </div>
     <div class="modal-body">
