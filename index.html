@@ -779,48 +779,31 @@ function uid() { return Date.now().toString(36) + Math.random().toString(36).sli
 /* ===== Sample Data ===== */
 function initData() {
   const now = new Date();
-  const todayStr = dateStr(now);
   const yesterdayStr = dateStr(new Date(now.getTime() - 86400000));
   const d2ago = dateStr(new Date(now.getTime() - 86400000 * 2));
 
   state.data = {
     domains: [
-      { id: 'd1', name: '毕业&工作', order: 0, hidden: false },
-      { id: 'd2', name: '输出&口语', order: 1, hidden: false },
-      { id: 'd3', name: '健康生活', order: 2, hidden: false },
-      { id: 'd4', name: '旅游', order: 3, hidden: false },
-      { id: 'd5', name: '日常清理', order: 4, hidden: false }
+      { id: 'd1', name: '工作', order: 0, hidden: false },
+      { id: 'd2', name: '学习成长', order: 1, hidden: false },
+      { id: 'd3', name: '生活健康', order: 2, hidden: false }
     ],
     krs: [
-      { id: 'k1', domainId: 'd1', name: '找到工作', type: 'project', goal: '秋招拿到心仪offer', priority: 'P0', status: '进行中', progress: 40, deadline: '', notes: '面试复盘+简历修改+投递', nextStep: '补充工作日记&todo，完成快手简历', checklist: [] },
-      { id: 'k2', domainId: 'd1', name: '毕业论文', type: 'project', goal: '完成毕业论文', priority: 'P2', status: '待开始', progress: 0, deadline: '', notes: '', nextStep: '子方向之后再拆', checklist: [] },
-      { id: 'k3', domainId: 'd2', name: '养成学英语习惯', type: 'habit', goal: '保持每日英语学习', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '多邻国每天打卡', nextStep: '', checklist: [] },
-      { id: 'k4', domainId: 'd2', name: '小红书运营', type: 'project', goal: '一个月至少发一个帖子', priority: 'P2', status: '进行中', progress: 30, deadline: '', notes: '探索适合的主题方向', nextStep: '整理演唱会照片+AI文案', checklist: [] },
-      { id: 'k5', domainId: 'd3', name: '早睡早起', type: 'habit', goal: '8月目标1点前睡', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '', nextStep: '', checklist: [] },
-      { id: 'k6', domainId: 'd3', name: '运动', type: 'habit', goal: '体重-5kg，体态改善', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '一周2-3练：普拉提+爬坡+力量', nextStep: '', checklist: [] },
-      { id: 'k7', domainId: 'd4', name: '西藏-国庆', type: 'project', goal: '国庆西藏旅行', priority: 'P3', status: '进行中', progress: 20, deadline: '', notes: '确认路线✅', nextStep: '与领队沟通，确定后sop化', checklist: [] }
+      { id: 'k1', domainId: 'd1', name: '季度OKR', type: 'project', goal: '完成本季度核心目标', priority: 'P0', status: '进行中', progress: 30, deadline: '', notes: '点击 ✏️ 编辑KR，点击 🗑 删除', nextStep: '拆解子任务', checklist: [] },
+      { id: 'k2', domainId: 'd2', name: '每日阅读', type: 'habit', goal: '每天读30分钟', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '点击打卡按钮记录每日习惯', nextStep: '', checklist: [] },
+      { id: 'k3', domainId: 'd3', name: '早睡早起', type: 'habit', goal: '11点前入睡', priority: 'P2', status: '进行中', progress: 0, deadline: '', notes: '', nextStep: '', checklist: [] }
     ],
     todos: [
-      { id: 't1', krId: 'k1', domainId: 'd1', title: '改简历-快手（双佣金+AI）', priority: 'P0', ddl: '', ddlText: '本周末', category: '需要记录', nextStep: '双佣金：工作日记+周报+调研收集', notes: '双佣金、净成交、全站直播、QCPX、投放工具', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't2', krId: 'k1', domainId: 'd1', title: '简历投递', priority: 'P1', ddl: '', ddlText: '下周', category: '需要记录', nextStep: '选岗位，明确简历修改方向', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't3', krId: 'k1', domainId: 'd1', title: '面试复盘-百度一面&二面', priority: 'P2', ddl: '', ddlText: '8.23', category: '需要记录', nextStep: '从二面录音出发复盘', notes: '分成两块：1）AI产出文档完善 2）录音复盘', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't4', krId: 'k1', domainId: 'd1', title: '改简历-美团产品', priority: 'P1', ddl: '', ddlText: '8.21', category: '需要记录', nextStep: '预算控制&混排确定文字', notes: '广告策略产品-一页纸', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't5', krId: 'k3', domainId: 'd2', title: '多邻国每天打卡', priority: 'P3', ddl: '', ddlText: '每天', category: '习惯', nextStep: '', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't6', krId: 'k4', domainId: 'd2', title: '解解演唱会分享', priority: 'P1', ddl: '', ddlText: '8.16', category: '需要记录', nextStep: '手机照片+AI文案', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't7', krId: 'k5', domainId: 'd3', title: '早睡打卡', priority: 'P3', ddl: '', ddlText: '每天', category: '习惯', nextStep: '', notes: '目标1点前', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't8', krId: 'k7', domainId: 'd4', title: '与领队沟通确认', priority: 'P2', ddl: '', ddlText: '本周', category: '需要记录', nextStep: '确定后sop化', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
-      { id: 't9', krId: '', domainId: 'd5', title: '清理手机相册&备忘录', priority: 'P3', ddl: '', ddlText: '换脑子时', category: '', nextStep: '', notes: '', status: '待开始', done: false, createdAt: now.getTime() },
-      { id: 't10', krId: 'k1', domainId: 'd1', title: '百度三面准备', priority: 'P0', ddl: '', ddlText: '8.24', category: '需要记录', nextStep: '复盘之前面试&三面准备', notes: '', status: '进行中', done: false, createdAt: now.getTime() }
+      { id: 't1', krId: 'k1', domainId: 'd1', title: '示例：撰写周报', priority: 'P0', ddl: '', ddlText: '本周', category: '需要记录', nextStep: '收集本周工作内容', notes: '这是一条示例任务，可以编辑或删除', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't2', krId: 'k1', domainId: 'd1', title: '示例：项目复盘', priority: 'P1', ddl: '', ddlText: '下周一', category: '需要记录', nextStep: '整理数据和结论', notes: '', status: '进行中', done: false, createdAt: now.getTime() },
+      { id: 't3', krId: 'k2', domainId: 'd2', title: '示例：读完一本书', priority: 'P2', ddl: '', ddlText: '本月', category: '需要记录', nextStep: '选一本想读的书', notes: '', status: '进行中', done: false, createdAt: now.getTime() }
     ],
     quickNotes: [
-      { id: 'q1', content: '试试用vibecoding进行产品化的方式', createdAt: now.getTime() - 3600000 },
-      { id: 'q2', content: '小红书分析：看看竞品怎么发帖的', createdAt: now.getTime() - 7200000 },
-      { id: 'q3', content: 'obsidian vs 飞书：需要探索哪个更适合知识管理', createdAt: now.getTime() - 86400000 }
+      { id: 'q1', content: '欢迎使用！这是一条示例闪念笔记，随时可以删除。', createdAt: now.getTime() - 3600000 }
     ],
     checkins: {
-      'k3': { [d2ago]: true, [yesterdayStr]: true },
-      'k5': { [yesterdayStr]: true },
-      'k6': {}
+      'k2': { [d2ago]: true, [yesterdayStr]: true },
+      'k3': {}
     }
   };
   saveData();
