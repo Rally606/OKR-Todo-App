@@ -1128,6 +1128,26 @@ function getWeekDates(offset) {
   return dates;
 }
 
+function selectDate(dateStr) {
+  state.selectedDate = dateStr;
+  var sel = new Date(dateStr + 'T00:00:00');
+  if (!isNaN(sel)) {
+    sel.setHours(0,0,0,0);
+    var now = new Date(); now.setHours(0,0,0,0);
+    var day = now.getDay() || 7;
+    var thisMon = new Date(now);
+    thisMon.setDate(now.getDate() - day + 1);
+    thisMon.setHours(0,0,0,0);
+    var selDay = sel.getDay() || 7;
+    var selMon = new Date(sel);
+    selMon.setDate(sel.getDate() - selDay + 1);
+    selMon.setHours(0,0,0,0);
+    var diff = Math.round((selMon - thisMon) / (7 * 86400000));
+    state.weekOffset = diff;
+  }
+  render();
+}
+
 function weekLabel(offset) {
   const dates = getWeekDates(offset);
   const s = dates[0], e = dates[6];
@@ -1713,8 +1733,8 @@ function renderWeekly() {
 
     <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;">
       <label style="font-size:13px;color:var(--c-text-2);white-space:nowrap;">📅 选择日期</label>
-      <input type="date" value="${esc(state.selectedDate)}" onchange="state.selectedDate=this.value;render()" style="padding:6px 10px;border:1px solid var(--c-border);border-radius:var(--r-md);background:var(--c-surface);color:var(--c-text);font-size:13px;">
-      <button class="btn btn-secondary btn-sm" onclick="state.selectedDate='${isoOf(today)}';render()" style="white-space:nowrap;">回到今天</button>
+      <input type="date" value="${esc(state.selectedDate)}" onchange="selectDate(this.value)" style="padding:6px 10px;border:1px solid var(--c-border);border-radius:var(--r-md);background:var(--c-surface);color:var(--c-text);font-size:13px;">
+      <button class="btn btn-secondary btn-sm" onclick="selectDate('${isoOf(today)}')" style="white-space:nowrap;">回到今天</button>
     </div>
 
     <div class="weekly-overview" style="margin-bottom:20px;">
