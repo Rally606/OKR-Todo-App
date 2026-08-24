@@ -72,97 +72,6 @@ body {
   transition: background .25s, color .25s;
 }
 
-
-/* ===== Notes Board ===== */
-.notes-toolbar {
-  display: flex;
-  gap: 12px;
-  margin-bottom: 20px;
-  flex-wrap: wrap;
-  align-items: center;
-}
-.notes-search {
-  flex: 1;
-  min-width: 200px;
-  padding: 8px 14px;
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-md);
-  background: var(--c-surface);
-  color: var(--c-text);
-  font-size: 14px;
-  outline: none;
-  transition: border-color .15s;
-}
-.notes-search:focus { border-color: var(--c-primary-light); }
-.notes-filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
-.notes-filter-btn {
-  padding: 6px 14px;
-  border-radius: 999px;
-  border: 1px solid var(--c-border);
-  background: var(--c-surface);
-  color: var(--c-text-2);
-  font-size: 13px;
-  cursor: pointer;
-  transition: all .15s;
-  white-space: nowrap;
-}
-.notes-filter-btn:hover { border-color: var(--c-primary-light); }
-.notes-filter-btn.active { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
-.notes-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
-  gap: 16px;
-}
-.note-card {
-  background: var(--c-surface);
-  border-radius: var(--r-lg);
-  border: 1px solid var(--c-border-2);
-  box-shadow: var(--sh-sm);
-  padding: 16px;
-  transition: all .2s;
-  position: relative;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
-}
-.note-card:hover { box-shadow: var(--sh-md); transform: translateY(-2px); }
-.note-card.pinned { border-color: var(--c-warning); border-width: 2px; }
-.note-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
-.note-type-badge {
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 999px;
-  font-weight: 600;
-  white-space: nowrap;
-}
-.note-type-badge.kr { background: var(--c-primary-bg); color: var(--c-primary); }
-.note-type-badge.todo { background: var(--c-success-bg); color: var(--c-success); }
-.note-type-badge.flash { background: var(--c-ai-bg); color: var(--c-ai); }
-.note-pin-btn { cursor: pointer; font-size: 14px; opacity: 0.4; transition: opacity .15s; }
-.note-pin-btn:hover { opacity: 1; }
-.note-pin-btn.pinned { opacity: 1; color: var(--c-warning); }
-.note-content {
-  font-size: 14px;
-  line-height: 1.6;
-  color: var(--c-text);
-  white-space: pre-wrap;
-  word-break: break-word;
-  flex: 1;
-}
-.note-source { font-size: 12px; color: var(--c-text-3); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
-.note-source-link { color: var(--c-primary); cursor: pointer; text-decoration: none; }
-.note-source-link:hover { text-decoration: underline; }
-.note-tags { display: flex; gap: 4px; flex-wrap: wrap; }
-.note-tag {
-  font-size: 10px;
-  padding: 2px 8px;
-  border-radius: 4px;
-  background: var(--c-border-2);
-  color: var(--c-text-2);
-}
-.note-empty { text-align: center; padding: 60px 20px; color: var(--c-text-3); }
-.note-empty-icon { font-size: 48px; margin-bottom: 12px; }
-
 /* ===== Layout ===== */
 #app { display: flex; min-height: 100vh; }
 
@@ -1111,7 +1020,6 @@ body {
     <div class="page active" id="page-dashboard"></div>
     <div class="page" id="page-krs"></div>
     <div class="page" id="page-tasks"></div>
-    <div class="page" id="page-notes"></div>
     <div class="page" id="page-weekly"></div>
     <div class="page" id="page-ai"></div>
     <div class="page" id="page-settings"></div>
@@ -1151,10 +1059,8 @@ let state = {
   searchQuery: '',
   taskView: 'list',
   data: { domains: [], krs: [], todos: [], quickNotes: [], checkins: {} },
-  prefs: { theme: 'light', shortcuts: { ...DEFAULT_SHORTCUTS }, navOrder: ['dashboard','krs','tasks','notes','weekly','ai','settings'] },
-  aiChat: [],
-  notesSearch: '',
-  notesTypeFilter: 'all'
+  prefs: { theme: 'light', shortcuts: { ...DEFAULT_SHORTCUTS }, navOrder: ['dashboard','krs','tasks','weekly','ai','settings'] },
+  aiChat: []
 };
 
 const STORAGE_KEY = 'okr-todo-app-v1';
@@ -1178,8 +1084,6 @@ function loadData() {
         if (t.showHome === undefined) t.showHome = true;
         if (t.order === undefined) t.order = i;
         if (t.docLink === undefined) t.docLink = '';
-        if (t.knowledge === undefined) t.knowledge = '';
-        if (t.notePinned === undefined) t.notePinned = false;
       });
       if (state.data.krs) state.data.krs.forEach((k, i) => {
         if (k.ddlDate === undefined) k.ddlDate = '';
@@ -1190,8 +1094,6 @@ function loadData() {
       });
       if (state.data.quickNotes) state.data.quickNotes.forEach(q => {
         if (q.krId === undefined) q.krId = '';
-        if (q.tags === undefined) q.tags = [];
-        if (q.domainId === undefined) q.domainId = '';
       });
     }
   } catch(e) { console.error('Load failed', e); }
@@ -1208,10 +1110,7 @@ function loadPrefs() {
       const saved = JSON.parse(raw);
       state.prefs = Object.assign(state.prefs, saved);
       state.prefs.shortcuts = Object.assign({ ...DEFAULT_SHORTCUTS }, saved.shortcuts || {});
-      if (!state.prefs.navOrder || !Array.isArray(state.prefs.navOrder)) state.prefs.navOrder = ['dashboard','krs','tasks','notes','weekly','ai','settings'];
-      // Migration: ensure 'notes' is in navOrder
-      const DEFAULT_NAV = ['dashboard','krs','tasks','notes','weekly','ai','settings'];
-      DEFAULT_NAV.forEach(v => { if (!state.prefs.navOrder.includes(v)) state.prefs.navOrder.splice(DEFAULT_NAV.indexOf(v), 0, v); });
+      if (!state.prefs.navOrder || !Array.isArray(state.prefs.navOrder)) state.prefs.navOrder = ['dashboard','krs','tasks','weekly','ai','settings'];
     }
   } catch(e) {}
 }
@@ -1224,14 +1123,13 @@ const NAV_ITEMS = [
   { view: 'dashboard', icon: '🏠', label: '首页' },
   { view: 'krs', icon: '📂', label: 'KR管理' },
   { view: 'tasks', icon: '📋', label: '任务看板' },
-  { view: 'notes', icon: '📝', label: '笔记看板' },
   { view: 'weekly', icon: '📅', label: '周视图' },
   { view: 'ai', icon: '🤖', label: 'AI能力', badge: '体验' },
   { view: 'settings', icon: '⚙️', label: '设置' }
 ];
 
 function renderNav() {
-  const order = state.prefs.navOrder || ['dashboard','krs','tasks','notes','weekly','ai','settings'];
+  const order = state.prefs.navOrder || ['dashboard','krs','tasks','weekly','ai','settings'];
   const nav = document.getElementById('nav');
   if (!nav) return;
   nav.innerHTML = order.map(v => {
@@ -1280,13 +1178,13 @@ function initData() {
       { id: 'k3', domainId: 'd3', name: '规律作息', type: 'habit', goal: '23点前入睡', priority: 'P2', status: '进行中', progress: 0, ddlDate: '', ddlText: '', notes: '', nextStep: '', docLink: '', checklist: [] }
     ],
     todos: [
-      { id: 't1', krId: 'k1', domainId: 'd1', title: '撰写项目周报', priority: 'P0', ddl: '', ddlDate: '', ddlText: '本周', nextStep: '汇总本周进展与风险', notes: '示例任务，可自由编辑或删除', knowledge: '做完后可以在这里记录踩坑经验、攻略等，笔记看板会自动汇总。', status: '进行中', done: false, showHome: true, createdAt: now.getTime() },
-      { id: 't2', krId: 'k1', domainId: 'd1', title: '组织项目复盘会议', priority: 'P1', ddl: '', ddlDate: '', ddlText: '下周一', nextStep: '提前发送议程', notes: '', knowledge: '', status: '进行中', done: false, showHome: true, createdAt: now.getTime() },
-      { id: 't3', krId: 'k2', domainId: 'd2', title: '读完一本专业书籍', priority: 'P2', ddl: '', ddlDate: '', ddlText: '本月', nextStep: '选定书目并制定阅读计划', notes: '', knowledge: '', status: '进行中', done: false, showHome: true, createdAt: now.getTime() },
-      { id: 't4', krId: '', domainId: 'd3', title: '整理桌面文件', priority: 'P3', ddl: '', ddlDate: '', ddlText: '有空', nextStep: '', notes: '不紧急不重要事项', knowledge: '', status: '待开始', done: false, showHome: true, createdAt: now.getTime() }
+      { id: 't1', krId: 'k1', domainId: 'd1', title: '撰写项目周报', priority: 'P0', ddl: '', ddlDate: '', ddlText: '本周', nextStep: '汇总本周进展与风险', notes: '示例任务，可自由编辑或删除', status: '进行中', done: false, showHome: true, createdAt: now.getTime() },
+      { id: 't2', krId: 'k1', domainId: 'd1', title: '组织项目复盘会议', priority: 'P1', ddl: '', ddlDate: '', ddlText: '下周一', nextStep: '提前发送议程', notes: '', status: '进行中', done: false, showHome: true, createdAt: now.getTime() },
+      { id: 't3', krId: 'k2', domainId: 'd2', title: '读完一本专业书籍', priority: 'P2', ddl: '', ddlDate: '', ddlText: '本月', nextStep: '选定书目并制定阅读计划', notes: '', status: '进行中', done: false, showHome: true, createdAt: now.getTime() },
+      { id: 't4', krId: '', domainId: 'd3', title: '整理桌面文件', priority: 'P3', ddl: '', ddlDate: '', ddlText: '有空', nextStep: '', notes: '不紧急不重要事项', status: '待开始', done: false, showHome: true, createdAt: now.getTime() }
     ],
     quickNotes: [
-      { id: 'q1', content: '欢迎使用 OKR Todo！这是一条示例闪念笔记，随时可以删除。', createdAt: now.getTime() - 3600000, krId: '', tags: ['示例'], domainId: 'd2' }
+      { id: 'q1', content: '欢迎使用 OKR Todo！这是一条示例闪念笔记，随时可以删除。', createdAt: now.getTime() - 3600000, krId: '' }
     ],
     checkins: {
       'k2': { [d3ago]: true, [d2ago]: true, [yesterdayStr]: true },
@@ -1407,7 +1305,6 @@ function render() {
     dashboard: renderDashboard,
     krs: renderKRs,
     tasks: renderTasks,
-    notes: renderNotes,
     weekly: renderWeekly,
     ai: renderAI,
     settings: renderSettings
@@ -1949,6 +1846,7 @@ function todoBelongsToDay(t, d, i, isWeekend) {
 }
 
 function todoBelongsToWeek(t, dates) {
+  if (!t.ddlDate && !t.ddlText) return true;
   return dates.some((d, i) => todoBelongsToDay(t, d, i, i >= 4));
 }
 
@@ -2027,140 +1925,6 @@ function renderWeekly() {
 }
 
 /* ===== AI Page (interactive) ===== */
-
-function renderNotes() {
-  const domains = state.data.domains.filter(d => !d.hidden);
-  if (!state.currentDomainId && domains.length > 0) state.currentDomainId = domains[0].id;
-
-  let allNotes = [];
-
-  state.data.krs.forEach(kr => {
-    if (kr.notes && kr.notes.trim()) {
-      const domain = state.data.domains.find(d => d.id === kr.domainId);
-      allNotes.push({
-        id: kr.id, type: 'kr', typeLabel: 'KR笔记',
-        content: kr.notes, sourceName: kr.name,
-        domainId: kr.domainId,
-        domainName: domain ? domain.name : '未分类',
-        tags: [], pinned: kr.notePinned || false,
-        createdAt: kr.createdAt || Date.now()
-      });
-    }
-  });
-
-  state.data.todos.forEach(todo => {
-    if (todo.knowledge && todo.knowledge.trim()) {
-      const domain = state.data.domains.find(d => d.id === todo.domainId);
-      const kr = todo.krId ? state.data.krs.find(k => k.id === todo.krId) : null;
-      allNotes.push({
-        id: todo.id, type: 'todo', typeLabel: '任务笔记',
-        content: todo.knowledge, sourceName: todo.title,
-        domainId: todo.domainId,
-        domainName: domain ? domain.name : '未分类',
-        krName: kr ? kr.name : '',
-        tags: [], pinned: todo.notePinned || false,
-        createdAt: todo.createdAt || Date.now()
-      });
-    }
-  });
-
-  state.data.quickNotes.forEach(qn => {
-    allNotes.push({
-      id: qn.id, type: 'flash', typeLabel: '闪念笔记',
-      content: qn.content, sourceName: '闪念笔记',
-      domainId: qn.domainId || '',
-      domainName: qn.domainId ? (state.data.domains.find(d => d.id === qn.domainId)?.name || '未分类') : '未分类',
-      tags: qn.tags || [], pinned: false,
-      createdAt: qn.createdAt
-    });
-  });
-
-  let filtered = allNotes;
-  if (state.currentDomainId !== 'all') {
-    filtered = filtered.filter(n => n.domainId === state.currentDomainId);
-  }
-  if (state.notesSearch) {
-    const q = state.notesSearch.toLowerCase();
-    filtered = filtered.filter(n =>
-      n.content.toLowerCase().includes(q) ||
-      n.sourceName.toLowerCase().includes(q) ||
-      n.tags.some(t => t.toLowerCase().includes(q))
-    );
-  }
-  if (state.notesTypeFilter && state.notesTypeFilter !== 'all') {
-    filtered = filtered.filter(n => n.type === state.notesTypeFilter);
-  }
-  filtered.sort((a, b) => {
-    if (a.pinned !== b.pinned) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0);
-    return b.createdAt - a.createdAt;
-  });
-
-  const pinnedCount = filtered.filter(n => n.pinned).length;
-  const totalCount = filtered.length;
-
-  const html = `
-    ${pageHeader('笔记看板', '聚合 KR笔记 · 任务笔记 · 闪念笔记，沉淀知识，方便复用')}
-    <div class="domain-tabs">
-      <div class="domain-tab ${state.currentDomainId==='all'?'active':''}" onclick="selectNotesDomain('all')">全部</div>
-      ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectNotesDomain('${d.id}')">${esc(d.name)}</div>`).join('')}
-      <div class="domain-tab add" onclick="openDomainModal()">+ 新建领域</div>
-    </div>
-    <div class="notes-toolbar">
-      <input type="text" class="notes-search" placeholder="搜索笔记内容、来源、标签..." value="${esc(state.notesSearch || '')}" oninput="onNotesSearch(this.value)">
-      <div class="notes-filter-group">
-        <div class="notes-filter-btn ${(!state.notesTypeFilter || state.notesTypeFilter==='all')?'active':''}" onclick="filterNotesType('all')">全部</div>
-        <div class="notes-filter-btn ${state.notesTypeFilter==='kr'?'active':''}" onclick="filterNotesType('kr')">KR笔记</div>
-        <div class="notes-filter-btn ${state.notesTypeFilter==='todo'?'active':''}" onclick="filterNotesType('todo')">任务笔记</div>
-        <div class="notes-filter-btn ${state.notesTypeFilter==='flash'?'active':''}" onclick="filterNotesType('flash')">闪念笔记</div>
-      </div>
-    </div>
-    <div style="font-size:13px;color:var(--c-text-2);margin-bottom:16px;">
-      共 ${totalCount} 条笔记${pinnedCount > 0 ? `（${pinnedCount} 条已置顶）` : ''}
-    </div>
-    ${filtered.length === 0 ? `
-      <div class="note-empty">
-        <div class="note-empty-icon">📝</div>
-        <div>暂无笔记</div>
-        <div style="font-size:13px;margin-top:8px;">在 KR 详情页、Todo 笔记区、或侧边栏闪念笔记中记录后，会自动出现在这里</div>
-      </div>
-    ` : `
-      <div class="notes-grid">
-        ${filtered.map(n => `
-          <div class="note-card ${n.pinned ? 'pinned' : ''}">
-            <div class="note-card-head">
-              <span class="note-type-badge ${n.type}">${n.typeLabel}</span>
-              ${n.type === 'flash' ? '' : `<span class="note-pin-btn ${n.pinned ? 'pinned' : ''}" onclick="toggleNotePin('${n.type}','${n.id}')">${n.pinned ? '📌' : '📍'}</span>`}
-            </div>
-            <div class="note-content">${esc(n.content)}</div>
-            <div class="note-source">
-              来源：
-              ${n.type === 'kr' ? `<span class="note-source-link" onclick="switchView('krs');selectDomain('${n.domainId}');selectKR('${n.id}')">${esc(n.sourceName)}</span>` : ''}
-              ${n.type === 'todo' ? `<span class="note-source-link" onclick="switchView('tasks')">${esc(n.sourceName)}</span>${n.krName ? ` · ${esc(n.krName)}` : ''}` : ''}
-              ${n.type === 'flash' ? `<span class="note-source-link" onclick="openQuickNoteModal('${n.id}')">${esc(n.sourceName)}</span>` : ''}
-              · ${esc(n.domainName)} · ${formatDate(n.createdAt).split(' ')[0]}
-            </div>
-            ${n.tags.length > 0 ? `<div class="note-tags">${n.tags.map(t => `<span class="note-tag">${esc(t)}</span>`).join('')}</div>` : ''}
-          </div>
-        `).join('')}
-      </div>
-    `}
-  `;
-  document.getElementById('page-notes').innerHTML = html;
-}
-
-function selectNotesDomain(domainId) { state.currentDomainId = domainId; renderNotes(); }
-function onNotesSearch(val) {
-  state.notesSearch = val;
-  renderNotes();
-  setTimeout(() => { const i = document.querySelector('.notes-search'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 0);
-}
-function filterNotesType(type) { state.notesTypeFilter = type; renderNotes(); }
-function toggleNotePin(type, id) {
-  if (type === 'kr') { const kr = state.data.krs.find(k => k.id === id); if (kr) kr.notePinned = !kr.notePinned; }
-  else if (type === 'todo') { const todo = state.data.todos.find(t => t.id === id); if (todo) todo.notePinned = !todo.notePinned; }
-  saveData(); renderNotes();
-}
-
 function renderAI() {
   const aiFeatures = [
     { icon: '💬', title: '对话式输入', desc: '用自然语言描述想法，自动拆解为结构化 todo 并归类。', status: '体验中' },
@@ -2534,7 +2298,6 @@ function renderSettings() {
       <div class="settings-row"><label>KR 数</label><span class="sr-val">${totalKRs}</span></div>
       <div class="settings-row"><label>Todo 数</label><span class="sr-val">${totalTodos}（已完成 ${doneTodos}）</span></div>
       <div class="settings-row"><label>闪念笔记数</label><span class="sr-val">${totalNotes}</span></div>
-      <div class="settings-row"><label>Todo笔记数</label><span class="sr-val">${state.data.todos.filter(t => t.knowledge && t.knowledge.trim()).length}</span></div>
       <div class="settings-row"><label>存储方式</label><span class="sr-val">本地存储 (localStorage)</span></div>
     </div>
 
@@ -2637,7 +2400,7 @@ function onNavDrop(e, targetView) {
   e.preventDefault();
   onDragLeaveClean(e);
   if (!_dragNavView || _dragNavView === targetView) return;
-  const order = state.prefs.navOrder || ['dashboard','krs','tasks','notes','weekly','ai','settings'];
+  const order = state.prefs.navOrder || ['dashboard','krs','tasks','weekly','ai','settings'];
   const fromIdx = order.indexOf(_dragNavView);
   const toIdx = order.indexOf(targetView);
   if (fromIdx < 0 || toIdx < 0) return;
@@ -2767,7 +2530,6 @@ function deleteQuickNote(id) {
 function openQuickNoteModal(id) {
   const q = id ? state.data.quickNotes.find(x => x.id === id) : null;
   const krs = state.data.krs;
-  const domains = state.data.domains.filter(d => !d.hidden);
   showModal(`
     <div class="modal-head">
       <h3>${q ? '编辑笔记' : '新建笔记'}</h3>
@@ -2779,22 +2541,11 @@ function openQuickNoteModal(id) {
         <textarea id="qn-content" rows="6" placeholder="记录你的想法...">${q ? esc(q.content) : ''}</textarea>
       </div>
       <div class="form-group">
-        <label>归属领域（选填）</label>
-        <select id="qn-domain">
-          <option value="">不归属（未分类）</option>
-          ${domains.map(d => `<option value="${d.id}" ${q && q.domainId === d.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}
-        </select>
-      </div>
-      <div class="form-group">
         <label>归属KR（选填）</label>
         <select id="qn-kr">
           <option value="">不归属（独立闪念笔记）</option>
           ${krs.map(kr => `<option value="${kr.id}" ${q && q.krId === kr.id ? 'selected' : ''}>${esc(kr.name)}</option>`).join('')}
         </select>
-      </div>
-      <div class="form-group">
-        <label>标签（选填，逗号分隔）</label>
-        <input type="text" id="qn-tags" value="${q && q.tags ? q.tags.join(', ') : ''}" placeholder="如：租房, 攻略, 复盘">
       </div>
     </div>
     <div class="modal-foot">
@@ -2809,17 +2560,12 @@ function saveQuickNote(id) {
   const content = document.getElementById('qn-content').value.trim();
   if (!content) { toast('请输入笔记内容', 'error'); return; }
   const krId = document.getElementById('qn-kr').value;
-  const domainId = document.getElementById('qn-domain').value;
-  const tagsStr = document.getElementById('qn-tags').value.trim();
-  const tags = tagsStr ? tagsStr.split(/[,，]/).map(t => t.trim()).filter(Boolean) : [];
   if (id) {
     const q = state.data.quickNotes.find(x => x.id === id);
     q.content = content;
     q.krId = krId;
-    q.domainId = domainId;
-    q.tags = tags;
   } else {
-    state.data.quickNotes.unshift({ id: uid(), content, createdAt: Date.now(), krId, domainId, tags });
+    state.data.quickNotes.unshift({ id: uid(), content, createdAt: Date.now(), krId });
   }
   saveData();
   closeModal();
@@ -3136,20 +2882,16 @@ function openTodoModal(id, krId, preset) {
         </div>
       </div>
       <div class="form-group">
-        <label>下一步</label>
-        <textarea id="td-nextstep" rows="2" placeholder="下一步行动计划...">${t ? esc(t.nextStep) : (preset ? esc(preset.nextStep) : '')}</textarea>
+        <label>备注</label>
+        <textarea id="td-nextstep" rows="2" placeholder="补充说明">${t ? esc(t.nextStep) : (preset ? esc(preset.nextStep) : '')}</textarea>
       </div>
       <div class="form-group">
         <label>文档</label>
         <textarea id="td-doclink" rows="2" placeholder="文档链接，可点击打开">${t ? esc(t.docLink || '') : (preset ? esc(preset.docLink || '') : '')}</textarea>
       </div>
       <div class="form-group">
-        <label>备注</label>
-        <textarea id="td-notes" rows="2" placeholder="补充说明">${t ? esc(t.notes) : (preset ? esc(preset.notes) : '')}</textarea>
-      </div>
-      <div class="form-group">
-        <label>笔记区</label>
-        <textarea id="td-knowledge" rows="4" placeholder="做完后沉淀的知识、攻略、踩坑记录...">${t ? esc(t.knowledge || '') : (preset ? esc(preset.knowledge || '') : '')}</textarea>
+        <label>下一步</label>
+        <textarea id="td-notes" placeholder="下一步行动计划...">${t ? esc(t.notes) : (preset ? esc(preset.notes) : '')}</textarea>
       </div>
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
@@ -3189,7 +2931,6 @@ function saveTodo(id) {
     nextStep: document.getElementById('td-nextstep').value.trim(),
     docLink: document.getElementById('td-doclink').value.trim(),
     notes: document.getElementById('td-notes').value.trim(),
-    knowledge: document.getElementById('td-knowledge').value.trim(),
     showHome: document.getElementById('td-showHome').checked
   };
 
