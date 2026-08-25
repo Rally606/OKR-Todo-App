@@ -81,7 +81,14 @@ body {
 .notes-filter-btn { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-text-2); font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap; }
 .notes-filter-btn:hover { border-color: var(--c-primary-light); }
 .notes-filter-btn.active { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
-.notes-tag-filter { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 16px; }
+.notes-tag-filter-wrap { position: relative; }
+.notes-tag-dropdown-btn { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-text-2); font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.notes-tag-dropdown-btn:hover { border-color: var(--c-primary-light); }
+.notes-tag-dropdown-btn.active { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
+.notes-tag-dropdown { position: absolute; top: 100%; right: 0; margin-top: 4px; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--r-md); box-shadow: var(--sh-lg); padding: 8px; z-index: 100; display: flex; flex-direction: column; gap: 4px; min-width: 160px; max-height: 240px; overflow-y: auto; }
+.notes-tag-opt { padding: 6px 12px; border-radius: var(--r-sm); font-size: 13px; cursor: pointer; color: var(--c-text); transition: background .15s; display: flex; align-items: center; gap: 6px; }
+.notes-tag-opt:hover { background: var(--c-bg); }
+.notes-tag-opt.active { background: var(--c-primary-bg); color: var(--c-primary); font-weight: 500; }
 .notes-tag-chip { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: var(--c-border-2); color: var(--c-text-2); cursor: pointer; transition: all .15s; }
 .notes-tag-chip:hover { background: var(--c-primary-bg); color: var(--c-primary); }
 .notes-tag-chip.active { background: var(--c-primary); color: #fff; }
@@ -100,16 +107,20 @@ body {
 .note-pin-btn.pinned { opacity: 1; }
 .note-select-cb { cursor: pointer; width: 16px; height: 16px; }
 .note-content { font-size: 14px; line-height: 1.6; color: var(--c-text); white-space: pre-wrap; word-break: break-word; flex: 1; }
-.note-edit-area { width: 100%; border: 1px solid var(--c-primary); border-radius: var(--r-sm); padding: 8px; font-size: 14px; line-height: 1.6; color: var(--c-text); background: var(--c-surface); resize: vertical; min-height: 80px; font-family: inherit; outline: none; }
+.note-edit-area { width: 100%; border: 1px solid var(--c-primary); border-radius: var(--r-sm); padding: 8px; font-size: 14px; line-height: 1.6; color: var(--c-text); background: var(--c-surface); resize: none; min-height: 60px; font-family: inherit; outline: none; overflow: hidden; }
 .note-source { font-size: 12px; color: var(--c-text-3); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .note-source-link { color: var(--c-primary); cursor: pointer; text-decoration: none; }
 .note-source-link:hover { text-decoration: underline; }
 .note-tags { display: flex; gap: 4px; flex-wrap: wrap; }
 .note-tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: var(--c-border-2); color: var(--c-text-2); }
+.note-del-x { font-size: 14px; color: var(--c-text-3); cursor: pointer; opacity: 0.3; transition: opacity .15s; padding: 2px 4px; }
+.note-del-x:hover { opacity: 1; color: var(--c-danger); }
 .note-actions { display: flex; gap: 8px; flex-wrap: wrap; }
 .note-action-btn { font-size: 12px; padding: 4px 10px; border-radius: var(--r-sm); border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-text-2); cursor: pointer; transition: all .15s; }
 .note-action-btn:hover { border-color: var(--c-primary); color: var(--c-primary); }
 .note-action-btn.danger:hover { border-color: var(--c-danger); color: var(--c-danger); }
+.note-edit-wrap { display: flex; flex-direction: column; gap: 8px; }
+.note-edit-actions { display: flex; gap: 8px; }
 .note-empty { text-align: center; padding: 60px 20px; color: var(--c-text-3); }
 .note-empty-icon { font-size: 48px; margin-bottom: 12px; }
 .notes-merge-bar { position: sticky; bottom: 16px; background: var(--c-primary); color: #fff; padding: 12px 20px; border-radius: var(--r-lg); display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: var(--sh-lg); z-index: 10; }
@@ -127,6 +138,8 @@ body {
 .qn-list-time { font-size: 10px; color: var(--c-text-3); margin-left: auto; }
 .qn-list-del { color: var(--c-text-3); cursor: pointer; font-size: 12px; }
 .qn-list-del:hover { color: var(--c-danger); }
+.qn-full-edit-btn { flex-shrink: 0; width: 28px; height: 28px; border: none; border-radius: var(--r-sm); background: var(--c-surface); color: var(--c-text-2); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.qn-full-edit-btn:hover { background: var(--c-primary); color: #fff; }
 .qn-textarea { width: 100%; border: 1.5px solid var(--c-border); border-radius: var(--r-md); padding: 10px 14px; font-size: 14px; line-height: 1.5; color: var(--c-text); background: var(--c-surface); resize: vertical; min-height: 60px; font-family: inherit; outline: none; transition: border-color .15s; margin-bottom: 8px; }
 .qn-textarea:focus { border-color: var(--c-primary); }
 .qn-input-hint { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--c-text-3); }
@@ -1490,12 +1503,11 @@ function renderDashboard() {
       <div class="dash-side">
         <div class="quick-notes">
           <h3>💡 闪念笔记</h3>
-          <textarea class="qn-textarea" id="qn-input" placeholder="快速记录，Ctrl+Enter 保存..." onkeydown="if(event.key==='Enter'&&event.ctrlKey){event.preventDefault();addQuickNote()}"></textarea>
-          <div class="qn-input-hint">
-            <button class="btn btn-primary btn-sm" onclick="openQuickNoteModal()" title="完整编辑">＋ 完整编辑</button>
-            <span>Ctrl+Enter 保存</span>
+          <div class="qn-input">
+            <input type="text" id="qn-input" placeholder="快速记录，回车即保存..." onkeydown="if(event.key==='Enter'){event.preventDefault();addQuickNote()}">
+            <button class="qn-full-edit-btn" onclick="openQuickNoteModal()" title="完整编辑">＋</button>
           </div>
-          ${state.data.quickNotes.slice(0, 8).map(q => {
+          ${state.data.quickNotes.slice(0, 5).map(q => {
             const kr = q.krId ? getKR(q.krId) : null;
             const d = q.domainId ? getDomain(q.domainId) : null;
             const tags = q.tags || [];
@@ -1511,6 +1523,7 @@ function renderDashboard() {
               </div>
             </div>
           `}).join('') || '<div class="empty-state" style="padding:12px;"><div class="es-text">还没有笔记</div></div>'}
+          ${state.data.quickNotes.length > 5 ? `<div style="text-align:center;padding:8px;font-size:12px;color:var(--c-primary);cursor:pointer;" onclick="switchView('notes')">进入笔记看板查看更多闪念笔记 →</div>` : ''}
         </div>
 
         <div class="ai-shortcut" onclick="switchView('ai')">
@@ -1543,16 +1556,14 @@ function renderTodoRow(t, re, opts) {
         ${domain ? `<span>${esc(domain.name)}</span>` : ''}
         ${formatDDL(t) ? `<span class="todo-ddl">⏰ ${formatDDL(t)}</span>` : ''}
         ${t.docLink ? `<span>📄 ${renderLinkableText(t.docLink)}</span>` : ''}
-        ${t.nextStep ? `<span>📝 ${esc(t.nextStep)}</span>` : ''}
-        ${t.notes ? `<span>📍 ${esc(t.notes)}</span>` : ''}
-        ${t.knowledge ? `<button class="todo-expand-btn" onclick="event.stopPropagation();toggleTodoExpand('${t.id}')">${state.expandedTodos && state.expandedTodos.includes(t.id) ? '收起笔记' : '展开笔记'}</button>` : ''}
+        ${(t.nextStep || t.knowledge) ? `<button class="todo-expand-btn" onclick="event.stopPropagation();toggleTodoExpand('${t.id}')">${state.expandedTodos && state.expandedTodos.includes(t.id) ? '收起详情' : '展开详情'}</button>` : ''}
       </div>
     </div>
     <div class="todo-actions">
       <button class="todo-action-btn" onclick="event.stopPropagation();openTodoModal('${t.id}')" title="编辑">✏️</button>
       ${showDelete ? `<button class="todo-action-btn" onclick="event.stopPropagation();deleteTodo('${t.id}')" title="删除">🗑</button>` : ''}
     </div>
-    ${t.knowledge && state.expandedTodos && state.expandedTodos.includes(t.id) ? `<div class="todo-knowledge-panel">${esc(t.knowledge)}</div>` : ''}
+    ${state.expandedTodos && state.expandedTodos.includes(t.id) && (t.nextStep || t.knowledge) ? `<div class="todo-knowledge-panel">${t.nextStep ? '<div style="margin-bottom:8px;"><b>下一步：</b>${esc(t.nextStep)}</div>' : ''}${t.knowledge ? '<div><b>笔记：</b>${esc(t.knowledge)}</div>' : ''}</div>` : ''}
   </div>`;
 }
 
@@ -1898,11 +1909,17 @@ function renderNotes() {
         <div class="notes-filter-btn ${state.notesTypeFilter==='flash'?'active':''}" onclick="filterNotesType('flash')">闪念笔记</div>
       </div>
     </div>
-    ${allTags.length > 0 ? `
-      <div class="notes-tag-filter">
-        ${allTags.map(tag => `<div class="notes-tag-chip ${state.notesTagFilter.includes(tag)?'active':''}" onclick="toggleTagFilter('${tag.replace(/'/g,"\\'")}')">${esc(tag)}</div>`).join('')}
+    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;">
+      <div class="notes-tag-filter-wrap" id="notes-tag-wrap">
+        <div class="notes-tag-dropdown-btn ${state.notesTagFilter.length > 0 ? 'active' : ''}" onclick="toggleNotesTagDropdown()">${state.notesTagFilter.length > 0 ? `标签筛选 (${state.notesTagFilter.length})` : '标签筛选'}</div>
+        ${state._notesTagDropdownOpen && allTags.length > 0 ? `
+          <div class="notes-tag-dropdown">
+            ${allTags.map(tag => `<div class="notes-tag-opt ${state.notesTagFilter.includes(tag)?'active':''}" onclick="toggleTagFilter('${tag.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')"><span>${state.notesTagFilter.includes(tag) ? '✓' : '○'}</span> ${esc(tag)}</div>`).join('')}
+          </div>
+        ` : ''}
       </div>
-    ` : ''}
+      ${state.notesTagFilter.length > 0 ? `<button class="notes-filter-btn" onclick="clearTagFilter()">清除标签筛选</button>` : ''}
+    </div>
     <div style="font-size:13px;color:var(--c-text-2);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
       <span>共 ${totalCount} 条笔记${pinnedCount > 0 ? `（${pinnedCount} 条已置顶）` : ''}</span>
       ${selectedCount > 0 ? `<button class="btn btn-primary btn-sm" onclick="mergeSelectedNotes()">合并选中 ${selectedCount} 条</button>` : ''}
@@ -1922,9 +1939,12 @@ function renderNotes() {
                 ${n.type === 'flash' ? `<input type="checkbox" class="note-select-cb" ${state.selectedNoteIds.includes(n.id)?'checked':''} onchange="toggleNoteSelect('${n.id}')">` : ''}
                 <span class="note-type-badge ${n.type}">${n.typeLabel}</span>
               </div>
-              ${n.type !== 'flash' ? `<button class="note-pin-btn ${n.pinned ? 'pinned' : ''}" onclick="toggleNotePin('${n.type}','${n.id}')">${n.pinned ? '📌' : '📍'}</button>` : ''}
+              <div style="display:flex;align-items:center;gap:4px;">
+                ${n.type !== 'flash' ? `<button class="note-pin-btn ${n.pinned ? 'pinned' : ''}" onclick="toggleNotePin('${n.type}','${n.id}')" title="${n.pinned ? '取消置顶' : '置顶'}">${n.pinned ? '📌' : '📍'}</button>` : ''}
+                <span class="note-del-x" onclick="deleteNote('${n.type}','${n.id}')" title="删除">✕</span>
+              </div>
             </div>
-            <div class="note-content" id="note-content-${n.id}">${esc(n.content)}</div>
+            <div class="note-content" id="note-content-${n.id}" onclick="editNoteInline('${n.type}','${n.id}')" style="cursor:text;">${esc(n.content)}</div>
             <div class="note-source">
               来源：
               ${n.type === 'kr' ? `<span class="note-source-link" onclick="switchView('krs');selectDomain('${n.domainId}');selectKR('${n.id}')">${esc(n.sourceName)}</span>` : ''}
@@ -1933,10 +1953,7 @@ function renderNotes() {
               · ${esc(n.domainName)} · ${formatDate(n.createdAt).split(' ')[0]}
             </div>
             ${n.tags.length > 0 ? `<div class="note-tags">${n.tags.map(t => `<span class="note-tag">${esc(t)}</span>`).join('')}</div>` : ''}
-            <div class="note-actions">
-              <button class="note-action-btn" onclick="editNoteInline('${n.type}','${n.id}')">✏️ 编辑</button>
-              ${n.type === 'flash' ? `<button class="note-action-btn danger" onclick="deleteNote('${n.type}','${n.id}')">🗑 删除</button>` : `<button class="note-action-btn" onclick="toggleNotePin('${n.type}','${n.id}')">${n.pinned ? '取消置顶' : '📌 置顶'}</button>`}
-            </div>
+            ${n.type !== 'flash' ? `<div class="note-actions"><button class="note-action-btn" onclick="toggleNotePin('${n.type}','${n.id}')">${n.pinned ? '取消置顶' : '📌 置顶'}</button></div>` : ''}
           </div>
         `).join('')}
       </div>
@@ -1948,6 +1965,8 @@ function renderNotes() {
 function selectNotesDomain(domainId) { state.currentDomainId = domainId; renderNotes(); }
 function onNotesSearch(val) { state.notesSearch = val; renderNotes(); setTimeout(() => { const i = document.querySelector('.notes-search'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 0); }
 function filterNotesType(type) { state.notesTypeFilter = type; renderNotes(); }
+function toggleNotesTagDropdown() { state._notesTagDropdownOpen = !state._notesTagDropdownOpen; renderNotes(); }
+function clearTagFilter() { state.notesTagFilter = []; renderNotes(); }
 function toggleTagFilter(tag) {
   const idx = state.notesTagFilter.indexOf(tag);
   if (idx > -1) state.notesTagFilter.splice(idx, 1);
@@ -1966,7 +1985,7 @@ function toggleNotePin(type, id) {
   saveData(); renderNotes();
 }
 function deleteNote(type, id) {
-  if (!confirm('确定删除这条笔记？')) return;
+  if (!confirm('确定删除这条笔记？删除后不可恢复。')) return;
   if (type === 'flash') { state.data.quickNotes = state.data.quickNotes.filter(q => q.id !== id); }
   else if (type === 'kr') { const kr = state.data.krs.find(k => k.id === id); if (kr) kr.notes = ''; }
   else if (type === 'todo') { const todo = state.data.todos.find(t => t.id === id); if (todo) todo.knowledge = ''; }
@@ -1975,22 +1994,17 @@ function deleteNote(type, id) {
 }
 function editNoteInline(type, id) {
   const area = document.getElementById('note-content-' + id);
-  if (!area) return;
+  if (!area || area.tagName === 'TEXTAREA') return;
   let content = '';
   if (type === 'kr') { const kr = state.data.krs.find(k => k.id === id); content = kr ? kr.notes : ''; }
   else if (type === 'todo') { const todo = state.data.todos.find(t => t.id === id); content = todo ? todo.knowledge : ''; }
   else if (type === 'flash') { const qn = state.data.quickNotes.find(q => q.id === id); content = qn ? qn.content : ''; }
-  area.outerHTML = '<textarea class="note-edit-area" id="note-edit-' + id + '">' + esc(content) + '</textarea>';
-  setTimeout(() => { const el = document.getElementById('note-edit-' + id); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 0);
-  const actionsEl = document.querySelector('.note-card .note-actions');
-  // Replace actions with save/cancel
-  const card = document.getElementById('note-edit-' + id)?.closest('.note-card');
-  if (card) {
-    const actDiv = card.querySelector('.note-actions');
-    if (actDiv) {
-      actDiv.innerHTML = '<button class="note-action-btn" onclick="saveNoteInline(\''+type+'\',\''+id+'\')">💾 保存</button><button class="note-action-btn" onclick="renderNotes()">取消</button>';
-    }
-  }
+  area.outerHTML = '<div class="note-edit-wrap" id="note-edit-wrap-' + id + '"><textarea class="note-edit-area" id="note-edit-' + id + '" oninput="autoResizeTextarea(this)">' + esc(content) + '</textarea><div class="note-edit-actions"><button class="note-action-btn" onclick="saveNoteInline(\''+type+'\',\''+id+'\')">💾 保存</button><button class="note-action-btn" onclick="renderNotes()">取消</button></div></div>';
+  setTimeout(() => { const el = document.getElementById('note-edit-' + id); if (el) { el.focus(); autoResizeTextarea(el); el.setSelectionRange(el.value.length, el.value.length); } }, 0);
+}
+function autoResizeTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.max(60, el.scrollHeight) + 'px';
 }
 function saveNoteInline(type, id) {
   const el = document.getElementById('note-edit-' + id);
