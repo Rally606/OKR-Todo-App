@@ -107,7 +107,7 @@ body {
 .note-pin-btn.pinned { opacity: 1; }
 .note-select-cb { cursor: pointer; width: 16px; height: 16px; }
 .note-content { font-size: 14px; line-height: 1.6; color: var(--c-text); white-space: pre-wrap; word-break: break-word; flex: 1; }
-.note-edit-area { width: 100%; border: 1px solid var(--c-primary); border-radius: var(--r-sm); padding: 8px; font-size: 14px; line-height: 1.6; color: var(--c-text); background: var(--c-surface); resize: none; min-height: 60px; font-family: inherit; outline: none; overflow: hidden; }
+.note-edit-area { width: 100%; border: 1px solid var(--c-primary); border-radius: var(--r-sm); padding: 8px; font-size: 14px; line-height: 1.6; color: var(--c-text); background: var(--c-surface); resize: none; min-height: 120px; font-family: inherit; outline: none; overflow: hidden; }
 .note-source { font-size: 12px; color: var(--c-text-3); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .note-source-link { color: var(--c-primary); cursor: pointer; text-decoration: none; }
 .note-source-link:hover { text-decoration: underline; }
@@ -125,6 +125,9 @@ body {
 .note-empty-icon { font-size: 48px; margin-bottom: 12px; }
 .notes-merge-bar { position: sticky; bottom: 16px; background: var(--c-primary); color: #fff; padding: 12px 20px; border-radius: var(--r-lg); display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: var(--sh-lg); z-index: 10; }
 /* ===== Todo expand for knowledge ===== */
+.inline-edit-field:hover { background: var(--c-primary-bg); border-radius: 2px; }
+.inline-edit-field:focus { background: var(--c-surface); border: 1px solid var(--c-primary); border-radius: var(--r-sm); padding: 2px 4px; }
+.todo-title-edit-input { font-family: inherit; }
 .todo-expand-btn { font-size: 11px; color: var(--c-primary); cursor: pointer; padding: 2px 8px; border-radius: var(--r-sm); background: var(--c-primary-bg); border: none; }
 .todo-expand-btn:hover { background: var(--c-primary); color: #fff; }
 .todo-knowledge-panel { padding: 12px 16px; background: var(--c-bg); border-radius: var(--r-md); margin: 8px 0 0 28px; font-size: 13px; line-height: 1.6; color: var(--c-text-2); white-space: pre-wrap; word-break: break-word; border-left: 3px solid var(--c-primary); width: calc(100% - 28px); flex-basis: 100%; order: 10; }
@@ -1134,6 +1137,7 @@ let state = {
   data: { domains: [], krs: [], todos: [], quickNotes: [], checkins: {} },
   notesSearch: '',
   notesTypeFilter: 'all',
+  notesDomainId: 'all',
   notesTagFilter: [],
   selectedNoteIds: [],
   expandedTodos: [],
@@ -1549,9 +1553,9 @@ function renderTodoRow(t, re, opts) {
     <span class="todo-drag-handle">⠿</span>
     <div class="todo-check ${t.done?'done':''}" onclick="toggleTodo('${t.id}')"></div>
     <div class="todo-info">
-      <div class="todo-title ${t.done?'done':''}">${highlightHtml(t.title, re)}</div>
+      <div class="todo-title ${t.done?'done':''}" onclick="event.stopPropagation();inlineEditTodoTitle('${t.id}')" title="点击编辑标题">${highlightHtml(t.title, re)}</div>
       <div class="todo-meta">
-        ${t.priority ? `<span class="kr-pri pri-${esc(t.priority)}">${esc(t.priority)}</span>` : ''}
+        ${t.priority ? `<span class="kr-pri pri-${esc(t.priority)}" style="cursor:pointer;" onclick="event.stopPropagation();showPriorityDropdown('${t.id}', this)" title="点击切换优先级">${esc(t.priority)}</span>` : ''}
         ${kr ? `<span>${esc(kr.name)}</span>` : ''}
         ${domain ? `<span>${esc(domain.name)}</span>` : ''}
         ${formatDDL(t) ? `<span class="todo-ddl">⏰ ${formatDDL(t)}</span>` : ''}
@@ -1564,7 +1568,7 @@ function renderTodoRow(t, re, opts) {
       <button class="todo-action-btn" onclick="event.stopPropagation();openTodoModal('${t.id}')" title="编辑">✏️</button>
       ${showDelete ? `<button class="todo-action-btn" onclick="event.stopPropagation();deleteTodo('${t.id}')" title="删除">🗑</button>` : ''}
     </div>
-    ${(state.expandedTodos && state.expandedTodos.includes(t.id) && (t.nextStep || t.knowledge)) ? '<div class="todo-knowledge-panel">' + (t.nextStep ? '<div style="margin-bottom:8px;"><b>下一步：</b>' + esc(t.nextStep) + '</div>' : '') + (t.knowledge ? '<div><b>笔记：</b>' + esc(t.knowledge) + '</div>' : '') + '</div>' : ''}
+    ${(state.expandedTodos && state.expandedTodos.includes(t.id) && (t.nextStep || t.knowledge)) ? '<div class="todo-knowledge-panel">' + (t.nextStep ? '<div style="margin-bottom:8px;"><b>下一步：</b> <span class="inline-edit-field" contenteditable="true" data-todo-id="' + t.id + '" data-field="nextStep" onblur="saveInlineExpand(this)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();this.blur()}" style="outline:none;cursor:text;">' + esc(t.nextStep) + '</span></div>' : '') + (t.knowledge ? '<div><b>笔记：</b> <span class="inline-edit-field" contenteditable="true" data-todo-id="' + t.id + '" data-field="knowledge" onblur="saveInlineExpand(this)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();this.blur()}" style="outline:none;cursor:text;">' + esc(t.knowledge) + '</span></div>' : '') + '</div>' : ''}
   </div>`;
 }
 
@@ -1878,7 +1882,7 @@ function renderNotes() {
   });
 
   let filtered = allNotes;
-  if (state.currentDomainId !== 'all') filtered = filtered.filter(n => n.domainId === state.currentDomainId);
+  if (state.notesDomainId && state.notesDomainId !== 'all') filtered = filtered.filter(n => n.domainId === state.notesDomainId);
   if (state.notesSearch) {
     const q = state.notesSearch.toLowerCase();
     filtered = filtered.filter(n => n.content.toLowerCase().includes(q) || n.sourceName.toLowerCase().includes(q) || n.tags.some(t => t.toLowerCase().includes(q)));
@@ -1897,8 +1901,8 @@ function renderNotes() {
   const html = `
     ${pageHeader('笔记看板', '聚合 KR笔记 · 任务笔记 · 闪念笔记，沉淀知识，方便复用')}
     <div class="domain-tabs">
-      <div class="domain-tab ${state.currentDomainId==='all'?'active':''}" onclick="selectNotesDomain('all')">全部</div>
-      ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectNotesDomain('${d.id}')">${esc(d.name)}</div>`).join('')}
+      <div class="domain-tab ${(state.notesDomainId||'all')==='all'?'active':''}" onclick="selectNotesDomain('all')">全部</div>
+      ${domains.map(d => `<div class="domain-tab ${d.id===(state.notesDomainId||'all')?'active':''}" onclick="selectNotesDomain('${d.id}')">${esc(d.name)}</div>`).join('')}
       <div class="domain-tab add" onclick="openDomainModal()">+ 新建领域</div>
     </div>
     <div class="notes-toolbar">
@@ -1943,7 +1947,7 @@ function renderNotes() {
                 <span class="note-del-x" onclick="deleteNote('${n.type}','${n.id}')" title="删除">✕</span>
               </div>
             </div>
-            <div class="note-content" id="note-content-${n.id}" onclick="editNoteInline('${n.type}','${n.id}')" style="cursor:text;">${esc(n.content)}</div>
+            <div class="note-content" id="note-content-${n.id}" onclick="editNoteInline('${n.type}','${n.id}')" style="cursor:text;">${renderMarkdown(n.content)}</div>
             <div class="note-source">
               来源：
               ${n.type === 'kr' ? `<span class="note-source-link" onclick="switchView('krs');selectDomain('${n.domainId}');selectKR('${n.id}')">${esc(n.sourceName)}</span>` : ''}
@@ -1961,7 +1965,7 @@ function renderNotes() {
   document.getElementById('page-notes').innerHTML = html;
 }
 
-function selectNotesDomain(domainId) { state.currentDomainId = domainId; renderNotes(); }
+function selectNotesDomain(domainId) { state.notesDomainId = domainId; renderNotes(); }
 function onNotesSearch(val) { state.notesSearch = val; renderNotes(); setTimeout(() => { const i = document.querySelector('.notes-search'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 0); }
 function filterNotesType(type) { state.notesTypeFilter = type; renderNotes(); }
 function toggleNotesTagDropdown() { state._notesTagDropdownOpen = !state._notesTagDropdownOpen; renderNotes(); }
@@ -1991,6 +1995,28 @@ function deleteNote(type, id) {
   state.selectedNoteIds = state.selectedNoteIds.filter(sid => sid !== id);
   saveData(); renderNotes(); toast('已删除', 'info');
 }
+function renderMarkdown(text) {
+  if (!text) return '';
+  let html = esc(text);
+  // Headers: # ## ###
+  html = html.replace(/^### (.+)$/gm, '<h3 style="font-size:15px;font-weight:600;margin:8px 0 4px;">$1</h3>');
+  html = html.replace(/^## (.+)$/gm, '<h2 style="font-size:16px;font-weight:600;margin:8px 0 4px;">$1</h2>');
+  html = html.replace(/^# (.+)$/gm, '<h1 style="font-size:17px;font-weight:700;margin:8px 0 4px;">$1</h1>');
+  // Bold: **text**
+  html = html.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
+  // Italic: *text*
+  html = html.replace(/\*(.+?)\*/g, '<em>$1</em>');
+  // Inline code: `text`
+  html = html.replace(/`(.+?)`/g, '<code style="background:var(--c-bg);padding:1px 4px;border-radius:3px;font-size:13px;">$1</code>');
+  // Bullet list: - item
+  html = html.replace(/^- (.+)$/gm, '<li style="margin-left:16px;list-style:disc;">$1</li>');
+  // Links/images
+  html = html.replace(/!\[([^\]]*)\]\(([^)]+)\)/g, '<img src="$2" alt="$1" style="max-width:100%;border-radius:var(--r-sm);margin:4px 0;" />');
+  html = html.replace(/\[([^\]]*)\]\(([^)]+)\)/g, '<a href="$2" target="_blank" style="color:var(--c-primary);">$1</a>');
+  // Line breaks
+  html = html.replace(/\n/g, '<br>');
+  return html;
+}
 function editNoteInline(type, id) {
   const area = document.getElementById('note-content-' + id);
   if (!area || area.tagName === 'TEXTAREA') return;
@@ -1998,12 +2024,36 @@ function editNoteInline(type, id) {
   if (type === 'kr') { const kr = state.data.krs.find(k => k.id === id); content = kr ? kr.notes : ''; }
   else if (type === 'todo') { const todo = state.data.todos.find(t => t.id === id); content = todo ? todo.knowledge : ''; }
   else if (type === 'flash') { const qn = state.data.quickNotes.find(q => q.id === id); content = qn ? qn.content : ''; }
-  area.outerHTML = '<div class="note-edit-wrap" id="note-edit-wrap-' + id + '"><textarea class="note-edit-area" id="note-edit-' + id + '" oninput="autoResizeTextarea(this)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();saveNoteInline(\''+type+'\',\''+id+'\')}" placeholder="Enter保存，Shift+Enter换行...">' + esc(content) + '</textarea><div class="note-edit-actions"><button class="note-action-btn" onclick="renderNotes()">取消</button></div></div>';
+  area.outerHTML = '<div class="note-edit-wrap" id="note-edit-wrap-' + id + '"><textarea class="note-edit-area" id="note-edit-' + id + '" oninput="autoResizeTextarea(this)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();saveNoteInline(\''+type+'\',\''+id+'\')}" onpaste="handleNotePaste(event,\''+type+'\',\''+id+'\')" placeholder="Enter保存，Shift+Enter换行，可粘贴图片...">' + esc(content) + '</textarea><div class="note-edit-actions"><button class="note-action-btn" onclick="renderNotes()">取消</button></div></div>';
   setTimeout(() => { const el = document.getElementById('note-edit-' + id); if (el) { el.focus(); autoResizeTextarea(el); el.setSelectionRange(el.value.length, el.value.length); } }, 0);
+}
+function handleNotePaste(e, type, id) {
+  const items = e.clipboardData && e.clipboardData.items;
+  if (!items) return;
+  for (const item of items) {
+    if (item.type && item.type.startsWith('image/')) {
+      e.preventDefault();
+      const blob = item.getAsFile();
+      if (!blob) return;
+      const reader = new FileReader();
+      reader.onload = function(ev) {
+        const dataUrl = ev.target.result;
+        const imgTag = '\n![粘贴图片](' + dataUrl + ')\n';
+        const ta = document.getElementById('note-edit-' + id);
+        if (!ta) return;
+        const start = ta.selectionStart, end = ta.selectionEnd;
+        ta.value = ta.value.substring(0, start) + imgTag + ta.value.substring(end);
+        ta.selectionStart = ta.selectionEnd = start + imgTag.length;
+        autoResizeTextarea(ta);
+      };
+      reader.readAsDataURL(blob);
+      return;
+    }
+  }
 }
 function autoResizeTextarea(el) {
   el.style.height = 'auto';
-  el.style.height = Math.max(60, el.scrollHeight) + 'px';
+  el.style.height = Math.max(120, el.scrollHeight) + 'px';
 }
 function saveNoteInline(type, id) {
   const el = document.getElementById('note-edit-' + id);
@@ -2030,6 +2080,53 @@ function mergeSelectedNotes() {
   state.selectedNoteIds = [];
   saveData(); renderNotes(); toast('已合并 ' + selected.length + ' 条笔记', 'success');
 }
+function saveInlineExpand(el) {
+  const todoId = el.dataset.todoId;
+  const field = el.dataset.field;
+  const todo = state.data.todos.find(t => t.id === todoId);
+  if (!todo) return;
+  const newVal = el.textContent.trim();
+  if (field === 'nextStep') todo.nextStep = newVal;
+  else if (field === 'knowledge') todo.knowledge = newVal;
+  saveData();
+}
+function inlineEditTodoTitle(id) {
+  const todo = state.data.todos.find(t => t.id === id);
+  if (!todo) return;
+  const titleEl = event.target;
+  if (titleEl.tagName === 'INPUT') return;
+  const oldVal = todo.title;
+  titleEl.outerHTML = '<input type="text" class="todo-title-edit-input" value="' + esc(oldVal).replace(/"/g, '&quot;') + '" onkeydown="if(event.key===\'Enter\'){event.preventDefault();confirmInlineTitle(\''+id+'\',this)}if(event.key===\'Escape\'){render()}" onblur="confirmInlineTitle(\''+id+'\',this)" style="font-size:14px;font-weight:500;border:1px solid var(--c-primary);border-radius:var(--r-sm);padding:2px 6px;width:100%;background:var(--c-surface);color:var(--c-text);outline:none;">';
+  setTimeout(() => { const el = document.querySelector('.todo-title-edit-input'); if (el) { el.focus(); el.setSelectionRange(el.value.length, el.value.length); } }, 0);
+}
+function confirmInlineTitle(id, el) {
+  const todo = state.data.todos.find(t => t.id === id);
+  if (!todo) return;
+  const newVal = el.value.trim();
+  if (newVal && newVal !== todo.title) { todo.title = newVal; saveData(); }
+  render();
+}
+function showPriorityDropdown(id, el) {
+  const existing = document.getElementById('pri-dropdown-' + id);
+  if (existing) { existing.remove(); return; }
+  const dropdown = document.createElement('div');
+  dropdown.id = 'pri-dropdown-' + id;
+  dropdown.style.cssText = 'position:absolute;z-index:1000;background:var(--c-surface);border:1px solid var(--c-border);border-radius:var(--r-sm);box-shadow:0 4px 12px rgba(0,0,0,0.15);padding:4px;display:flex;flex-direction:column;gap:2px;';
+  ['P0','P1','P2','P3'].forEach(p => {
+    const opt = document.createElement('div');
+    opt.style.cssText = 'padding:4px 12px;cursor:pointer;border-radius:var(--r-sm);font-size:12px;font-weight:500;';
+    opt.className = 'kr-pri pri-' + p;
+    opt.textContent = p;
+    opt.onclick = function(e) { e.stopPropagation(); const todo = state.data.todos.find(t => t.id === id); if (todo) { todo.priority = p; saveData(); } dropdown.remove(); render(); };
+    opt.onmouseenter = function() { this.style.opacity = '0.8'; };
+    opt.onmouseleave = function() { this.style.opacity = '1'; };
+    dropdown.appendChild(opt);
+  });
+  el.parentElement.style.position = 'relative';
+  el.parentElement.appendChild(dropdown);
+  setTimeout(() => { document.addEventListener('click', function close(e) { if (!dropdown.contains(e.target)) { dropdown.remove(); document.removeEventListener('click', close); } }); }, 0);
+}
+
 function toggleTodoExpand(id) {
   if (!state.expandedTodos) state.expandedTodos = [];
   const idx = state.expandedTodos.indexOf(id);
