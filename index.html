@@ -1555,6 +1555,7 @@ function renderTodoRow(t, re, opts) {
         ${kr ? `<span>${esc(kr.name)}</span>` : ''}
         ${domain ? `<span>${esc(domain.name)}</span>` : ''}
         ${formatDDL(t) ? `<span class="todo-ddl">⏰ ${formatDDL(t)}</span>` : ''}
+        ${t.notes ? `<span>📍 ${esc(t.notes)}</span>` : ''}
         ${t.docLink ? `<span>📄 ${renderLinkableText(t.docLink)}</span>` : ''}
         ${(t.nextStep || t.knowledge) ? `<button class="todo-expand-btn" onclick="event.stopPropagation();toggleTodoExpand('${t.id}')">${state.expandedTodos && state.expandedTodos.includes(t.id) ? '收起详情' : '展开详情'}</button>` : ''}
       </div>
