@@ -549,6 +549,14 @@ body {
 .kr-list-item .ki-name { flex: 1; font-size: 14px; font-weight: 500; }
 .kr-list-item .ki-pri { font-size: 10px; padding: 1px 6px; border-radius: var(--r-sm); font-weight: 600; }
 
+.kr-title-inline { cursor: text; border-radius: var(--r-sm); padding: 2px 4px; margin: -2px -4px; }
+.kr-title-inline:hover { background: var(--c-primary-bg); }
+.kr-inline-field { padding: 10px 12px; background: var(--c-bg); border-radius: var(--r-md); font-size: 14px; cursor: text; border: 1px solid transparent; transition: border-color 0.15s; }
+.kr-inline-field:hover { border-color: var(--c-primary); }
+.kr-inline-field:focus-within { border-color: var(--c-primary); }
+.kr-goal-inline { cursor: pointer; }
+.kr-goal-inline:hover { background: var(--c-primary-bg); }
+.kr-inline-input { font-family: inherit; }
 .kr-detail-panel {
   background: var(--c-surface);
   border-radius: var(--r-lg);
@@ -1660,9 +1668,9 @@ function renderKRDetail(kr) {
   return `<div class="kr-detail-panel">
     <div class="kr-detail-head">
       <div style="display:flex;align-items:center;justify-content:space-between;">
-        <h2>${esc(kr.name)}</h2>
+        <h2 class="kr-title-inline" onclick="inlineEditKRField('${kr.id}','name',this)" title="点击编辑标题">${esc(kr.name)}</h2>
         <div style="display:flex;gap:6px;">
-          <button class="btn btn-secondary btn-sm" onclick="openKRModal('${kr.id}')">✏️ 编辑</button>
+          <button class="btn btn-secondary btn-sm" onclick="openKRModal('${kr.id}')">⚙️ 更多设置</button>
           <button class="btn btn-danger btn-sm" onclick="deleteKR('${kr.id}')">🗑 删除</button>
         </div>
       </div>
@@ -1670,7 +1678,7 @@ function renderKRDetail(kr) {
         <span class="meta-chip">${kr.type==='project'?'项目型':'习惯型'}</span>
         <span class="kr-pri pri-${esc(kr.priority)}">${esc(kr.priority)}</span>
         <span class="meta-chip">${esc(kr.status)}</span>
-        ${kr.goal ? `<span class="meta-chip">🎯 ${esc(kr.goal)}</span>` : ''}
+        ${kr.goal ? `<span class="meta-chip kr-goal-inline" onclick="event.stopPropagation();inlineEditKRField('${kr.id}','goal',this)" title="点击编辑">🎯 ${esc(kr.goal)}</span>` : `<span class="meta-chip kr-goal-inline" style="cursor:pointer;color:var(--c-text-3);" onclick="event.stopPropagation();inlineEditKRField('${kr.id}','goal',this)">+ 添加目标</span>`}
         ${(kr.ddlDate || kr.ddlText) ? `<span class="meta-chip">⏰ ${formatDDL(kr)}</span>` : ''}
       </div>
     </div>
@@ -1683,18 +1691,14 @@ function renderKRDetail(kr) {
 
     ${habitHeatmap}
 
-    ${kr.nextStep ? `
-      <div class="section-label">📝 备注</div>
-      <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;">${esc(kr.nextStep)}</div>
-    ` : ''}
+    <div class="section-label">📝 备注</div>
+    <div class="kr-inline-field" id="kr-next-${kr.id}" onclick="inlineEditKRField('${kr.id}','nextStep',this)" title="点击编辑" style="white-space:pre-wrap;">${esc(kr.nextStep) || '<span style="color:var(--c-text-3);">+ 添加备注</span>'}</div>
 
-    ${kr.docLink ? `
-      <div class="section-label">📄 文档</div>
-      <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;">${renderLinkableText(kr.docLink)}</div>
-    ` : ''}
+    <div class="section-label">📄 文档</div>
+    <div class="kr-inline-field" id="kr-doc-${kr.id}" onclick="inlineEditKRField('${kr.id}','docLink',this)" title="点击编辑">${kr.docLink ? renderLinkableText(kr.docLink) : '<span style="color:var(--c-text-3);">+ 添加文档链接</span>'}</div>
 
     <div class="section-label">📝 笔记区</div>
-    <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;min-height:40px;white-space:pre-wrap;">${esc(kr.notes) || '暂无笔记'}</div>
+    <div class="kr-inline-field" id="kr-notes-${kr.id}" onclick="inlineEditKRField('${kr.id}','notes',this)" title="点击编辑" style="white-space:pre-wrap;">${esc(kr.notes) || '<span style="color:var(--c-text-3);">+ 添加笔记</span>'}</div>
 
     ${(() => {
       const krNotes = state.data.quickNotes.filter(q => q.krId === kr.id);
@@ -1718,6 +1722,47 @@ function renderKRDetail(kr) {
       ${todos.length > 0 ? todos.map(t => renderTodoRow(t)).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">暂无待办</div></div>'}
     </div>
   </div>`;
+}
+
+function inlineEditKRField(krId, field, el) {
+  if (event) event.stopPropagation();
+  if (el.tagName === 'INPUT' || el.tagName === 'TEXTAREA') return;
+  const kr = state.data.krs.find(k => k.id === krId);
+  if (!kr) return;
+  const oldVal = kr[field] || '';
+  const isMultiline = field === 'docLink' || field === 'notes' || field === 'nextStep';
+  const inputTag = isMultiline ? 'textarea' : 'input';
+  const inputType = isMultiline ? '' : ' type="text"';
+  const inputStyle = isMultiline 
+    ? 'width:100%;border:1px solid var(--c-primary);border-radius:var(--r-sm);padding:8px 12px;font-size:14px;line-height:1.6;background:var(--c-surface);color:var(--c-text);font-family:inherit;outline:none;resize:none;min-height:60px;white-space:pre-wrap;'
+    : 'font-size:13px;border:1px solid var(--c-primary);border-radius:var(--r-sm);padding:2px 8px;background:var(--c-surface);color:var(--c-text);outline:none;width:200px;';
+  const html_str = '<' + inputTag + inputType + ' class="kr-inline-input" value="' + esc(oldVal).replace(/"/g, '&quot;') + '" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();saveKRInlineField(\''+krId+'\',\''+field+'\',this)}if(event.key===\'Escape\'){render()}" onblur="saveKRInlineField(\''+krId+'\',\''+field+'\',this)" style="' + inputStyle + '" placeholder="输入内容...">' + (isMultiline ? esc(oldVal) : '') + '</' + inputTag + '>';
+  el.outerHTML = html_str;
+  setTimeout(() => {
+    const inputs = document.querySelectorAll('.kr-inline-input');
+    const lastInput = inputs[inputs.length - 1];
+    if (lastInput) {
+      lastInput.focus();
+      if (lastInput.tagName === 'TEXTAREA') {
+        lastInput.textContent = oldVal;
+        lastInput.style.height = 'auto';
+        lastInput.style.height = Math.max(60, lastInput.scrollHeight) + 'px';
+        lastInput.setSelectionRange(lastInput.value.length, lastInput.value.length);
+      } else {
+        lastInput.setSelectionRange(lastInput.value.length, lastInput.value.length);
+      }
+    }
+  }, 0);
+}
+function saveKRInlineField(krId, field, el) {
+  const kr = state.data.krs.find(k => k.id === krId);
+  if (!kr) return;
+  const newVal = (el.value || '').trim();
+  if (newVal !== (kr[field] || '')) {
+    kr[field] = newVal;
+    saveData();
+  }
+  render();
 }
 
 function selectKR(id) {
