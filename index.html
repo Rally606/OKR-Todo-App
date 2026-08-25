@@ -72,6 +72,109 @@ body {
   transition: background .25s, color .25s;
 }
 
+
+/* ===== Notes Board ===== */
+.notes-toolbar { display: flex; gap: 12px; margin-bottom: 16px; flex-wrap: wrap; align-items: center; }
+.notes-search { flex: 1; min-width: 200px; padding: 8px 14px; border: 1px solid var(--c-border); border-radius: var(--r-md); background: var(--c-surface); color: var(--c-text); font-size: 14px; outline: none; transition: border-color .15s; }
+.notes-search:focus { border-color: var(--c-primary-light); }
+.notes-filter-group { display: flex; gap: 6px; flex-wrap: wrap; }
+.notes-filter-btn { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-text-2); font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.notes-filter-btn:hover { border-color: var(--c-primary-light); }
+.notes-filter-btn.active { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
+.notes-tag-filter-wrap { position: relative; }
+.notes-tag-dropdown-btn { padding: 6px 14px; border-radius: 999px; border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-text-2); font-size: 13px; cursor: pointer; transition: all .15s; white-space: nowrap; }
+.notes-tag-dropdown-btn:hover { border-color: var(--c-primary-light); }
+.notes-tag-dropdown-btn.active { background: var(--c-primary); color: #fff; border-color: var(--c-primary); }
+.notes-tag-dropdown { position: absolute; top: 100%; right: 0; margin-top: 4px; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--r-md); box-shadow: var(--sh-lg); padding: 8px; z-index: 100; display: flex; flex-direction: column; gap: 4px; min-width: 160px; max-height: 240px; overflow-y: auto; }
+.notes-tag-opt { padding: 6px 12px; border-radius: var(--r-sm); font-size: 13px; cursor: pointer; color: var(--c-text); transition: background .15s; display: flex; align-items: center; gap: 6px; }
+.notes-tag-opt:hover { background: var(--c-bg); }
+.notes-tag-opt.active { background: var(--c-primary-bg); color: var(--c-primary); font-weight: 500; }
+.notes-tag-chip { font-size: 11px; padding: 3px 10px; border-radius: 999px; background: var(--c-border-2); color: var(--c-text-2); cursor: pointer; transition: all .15s; }
+.notes-tag-chip:hover { background: var(--c-primary-bg); color: var(--c-primary); }
+.notes-tag-chip.active { background: var(--c-primary); color: #fff; }
+.notes-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px, 1fr)); gap: 16px; }
+.note-card { background: var(--c-surface); border-radius: var(--r-lg); border: 1px solid var(--c-border-2); box-shadow: var(--sh-sm); padding: 16px; transition: all .2s; position: relative; display: flex; flex-direction: column; gap: 8px; }
+.note-card:hover { box-shadow: var(--sh-md); transform: translateY(-2px); }
+.note-card.pinned { border-color: var(--c-warning); border-width: 2px; }
+.note-card.selected { border-color: var(--c-primary); border-width: 2px; background: var(--c-primary-bg); }
+.note-card-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.note-type-badge { font-size: 10px; padding: 2px 8px; border-radius: 999px; font-weight: 600; white-space: nowrap; }
+.note-type-badge.kr { background: var(--c-primary-bg); color: var(--c-primary); }
+.note-type-badge.todo { background: var(--c-success-bg); color: var(--c-success); }
+.note-type-badge.flash { background: #f3e8ff; color: #9333ea; }
+.note-pin-btn { cursor: pointer; font-size: 14px; opacity: 0.4; transition: opacity .15s; background: none; border: none; }
+.note-pin-btn:hover { opacity: 1; }
+.note-pin-btn.pinned { opacity: 1; }
+.note-select-cb { cursor: pointer; width: 16px; height: 16px; }
+.note-content { font-size: 14px; line-height: 1.6; color: var(--c-text); word-break: break-word; flex: 1; }
+.note-content h1 { font-size: 18px; font-weight: 700; margin: 8px 0 4px; }
+.note-content h2 { font-size: 16px; font-weight: 600; margin: 8px 0 4px; }
+.note-content h3 { font-size: 14px; font-weight: 600; margin: 6px 0 2px; }
+.note-content ul { list-style: disc; padding-left: 20px; margin: 4px 0; }
+.note-content ol { list-style: decimal; padding-left: 20px; margin: 4px 0; }
+.note-content li { margin: 2px 0; }
+.note-content p { margin: 4px 0; white-space: pre-wrap; }
+.note-content strong { font-weight: 700; }
+.note-content em { font-style: italic; }
+.note-content code { background: var(--c-border-2); padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 13px; }
+.note-content blockquote { border-left: 3px solid var(--c-primary); padding-left: 12px; margin: 4px 0; color: var(--c-text-2); }
+.note-content pre { background: var(--c-border-2); padding: 8px; border-radius: var(--r-sm); overflow-x: auto; margin: 4px 0; }
+.note-edit-area { width: 100%; border: 1px solid var(--c-primary); border-radius: var(--r-sm); padding: 8px; font-size: 14px; line-height: 1.6; color: var(--c-text); background: var(--c-surface); resize: none; min-height: 120px; font-family: inherit; outline: none; overflow: hidden; }
+.note-source { font-size: 12px; color: var(--c-text-3); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
+.note-source-link { color: var(--c-primary); cursor: pointer; text-decoration: none; }
+.note-source-link:hover { text-decoration: underline; }
+.note-tags { display: flex; gap: 4px; flex-wrap: wrap; }
+.note-tag { font-size: 10px; padding: 2px 8px; border-radius: 4px; background: var(--c-border-2); color: var(--c-text-2); }
+.note-del-x { font-size: 14px; color: var(--c-text-3); cursor: pointer; opacity: 0.3; transition: opacity .15s; padding: 2px 4px; }
+.note-del-x:hover { opacity: 1; color: var(--c-danger); }
+.note-actions { display: flex; gap: 8px; flex-wrap: wrap; }
+.note-action-btn { font-size: 12px; padding: 4px 10px; border-radius: var(--r-sm); border: 1px solid var(--c-border); background: var(--c-surface); color: var(--c-text-2); cursor: pointer; transition: all .15s; }
+.note-action-btn:hover { border-color: var(--c-primary); color: var(--c-primary); }
+.note-action-btn.danger:hover { border-color: var(--c-danger); color: var(--c-danger); }
+.note-edit-wrap { display: flex; flex-direction: column; gap: 8px; }
+.note-edit-actions { display: flex; gap: 8px; }
+.note-empty { text-align: center; padding: 60px 20px; color: var(--c-text-3); }
+.note-empty-icon { font-size: 48px; margin-bottom: 12px; }
+.notes-merge-bar { position: sticky; bottom: 16px; background: var(--c-primary); color: #fff; padding: 12px 20px; border-radius: var(--r-lg); display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: var(--sh-lg); z-index: 10; }
+/* ===== Todo expand for knowledge ===== */
+.todo-expand-btn { font-size: 11px; color: var(--c-primary); cursor: pointer; padding: 2px 8px; border-radius: var(--r-sm); background: var(--c-primary-bg); border: none; }
+.todo-expand-btn:hover { background: var(--c-primary); color: #fff; }
+.todo-knowledge-panel { padding: 12px 16px; background: var(--c-bg); border-radius: var(--r-md); margin: 8px 0 0 28px; font-size: 13px; line-height: 1.6; color: var(--c-text-2); word-break: break-word; border-left: 3px solid var(--c-primary); width: calc(100% - 28px); flex-basis: 100%; order: 10; }
+
+/* Inline editing for todo title */
+.todo-title { cursor: text; border-radius: var(--r-sm); transition: background .12s; }
+.todo-title:hover { background: var(--c-border-2); }
+.todo-title[contenteditable="true"] { outline: 2px solid var(--c-primary); outline-offset: 2px; border-radius: var(--r-sm); padding: 2px 6px; margin: -2px -6px; background: var(--c-surface); }
+
+/* Priority quick-switch dropdown */
+.priority-dropdown { position: fixed; z-index: 9999; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--r-sm); box-shadow: var(--sh-md); padding: 4px; display: flex; flex-direction: column; gap: 2px; }
+.pri-option { padding: 6px 16px; border-radius: var(--r-sm); cursor: pointer; font-size: 12px; font-weight: 600; text-align: center; transition: background .12s; }
+.pri-option:hover { background: var(--c-border-2); }
+.pri-option.selected { background: var(--c-primary-bg); }
+
+/* Editable fields in todo expand panel */
+.todo-expand-field { display: flex; flex-direction: column; gap: 4px; }
+.todo-expand-label { font-size: 11px; color: var(--c-text-3); font-weight: 600; }
+.todo-expand-text { font-size: 13px; line-height: 1.5; padding: 6px 8px; border-radius: var(--r-sm); border: 1px solid transparent; cursor: pointer; white-space: pre-wrap; word-break: break-word; min-height: 20px; }
+.todo-expand-text:hover { border-color: var(--c-border-2); background: var(--c-surface); }
+.todo-expand-empty { color: var(--c-text-3); font-style: italic; }
+.todo-expand-textarea { width: 100%; font-size: 13px; line-height: 1.5; padding: 6px 8px; border: 1px solid var(--c-primary); border-radius: var(--r-sm); background: var(--c-surface); color: var(--c-text); outline: none; resize: vertical; min-height: 40px; font-family: inherit; }
+/* ===== Homepage flash notes redesign ===== */
+.qn-list-item { padding: 10px 12px; background: var(--c-bg); border-radius: var(--r-md); margin-bottom: 6px; font-size: 13px; transition: background .15s; }
+.qn-list-item:hover { background: var(--c-surface); }
+.qn-list-content { color: var(--c-text); line-height: 1.5; white-space: pre-wrap; word-break: break-word; }
+.qn-list-meta { display: flex; align-items: center; gap: 6px; margin-top: 4px; flex-wrap: wrap; }
+.qn-list-tag { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: #f3e8ff; color: #9333ea; }
+.qn-list-domain { font-size: 10px; padding: 1px 6px; border-radius: 4px; background: var(--c-primary-bg); color: var(--c-primary); }
+.qn-list-time { font-size: 10px; color: var(--c-text-3); margin-left: auto; }
+.qn-list-del { color: var(--c-text-3); cursor: pointer; font-size: 12px; }
+.qn-list-del:hover { color: var(--c-danger); }
+.qn-full-edit-btn { flex-shrink: 0; width: 28px; height: 28px; border: none; border-radius: var(--r-sm); background: var(--c-surface); color: var(--c-text-2); font-size: 16px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: all .15s; }
+.qn-full-edit-btn:hover { background: var(--c-primary); color: #fff; }
+.qn-textarea { width: 100%; border: 1.5px solid var(--c-border); border-radius: var(--r-md); padding: 10px 14px; font-size: 14px; line-height: 1.5; color: var(--c-text); background: var(--c-surface); resize: vertical; min-height: 60px; font-family: inherit; outline: none; transition: border-color .15s; margin-bottom: 8px; }
+.qn-textarea:focus { border-color: var(--c-primary); }
+.qn-input-hint { display: flex; justify-content: space-between; align-items: center; font-size: 11px; color: var(--c-text-3); }
+
 /* ===== Layout ===== */
 #app { display: flex; min-height: 100vh; }
 
@@ -323,7 +426,7 @@ body {
 }
 .weekly-overview h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .weekly-overview h3 .count { font-size: 12px; color: var(--c-text-3); font-weight: 400; }
-.todo-row {
+.todo-row { flex-wrap: wrap;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -372,85 +475,6 @@ body {
 .todo-action-btn:hover { background: var(--c-border); }
 .todo-row.highlight { background: var(--c-primary-bg); border-radius: var(--r-sm); }
 
-/* Inline editing for todo title */
-.todo-title[contenteditable="true"] {
-  outline: 2px solid var(--c-primary);
-  outline-offset: 2px;
-  border-radius: var(--r-sm);
-  padding: 2px 6px;
-  margin: -2px -6px;
-  background: var(--c-surface);
-  cursor: text;
-}
-.todo-title { cursor: pointer; border-radius: var(--r-sm); }
-.todo-title:hover { background: var(--c-border-2); }
-
-/* Priority quick-switch dropdown */
-.priority-dropdown {
-  position: fixed;
-  z-index: 9999;
-  background: var(--c-surface);
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-sm);
-  box-shadow: var(--sh-md);
-  padding: 4px;
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-.pri-option {
-  padding: 6px 16px;
-  border-radius: var(--r-sm);
-  cursor: pointer;
-  font-size: 12px;
-  font-weight: 600;
-  text-align: center;
-  transition: background .12s;
-}
-.pri-option:hover { background: var(--c-border-2); }
-.pri-option.selected { background: var(--c-primary-bg); }
-
-/* Todo expand panel */
-.todo-expand-panel {
-  margin-top: 8px;
-  padding: 10px 12px;
-  background: var(--c-bg);
-  border-radius: var(--r-md);
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-.todo-expand-field { display: flex; flex-direction: column; gap: 4px; }
-.todo-expand-label { font-size: 11px; color: var(--c-text-3); font-weight: 600; }
-.todo-expand-text {
-  font-size: 13px;
-  line-height: 1.5;
-  padding: 8px 10px;
-  border-radius: var(--r-sm);
-  border: 1px solid transparent;
-  cursor: pointer;
-  white-space: pre-wrap;
-  word-break: break-word;
-  min-height: 24px;
-}
-.todo-expand-text:hover { border-color: var(--c-border-2); background: var(--c-surface); }
-.todo-expand-text.editing { border-color: var(--c-primary); background: var(--c-surface); cursor: text; }
-.todo-expand-textarea {
-  width: 100%;
-  font-size: 13px;
-  line-height: 1.5;
-  padding: 8px 10px;
-  border: 1px solid var(--c-primary);
-  border-radius: var(--r-sm);
-  background: var(--c-surface);
-  color: var(--c-text);
-  outline: none;
-  resize: vertical;
-  min-height: 40px;
-  font-family: inherit;
-}
-.todo-expand-empty { color: var(--c-text-3); font-style: italic; }
-
 /* ===== Quick Notes ===== */
 .quick-notes {
   background: var(--c-surface);
@@ -475,49 +499,6 @@ body {
   color: var(--c-text);
 }
 .qn-input input:focus { border-color: var(--c-primary); }
-
-/* Note edit area with Markdown support */
-.note-edit-area {
-  min-height: 120px;
-  border: 1px solid var(--c-border);
-  border-radius: var(--r-md);
-  background: var(--c-surface);
-  color: var(--c-text);
-  padding: 12px;
-  font-size: 14px;
-  line-height: 1.6;
-  outline: none;
-  resize: vertical;
-  width: 100%;
-  font-family: inherit;
-  transition: border-color .15s;
-}
-.note-edit-area:focus { border-color: var(--c-primary); }
-.note-preview-area {
-  min-height: 120px;
-  border: 1px solid var(--c-border-2);
-  border-radius: var(--r-md);
-  background: var(--c-bg);
-  padding: 12px;
-  font-size: 14px;
-  line-height: 1.6;
-  cursor: pointer;
-  transition: border-color .15s;
-}
-.note-preview-area:hover { border-color: var(--c-primary); }
-.note-preview-area .md-empty { color: var(--c-text-3); font-style: italic; }
-.note-preview-area h1 { font-size: 18px; font-weight: 700; margin: 8px 0 4px; }
-.note-preview-area h2 { font-size: 16px; font-weight: 600; margin: 8px 0 4px; }
-.note-preview-area h3 { font-size: 14px; font-weight: 600; margin: 6px 0 2px; }
-.note-preview-area ul { list-style: disc; padding-left: 20px; margin: 4px 0; }
-.note-preview-area ol { list-style: decimal; padding-left: 20px; margin: 4px 0; }
-.note-preview-area li { margin: 2px 0; }
-.note-preview-area strong { font-weight: 700; }
-.note-preview-area em { font-style: italic; }
-.note-preview-area p { margin: 4px 0; }
-.note-preview-area code { background: var(--c-border-2); padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 13px; }
-.note-preview-area pre { background: var(--c-border-2); padding: 8px; border-radius: var(--r-sm); overflow-x: auto; margin: 4px 0; }
-.note-preview-area blockquote { border-left: 3px solid var(--c-primary); padding-left: 12px; margin: 4px 0; color: var(--c-text-2); }
 .qn-item {
   padding: 8px 10px;
   background: var(--c-bg);
@@ -1182,10 +1163,13 @@ let state = {
   searchQuery: '',
   taskView: 'list',
   data: { domains: [], krs: [], todos: [], quickNotes: [], checkins: {} },
+  notesSearch: '',
+  notesTypeFilter: 'all',
+  notesTagFilter: [],
+  selectedNoteIds: [],
+  expandedTodos: [],
   prefs: { theme: 'light', shortcuts: { ...DEFAULT_SHORTCUTS }, navOrder: ['dashboard','krs','tasks','weekly','notes','ai','settings'] },
-  aiChat: [],
-  expandedTodos: {},
-  noteEdit: { id: null, draft: '' }
+  aiChat: []
 };
 
 const STORAGE_KEY = 'okr-todo-app-v1';
@@ -1209,6 +1193,8 @@ function loadData() {
         if (t.showHome === undefined) t.showHome = true;
         if (t.order === undefined) t.order = i;
         if (t.docLink === undefined) t.docLink = '';
+      if (t.knowledge === undefined) t.knowledge = '';
+      if (t.notePinned === undefined) t.notePinned = false;
       });
       if (state.data.krs) state.data.krs.forEach((k, i) => {
         if (k.ddlDate === undefined) k.ddlDate = '';
@@ -1219,6 +1205,8 @@ function loadData() {
       });
       if (state.data.quickNotes) state.data.quickNotes.forEach(q => {
         if (q.krId === undefined) q.krId = '';
+        if (q.tags === undefined) q.tags = [];
+        if (q.domainId === undefined) q.domainId = '';
       });
     }
   } catch(e) { console.error('Load failed', e); }
@@ -1547,21 +1535,26 @@ function renderDashboard() {
         <div class="quick-notes">
           <h3>💡 闪念笔记</h3>
           <div class="qn-input">
-            <input type="text" id="qn-input" placeholder="快速记录，回车即保存..." onkeydown="if(event.key==='Enter')addQuickNote()">
-            <button class="btn btn-primary btn-sm" onclick="openQuickNoteModal()" title="完整编辑并选择归属">＋</button>
+            <textarea id="qn-input" placeholder="快速记录，Enter保存，Shift+Enter换行..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addQuickNote()}" rows="1" style="flex:1;border:1px solid var(--c-border);border-radius:var(--r-sm);padding:8px 12px;font-size:14px;resize:none;outline:none;background:var(--c-surface);color:var(--c-text);font-family:inherit;max-height:120px;overflow:hidden;" oninput="this.style.height='auto';this.style.height=Math.max(36,this.scrollHeight)+'px'"></textarea>
+            <button class="qn-full-edit-btn" onclick="openQuickNoteModal()" title="完整编辑">＋</button>
           </div>
           ${state.data.quickNotes.slice(0, 5).map(q => {
             const kr = q.krId ? getKR(q.krId) : null;
+            const d = q.domainId ? getDomain(q.domainId) : null;
+            const tags = q.tags || [];
             return `
-            <div class="qn-item" onclick="openQuickNoteModal('${q.id}')" style="cursor:pointer;">
-              <span class="qn-text">${esc(q.content)}</span>
-              <div style="display:flex;align-items:center;gap:6px;">
-                ${kr ? `<span style="font-size:10px;padding:1px 6px;background:var(--c-primary-bg);color:var(--c-primary);border-radius:999px;">${esc(kr.name)}</span>` : ''}
-                <span class="qn-time">${formatDate(q.createdAt).split(' ')[0]}</span>
-                <span class="qn-del" onclick="event.stopPropagation();deleteQuickNote('${q.id}')">✕</span>
+            <div class="qn-list-item" onclick="openQuickNoteModal('${q.id}')" style="cursor:pointer;">
+              <div class="qn-list-content">${esc(q.content)}</div>
+              <div class="qn-list-meta">
+                ${kr ? `<span class="qn-list-tag">${esc(kr.name)}</span>` : ''}
+                ${d ? `<span class="qn-list-domain">${esc(d.name)}</span>` : ''}
+                ${tags.map(tg => `<span class="qn-list-tag">${esc(tg)}</span>`).join('')}
+                <span class="qn-list-time">${formatDate(q.createdAt).split(' ')[0]}</span>
+                <span class="qn-list-del" onclick="event.stopPropagation();deleteQuickNote('${q.id}')">✕</span>
               </div>
             </div>
           `}).join('') || '<div class="empty-state" style="padding:12px;"><div class="es-text">还没有笔记</div></div>'}
+          ${state.data.quickNotes.length > 5 ? `<div style="text-align:center;padding:8px;font-size:12px;color:var(--c-primary);cursor:pointer;" onclick="switchView('notes')">进入笔记看板查看更多闪念笔记 →</div>` : ''}
         </div>
 
         <div class="ai-shortcut" onclick="switchView('ai')">
@@ -1583,7 +1576,7 @@ function renderTodoRow(t, re, opts) {
   const kr = t.krId ? getKR(t.krId) : null;
   const h = !!re;
   const showDelete = !opts || opts.showDelete !== false;
-  const expanded = state.expandedTodos[t.id];
+  const expanded = state.expandedTodos && state.expandedTodos.includes(t.id);
   return `<div class="todo-row ${h?'highlight':''}" draggable="true" ondragstart="onTodoDragStart(event,'${t.id}')" ondragend="onTodoDragEnd(event)" ondragover="onTodoDragOver(event)" ondrop="onTodoDrop(event,'${t.id}')" ondragleave="onTodoDragLeave(event)">
     <span class="todo-drag-handle">⠿</span>
     <div class="todo-check ${t.done?'done':''}" onclick="toggleTodo('${t.id}')"></div>
@@ -1594,137 +1587,17 @@ function renderTodoRow(t, re, opts) {
         ${kr ? `<span>${esc(kr.name)}</span>` : ''}
         ${domain ? `<span>${esc(domain.name)}</span>` : ''}
         ${formatDDL(t) ? `<span class="todo-ddl">⏰ ${formatDDL(t)}</span>` : ''}
+        ${t.notes ? `<span>📍 ${esc(t.notes)}</span>` : ''}
         ${t.docLink ? `<span>📄 ${renderLinkableText(t.docLink)}</span>` : ''}
+        <button class="todo-expand-btn" onclick="event.stopPropagation();toggleTodoExpand('${t.id}')">${expanded ? '收起详情' : '展开详情'}</button>
       </div>
-      ${expanded ? renderTodoExpandPanel(t) : ''}
     </div>
     <div class="todo-actions">
-      <button class="todo-action-btn" onclick="event.stopPropagation();toggleTodoExpand('${t.id}')" title="展开/收起">${expanded?'▾':'▸'}</button>
-      <button class="todo-action-btn" onclick="event.stopPropagation();openTodoModal('${t.id}')" title="更多设置">✏️</button>
+      <button class="todo-action-btn" onclick="event.stopPropagation();openTodoModal('${t.id}')" title="编辑">✏️</button>
       ${showDelete ? `<button class="todo-action-btn" onclick="event.stopPropagation();deleteTodo('${t.id}')" title="删除">🗑</button>` : ''}
     </div>
+    ${expanded ? '<div class="todo-knowledge-panel" onclick="event.stopPropagation()"><div class="todo-expand-field"><div class="todo-expand-label">📝 下一步</div><div class="todo-expand-text" onclick="inlineEditTodoField(this,\'' + t.id + '\',\'nextStep\')" title="点击编辑">' + (t.nextStep ? esc(t.nextStep) : '<span class="todo-expand-empty">点击添加下一步…</span>') + '</div></div><div class="todo-expand-field"><div class="todo-expand-label">📍 笔记</div><div class="todo-expand-text" onclick="inlineEditTodoField(this,\'' + t.id + '\',\'knowledge\')" title="点击编辑">' + (t.knowledge ? esc(t.knowledge) : '<span class="todo-expand-empty">点击添加笔记…</span>') + '</div></div></div>' : ''}
   </div>`;
-}
-
-function renderTodoExpandPanel(t) {
-  return `<div class="todo-expand-panel" onclick="event.stopPropagation()">
-    <div class="todo-expand-field">
-      <div class="todo-expand-label">📝 下一步</div>
-      <div class="todo-expand-text" onclick="inlineEditTodoField(this,'${t.id}','nextStep')" title="点击编辑">
-        ${t.nextStep ? esc(t.nextStep) : '<span class="todo-expand-empty">点击添加下一步…</span>'}
-      </div>
-    </div>
-    <div class="todo-expand-field">
-      <div class="todo-expand-label">📍 笔记区</div>
-      <div class="todo-expand-text" onclick="inlineEditTodoField(this,'${t.id}','notes')" title="点击编辑">
-        ${t.notes ? esc(t.notes) : '<span class="todo-expand-empty">点击添加笔记…</span>'}
-      </div>
-    </div>
-  </div>`;
-}
-
-function toggleTodoExpand(id) {
-  if (state.expandedTodos[id]) delete state.expandedTodos[id];
-  else state.expandedTodos[id] = true;
-  render();
-}
-
-function inlineEditTodoTitle(el, id) {
-  const t = state.data.todos.find(x => x.id === id);
-  if (!t) return;
-  el.setAttribute('contenteditable', 'true');
-  el.setAttribute('draggable', 'false');
-  el.textContent = t.title;
-  el.focus();
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  range.collapse(false);
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-}
-
-function saveInlineTodoTitle(el, id) {
-  if (el.getAttribute('contenteditable') !== 'true') return;
-  const text = el.textContent.trim();
-  const t = state.data.todos.find(x => x.id === id);
-  if (t && text && text !== t.title) {
-    t.title = text;
-    saveData();
-  }
-  render();
-}
-
-function onTodoTitleKeydown(event, id) {
-  if (event.key === 'Enter') { event.preventDefault(); event.target.blur(); }
-  if (event.key === 'Escape') { event.preventDefault(); render(); }
-}
-
-function inlineEditTodoField(el, id, field) {
-  const t = state.data.todos.find(x => x.id === id);
-  if (!t) return;
-  const currentVal = t[field] || '';
-  el.classList.add('editing');
-  const textarea = document.createElement('textarea');
-  textarea.className = 'todo-expand-textarea';
-  textarea.value = currentVal;
-  textarea.rows = Math.max(2, currentVal.split('\n').length + 1);
-  textarea.placeholder = field === 'nextStep' ? '点击添加下一步…' : '点击添加笔记…';
-  el.innerHTML = '';
-  el.appendChild(textarea);
-  textarea.focus();
-  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-  let saved = false;
-  const save = () => {
-    if (saved) return;
-    saved = true;
-    const val = textarea.value.trim();
-    if (val !== (t[field] || '')) {
-      t[field] = val;
-      saveData();
-    }
-    render();
-  };
-  textarea.addEventListener('blur', save);
-  textarea.addEventListener('keydown', (e) => {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
-    if (e.key === 'Escape') { e.preventDefault(); saved = true; render(); }
-  });
-}
-
-function showPriorityMenu(event, id) {
-  event.stopPropagation();
-  const existing = document.getElementById('priority-menu');
-  if (existing) existing.remove();
-  const t = state.data.todos.find(x => x.id === id);
-  if (!t) return;
-  const menu = document.createElement('div');
-  menu.id = 'priority-menu';
-  menu.className = 'priority-dropdown';
-  menu.innerHTML = ['P0','P1','P2','P3'].map(p =>
-    `<div class="pri-option ${t.priority===p?'selected':''}" onclick="setTodoPriority('${id}','${p}')">${p}</div>`
-  ).join('');
-  document.body.appendChild(menu);
-  const rect = event.target.getBoundingClientRect();
-  menu.style.left = rect.left + 'px';
-  menu.style.top = (rect.bottom + 4) + 'px';
-  setTimeout(() => document.addEventListener('click', closePriorityMenu, { once: true }), 0);
-}
-
-function closePriorityMenu() {
-  const menu = document.getElementById('priority-menu');
-  if (menu) menu.remove();
-}
-
-function setTodoPriority(id, priority) {
-  const t = state.data.todos.find(x => x.id === id);
-  if (t && t.priority !== priority) {
-    t.priority = priority;
-    saveData();
-    toast('优先级已切换为 ' + priority, 'success');
-  }
-  closePriorityMenu();
-  render();
 }
 
 /* ===== KR Management ===== */
@@ -1999,31 +1872,7 @@ function renderTasks() {
       </div>
     `}
 
-    <div style="margin-top:24px;display:grid;grid-template-columns:1fr 1fr;gap:16px;" class="note-board">
-      <div class="kr-card" style="cursor:default;">
-        <div class="section-label">📝 KR 笔记区</div>
-        ${state.data.krs.filter(k => k.notes).length > 0 ? state.data.krs.filter(k => k.notes).map(k => {
-          const d = getDomain(k.domainId);
-          return `<div style="padding:8px 0;border-bottom:1px solid var(--c-border-2);">
-            <div style="font-weight:600;font-size:13px;">${esc(k.name)} ${d ? `<span style="color:var(--c-text-3);font-weight:400;">· ${esc(d.name)}</span>` : ''}</div>
-            <div style="font-size:13px;color:var(--c-text-2);white-space:pre-wrap;margin-top:4px;">${esc(k.notes)}</div>
-          </div>`;
-        }).join('') : '<div class="empty-state" style="padding:12px;"><div class="es-text">暂无KR笔记</div></div>'}
-      </div>
-      <div class="kr-card" style="cursor:default;">
-        <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
-          <span>💡 闪念笔记</span>
-          <button class="btn btn-primary btn-sm" onclick="openQuickNoteModal()">+ 笔记</button>
-        </div>
-        ${state.data.quickNotes.length > 0 ? state.data.quickNotes.slice(0, 8).map(q => {
-          const kr = q.krId ? getKR(q.krId) : null;
-          return `<div class="qn-item" onclick="openQuickNoteModal('${q.id}')" style="cursor:pointer;">
-            <span class="qn-text">${esc(q.content)}</span>
-            <span class="qn-time">${formatDate(q.createdAt).split(' ')[0]}${kr ? ' · ' + esc(kr.name) : ''}</span>
-          </div>`;
-        }).join('') : '<div class="empty-state" style="padding:12px;"><div class="es-text">还没有闪念笔记</div></div>'}
-      </div>
-    </div>
+
   `;
   document.getElementById('page-tasks').innerHTML = html;
   // keep focus on search after render
@@ -2040,84 +1889,303 @@ function renderTasks() {
 /* ===== Notes Board ===== */
 function renderNotes() {
   const domains = state.data.domains.filter(d => !d.hidden);
-  const krNotes = state.data.krs.filter(k => k.notes);
-  const quickNotes = state.data.quickNotes;
-  const editingId = state.noteEdit.id;
+  if (!state.currentDomainId) state.currentDomainId = 'all';
+
+  let allNotes = [];
+  state.data.krs.forEach(kr => {
+    if (kr.notes && kr.notes.trim()) {
+      const domain = state.data.domains.find(d => d.id === kr.domainId);
+      allNotes.push({ id: kr.id, type: 'kr', typeLabel: 'KR笔记', content: kr.notes, sourceName: kr.name, domainId: kr.domainId, domainName: domain ? domain.name : '未分类', tags: [], pinned: kr.notePinned || false, createdAt: kr.createdAt || Date.now() });
+    }
+  });
+  state.data.todos.forEach(todo => {
+    if (todo.knowledge && todo.knowledge.trim()) {
+      const domain = state.data.domains.find(d => d.id === todo.domainId);
+      const kr = todo.krId ? state.data.krs.find(k => k.id === todo.krId) : null;
+      allNotes.push({ id: todo.id, type: 'todo', typeLabel: '任务笔记', content: todo.knowledge, sourceName: todo.title, domainId: todo.domainId, domainName: domain ? domain.name : '未分类', krName: kr ? kr.name : '', tags: [], pinned: todo.notePinned || false, createdAt: todo.createdAt || Date.now() });
+    }
+  });
+  state.data.quickNotes.forEach(qn => {
+    allNotes.push({ id: qn.id, type: 'flash', typeLabel: '闪念笔记', content: qn.content, sourceName: '闪念笔记', domainId: qn.domainId || '', domainName: qn.domainId ? (state.data.domains.find(d => d.id === qn.domainId)?.name || '未分类') : '未分类', tags: qn.tags || [], pinned: false, createdAt: qn.createdAt });
+  });
+
+  let filtered = allNotes;
+  if (state.currentDomainId !== 'all') filtered = filtered.filter(n => n.domainId === state.currentDomainId);
+  if (state.notesSearch) {
+    const q = state.notesSearch.toLowerCase();
+    filtered = filtered.filter(n => n.content.toLowerCase().includes(q) || n.sourceName.toLowerCase().includes(q) || n.tags.some(t => t.toLowerCase().includes(q)));
+  }
+  if (state.notesTypeFilter && state.notesTypeFilter !== 'all') filtered = filtered.filter(n => n.type === state.notesTypeFilter);
+  if (state.notesTagFilter && state.notesTagFilter.length > 0) {
+    filtered = filtered.filter(n => state.notesTagFilter.some(tag => n.tags.includes(tag)) || (n.type === 'flash' && state.data.quickNotes.find(q => q.id === n.id)?.tags?.some(t => state.notesTagFilter.includes(t))));
+  }
+  filtered.sort((a, b) => { if (a.pinned !== b.pinned) return (b.pinned ? 1 : 0) - (a.pinned ? 1 : 0); return b.createdAt - a.createdAt; });
+
+  const allTags = [...new Set(allNotes.filter(n => n.tags.length > 0).flatMap(n => n.tags))].sort();
+  const pinnedCount = filtered.filter(n => n.pinned).length;
+  const totalCount = filtered.length;
+  const selectedCount = state.selectedNoteIds.length;
 
   const html = `
-    ${pageHeader('笔记看板', '汇总所有 KR 笔记与闪念笔记')}
-
-    <div class="kr-card" style="cursor:default;margin-bottom:16px;">
-      <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;margin-bottom:12px;">
-        <span>✍️ 快速笔记</span>
-        ${editingId === 'new' ? '<div style="display:flex;gap:6px;"><button class="btn btn-secondary btn-sm" onclick="cancelNoteEdit()">取消</button><button class="btn btn-primary btn-sm" onclick="saveNoteFromBoard()">保存</button></div>' : '<button class="btn btn-primary btn-sm" onclick="enterNoteEditMode()">+ 写笔记</button>'}
-      </div>
-      ${editingId === 'new' ? `
-        <textarea class="note-edit-area" id="note-edit-textarea" placeholder="支持 Markdown：# 标题、- 列表、**粗体**…（Enter 保存，Shift+Enter 换行）" onkeydown="onNoteEditKeydown(event)" autofocus>${esc(state.noteEdit.draft || '')}</textarea>
-      ` : `
-        <div class="note-preview-area" onclick="enterNoteEditMode()">
-          ${state.noteEdit.draft ? renderMarkdown(state.noteEdit.draft) : '<span class="md-empty">点击此处记录笔记，支持 Markdown 格式…</span>'}
-        </div>
-      `}
+    ${pageHeader('笔记看板', '聚合 KR笔记 · 任务笔记 · 闪念笔记，沉淀知识，方便复用')}
+    <div class="domain-tabs">
+      <div class="domain-tab ${state.currentDomainId==='all'?'active':''}" onclick="selectNotesDomain('all')">全部</div>
+      ${domains.map(d => `<div class="domain-tab ${d.id===state.currentDomainId?'active':''}" onclick="selectNotesDomain('${d.id}')">${esc(d.name)}</div>`).join('')}
+      <div class="domain-tab add" onclick="openDomainModal()">+ 新建领域</div>
     </div>
-
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;">
-      <div class="kr-card" style="cursor:default;">
-        <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
-          <span>📝 KR 笔记区 (${krNotes.length})</span>
+    <div class="notes-toolbar">
+      <input type="text" class="notes-search" placeholder="搜索笔记内容、来源、标签..." value="${esc(state.notesSearch || '')}" oninput="onNotesSearch(this.value)">
+      <div class="notes-filter-group">
+        <div class="notes-filter-btn ${(!state.notesTypeFilter || state.notesTypeFilter==='all')?'active':''}" onclick="filterNotesType('all')">全部</div>
+        <div class="notes-filter-btn ${state.notesTypeFilter==='kr'?'active':''}" onclick="filterNotesType('kr')">KR笔记</div>
+        <div class="notes-filter-btn ${state.notesTypeFilter==='todo'?'active':''}" onclick="filterNotesType('todo')">任务笔记</div>
+        <div class="notes-filter-btn ${state.notesTypeFilter==='flash'?'active':''}" onclick="filterNotesType('flash')">闪念笔记</div>
+        <div class="notes-tag-filter-wrap" id="notes-tag-wrap" style="margin-left:auto;">
+          <div class="notes-tag-dropdown-btn ${state.notesTagFilter.length > 0 ? 'active' : ''}" onclick="toggleNotesTagDropdown()">${state.notesTagFilter.length > 0 ? `标签筛选 (${state.notesTagFilter.length})` : '标签筛选'}</div>
+          ${state._notesTagDropdownOpen && allTags.length > 0 ? `
+            <div class="notes-tag-dropdown">
+              ${allTags.map(tag => `<div class="notes-tag-opt ${state.notesTagFilter.includes(tag)?'active':''}" onclick="toggleTagFilter('${tag.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')"><span>${state.notesTagFilter.includes(tag) ? '✓' : '○'}</span> ${esc(tag)}</div>`).join('')}
+            </div>
+          ` : ''}
         </div>
-        ${krNotes.length > 0 ? krNotes.map(k => {
-          const d = getDomain(k.domainId);
-          return `<div style="padding:8px 0;border-bottom:1px solid var(--c-border-2);cursor:pointer;" onclick="switchView('krs');selectKR('${k.id}')">
-            <div style="font-weight:600;font-size:13px;">${esc(k.name)} ${d ? `<span style="color:var(--c-text-3);font-weight:400;">· ${esc(d.name)}</span>` : ''}</div>
-            <div style="font-size:13px;color:var(--c-text-2);margin-top:4px;max-height:80px;overflow:hidden;">${renderMarkdown(k.notes)}</div>
-          </div>`;
-        }).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">暂无KR笔记，去KR管理添加</div></div>'}
       </div>
-
-      <div class="kr-card" style="cursor:default;">
-        <div class="section-label" style="display:flex;align-items:center;justify-content:space-between;">
-          <span>💡 闪念笔记 (${quickNotes.length})</span>
-          <button class="btn btn-primary btn-sm" onclick="enterNoteEditMode()">+ 笔记</button>
-        </div>
-        ${quickNotes.length > 0 ? quickNotes.slice(0, 10).map(q => {
-          const kr = q.krId ? getKR(q.krId) : null;
-          if (editingId === q.id) {
-            return `<div class="qn-item" style="flex-direction:column;align-items:stretch;gap:8px;">
-              <textarea class="note-edit-area" id="note-edit-textarea" style="min-height:80px;" placeholder="编辑笔记内容…" onkeydown="onNoteEditKeydown(event)">${esc(q.content)}</textarea>
-              <div style="display:flex;gap:6px;justify-content:flex-end;">
-                <button class="btn btn-secondary btn-sm" onclick="cancelNoteEdit()">取消</button>
-                <button class="btn btn-primary btn-sm" onclick="saveNoteFromBoard('${q.id}')">保存</button>
+    </div>
+    ${state.notesTagFilter.length > 0 ? `<button class="notes-filter-btn" onclick="clearTagFilter()" style="margin-left:auto;">清除标签</button>` : ''}
+    <div style="font-size:13px;color:var(--c-text-2);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
+      <span>共 ${totalCount} 条笔记${pinnedCount > 0 ? `（${pinnedCount} 条已置顶）` : ''}</span>
+      ${selectedCount > 0 ? `<button class="btn btn-primary btn-sm" onclick="mergeSelectedNotes()">合并选中 ${selectedCount} 条</button>` : ''}
+    </div>
+    ${filtered.length === 0 ? `
+      <div class="note-empty">
+        <div class="note-empty-icon">📝</div>
+        <div>暂无笔记</div>
+        <div style="font-size:13px;margin-top:8px;">在 KR 详情页、Todo 笔记区、或侧边栏闪念笔记中记录后，会自动出现在这里</div>
+      </div>
+    ` : `
+      <div class="notes-grid">
+        ${filtered.map(n => `
+          <div class="note-card ${n.pinned ? 'pinned' : ''} ${state.selectedNoteIds.includes(n.id) ? 'selected' : ''}">
+            <div class="note-card-head">
+              <div style="display:flex;align-items:center;gap:8px;">
+                ${n.type === 'flash' ? `<input type="checkbox" class="note-select-cb" ${state.selectedNoteIds.includes(n.id)?'checked':''} onchange="toggleNoteSelect('${n.id}')">` : ''}
+                <span class="note-type-badge ${n.type}">${n.typeLabel}</span>
               </div>
-            </div>`;
-          }
-          return `<div class="qn-item" onclick="enterNoteEditMode('${q.id}')" style="cursor:pointer;">
-            <div class="qn-text" style="flex:1;">${renderMarkdown(q.content)}</div>
-            <span class="qn-time">${formatDate(q.createdAt).split(' ')[0]}${kr ? ' · ' + esc(kr.name) : ''}</span>
-          </div>`;
-        }).join('') : '<div class="empty-state" style="padding:20px;"><div class="es-text">还没有闪念笔记</div></div>'}
+              <div style="display:flex;align-items:center;gap:4px;">
+                ${n.type !== 'flash' ? `<button class="note-pin-btn ${n.pinned ? 'pinned' : ''}" onclick="toggleNotePin('${n.type}','${n.id}')" title="${n.pinned ? '取消置顶' : '置顶'}">${n.pinned ? '📌' : '📍'}</button>` : ''}
+                <span class="note-del-x" onclick="deleteNote('${n.type}','${n.id}')" title="删除">✕</span>
+              </div>
+            </div>
+            <div class="note-content" id="note-content-${n.id}" onclick="editNoteInline('${n.type}','${n.id}')" style="cursor:text;">${renderMarkdown(n.content)}</div>
+            <div class="note-source">
+              来源：
+              ${n.type === 'kr' ? `<span class="note-source-link" onclick="switchView('krs');selectDomain('${n.domainId}');selectKR('${n.id}')">${esc(n.sourceName)}</span>` : ''}
+              ${n.type === 'todo' ? `<span class="note-source-link" onclick="switchView('tasks')">${esc(n.sourceName)}</span>${n.krName ? ` · ${esc(n.krName)}` : ''}` : ''}
+              ${n.type === 'flash' ? `<span class="note-source-link" onclick="openQuickNoteModal('${n.id}')">${esc(n.sourceName)}</span>` : ''}
+              · ${esc(n.domainName)} · ${formatDate(n.createdAt).split(' ')[0]}
+            </div>
+            ${n.tags.length > 0 ? `<div class="note-tags">${n.tags.map(t => `<span class="note-tag">${esc(t)}</span>`).join('')}</div>` : ''}
+            ${n.type !== 'flash' ? `<div class="note-actions"><button class="note-action-btn" onclick="toggleNotePin('${n.type}','${n.id}')">${n.pinned ? '取消置顶' : '📌 置顶'}</button></div>` : ''}
+          </div>
+        `).join('')}
       </div>
-    </div>
+    `}
   `;
   document.getElementById('page-notes').innerHTML = html;
-  if (editingId) setTimeout(() => { const ta = document.getElementById('note-edit-textarea'); if (ta) { ta.focus(); ta.setSelectionRange(ta.value.length, ta.value.length); } }, 50);
 }
 
+function selectNotesDomain(domainId) { state.currentDomainId = domainId; renderNotes(); }
+function onNotesSearch(val) { state.notesSearch = val; renderNotes(); setTimeout(() => { const i = document.querySelector('.notes-search'); if (i) { i.focus(); i.setSelectionRange(i.value.length, i.value.length); } }, 0); }
+function filterNotesType(type) { state.notesTypeFilter = type; renderNotes(); }
+function toggleNotesTagDropdown() { state._notesTagDropdownOpen = !state._notesTagDropdownOpen; renderNotes(); }
+function clearTagFilter() { state.notesTagFilter = []; renderNotes(); }
+function toggleTagFilter(tag) {
+  const idx = state.notesTagFilter.indexOf(tag);
+  if (idx > -1) state.notesTagFilter.splice(idx, 1);
+  else state.notesTagFilter.push(tag);
+  renderNotes();
+}
+function toggleNoteSelect(id) {
+  const idx = state.selectedNoteIds.indexOf(id);
+  if (idx > -1) state.selectedNoteIds.splice(idx, 1);
+  else state.selectedNoteIds.push(id);
+  renderNotes();
+}
+function toggleNotePin(type, id) {
+  if (type === 'kr') { const kr = state.data.krs.find(k => k.id === id); if (kr) kr.notePinned = !kr.notePinned; }
+  else if (type === 'todo') { const todo = state.data.todos.find(t => t.id === id); if (todo) todo.notePinned = !todo.notePinned; }
+  saveData(); renderNotes();
+}
+function deleteNote(type, id) {
+  if (!confirm('确定删除这条笔记？删除后不可恢复。')) return;
+  if (type === 'flash') { state.data.quickNotes = state.data.quickNotes.filter(q => q.id !== id); }
+  else if (type === 'kr') { const kr = state.data.krs.find(k => k.id === id); if (kr) kr.notes = ''; }
+  else if (type === 'todo') { const todo = state.data.todos.find(t => t.id === id); if (todo) todo.knowledge = ''; }
+  state.selectedNoteIds = state.selectedNoteIds.filter(sid => sid !== id);
+  saveData(); renderNotes(); toast('已删除', 'info');
+}
+function editNoteInline(type, id) {
+  const area = document.getElementById('note-content-' + id);
+  if (!area || area.tagName === 'TEXTAREA') return;
+  let content = '';
+  if (type === 'kr') { const kr = state.data.krs.find(k => k.id === id); content = kr ? kr.notes : ''; }
+  else if (type === 'todo') { const todo = state.data.todos.find(t => t.id === id); content = todo ? todo.knowledge : ''; }
+  else if (type === 'flash') { const qn = state.data.quickNotes.find(q => q.id === id); content = qn ? qn.content : ''; }
+  area.outerHTML = '<div class="note-edit-wrap" id="note-edit-wrap-' + id + '"><textarea class="note-edit-area" id="note-edit-' + id + '" oninput="autoResizeTextarea(this)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();saveNoteInline(\''+type+'\',\''+id+'\')}" placeholder="Enter保存，Shift+Enter换行...">' + esc(content) + '</textarea><div class="note-edit-actions"><button class="note-action-btn" onclick="renderNotes()">取消</button></div></div>';
+  setTimeout(() => { const el = document.getElementById('note-edit-' + id); if (el) { el.focus(); autoResizeTextarea(el); el.setSelectionRange(el.value.length, el.value.length); } }, 0);
+}
+function autoResizeTextarea(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.max(120, el.scrollHeight) + 'px';
+}
+function saveNoteInline(type, id) {
+  const el = document.getElementById('note-edit-' + id);
+  if (!el) return;
+  const content = el.value.trim();
+  if (!content) { toast('内容不能为空', 'error'); return; }
+  if (type === 'kr') { const kr = state.data.krs.find(k => k.id === id); if (kr) kr.notes = content; }
+  else if (type === 'todo') { const todo = state.data.todos.find(t => t.id === id); if (todo) todo.knowledge = content; }
+  else if (type === 'flash') { const qn = state.data.quickNotes.find(q => q.id === id); if (qn) qn.content = content; }
+  saveData(); renderNotes(); toast('已保存', 'success');
+}
+function mergeSelectedNotes() {
+  if (state.selectedNoteIds.length < 2) { toast('至少选择2条笔记', 'error'); return; }
+  const selected = state.data.quickNotes.filter(q => state.selectedNoteIds.includes(q.id));
+  if (selected.length !== state.selectedNoteIds.length) { toast('只能合并闪念笔记', 'error'); return; }
+  const mergedContent = selected.map(q => q.content).join('\n---\n');
+  const mergedTags = [...new Set(selected.flatMap(q => q.tags || []))];
+  const mergedDomainId = selected.find(q => q.domainId)?.domainId || '';
+  const oldest = selected.sort((a, b) => a.createdAt - b.createdAt)[0];
+  oldest.content = mergedContent;
+  oldest.tags = mergedTags;
+  oldest.domainId = mergedDomainId;
+  state.data.quickNotes = state.data.quickNotes.filter(q => !state.selectedNoteIds.includes(q.id) || q.id === oldest.id);
+  state.selectedNoteIds = [];
+  saveData(); renderNotes(); toast('已合并 ' + selected.length + ' 条笔记', 'success');
+}
+function toggleTodoExpand(id) {
+  if (!state.expandedTodos) state.expandedTodos = [];
+  const idx = state.expandedTodos.indexOf(id);
+  if (idx > -1) state.expandedTodos.splice(idx, 1);
+  else state.expandedTodos.push(id);
+  render();
+}
+
+/* ===== Inline editing: Todo title, priority, expand fields ===== */
+function inlineEditTodoTitle(el, id) {
+  if (el.getAttribute('contenteditable') === 'true') return;
+  const t = state.data.todos.find(x => x.id === id);
+  if (!t) return;
+  el.setAttribute('contenteditable', 'true');
+  el.setAttribute('draggable', 'false');
+  el.textContent = t.title;
+  el.focus();
+  const range = document.createRange();
+  range.selectNodeContents(el);
+  range.collapse(false);
+  const sel = window.getSelection();
+  sel.removeAllRanges();
+  sel.addRange(range);
+}
+
+function saveInlineTodoTitle(el, id) {
+  if (el.getAttribute('contenteditable') !== 'true') return;
+  const text = el.textContent.trim();
+  const t = state.data.todos.find(x => x.id === id);
+  if (t && text && text !== t.title) {
+    t.title = text;
+    saveData();
+  }
+  render();
+}
+
+function onTodoTitleKeydown(event, id) {
+  if (event.key === 'Enter') { event.preventDefault(); event.target.blur(); }
+  if (event.key === 'Escape') { event.preventDefault(); render(); }
+}
+
+function showPriorityMenu(event, id) {
+  event.stopPropagation();
+  const existing = document.getElementById('priority-menu');
+  if (existing) existing.remove();
+  const t = state.data.todos.find(x => x.id === id);
+  if (!t) return;
+  const menu = document.createElement('div');
+  menu.id = 'priority-menu';
+  menu.className = 'priority-dropdown';
+  menu.innerHTML = ['P0','P1','P2','P3'].map(p =>
+    '<div class="pri-option ' + (t.priority === p ? 'selected' : '') + '" onclick="setTodoPriority(\'' + id + '\',\'' + p + '\')">' + p + '</div>'
+  ).join('');
+  document.body.appendChild(menu);
+  const rect = event.target.getBoundingClientRect();
+  menu.style.left = rect.left + 'px';
+  menu.style.top = (rect.bottom + 4) + 'px';
+  setTimeout(function() { document.addEventListener('click', closePriorityMenu, { once: true }); }, 0);
+}
+
+function closePriorityMenu() {
+  var menu = document.getElementById('priority-menu');
+  if (menu) menu.remove();
+}
+
+function setTodoPriority(id, priority) {
+  var t = state.data.todos.find(function(x) { return x.id === id; });
+  if (t && t.priority !== priority) {
+    t.priority = priority;
+    saveData();
+    toast('优先级已切换为 ' + priority, 'success');
+  }
+  closePriorityMenu();
+  render();
+}
+
+function inlineEditTodoField(el, id, field) {
+  if (el.querySelector('textarea')) return;
+  var t = state.data.todos.find(function(x) { return x.id === id; });
+  if (!t) return;
+  var currentVal = t[field] || '';
+  var textarea = document.createElement('textarea');
+  textarea.className = 'todo-expand-textarea';
+  textarea.value = currentVal;
+  textarea.rows = Math.max(2, currentVal.split('\n').length + 1);
+  textarea.placeholder = field === 'nextStep' ? '点击添加下一步…' : '点击添加笔记…';
+  el.innerHTML = '';
+  el.appendChild(textarea);
+  textarea.focus();
+  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
+  var saved = false;
+  var save = function() {
+    if (saved) return;
+    saved = true;
+    var val = textarea.value.trim();
+    if (val !== (t[field] || '')) {
+      t[field] = val;
+      saveData();
+    }
+    render();
+  };
+  textarea.addEventListener('blur', save);
+  textarea.addEventListener('keydown', function(e) {
+    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
+    if (e.key === 'Escape') { e.preventDefault(); saved = true; render(); }
+  });
+}
+
+/* ===== Markdown rendering ===== */
 function renderMarkdown(text) {
   if (!text) return '';
-  const lines = String(text).split('\n');
-  let html = '';
-  let listType = null;
-  let paraBuffer = [];
-  const flushPara = () => {
+  var lines = String(text).split('\n');
+  var html = '';
+  var listType = null;
+  var paraBuffer = [];
+  var flushPara = function() {
     if (paraBuffer.length > 0) { html += '<p>' + paraBuffer.join(' ') + '</p>'; paraBuffer = []; }
   };
-  const closeList = () => {
+  var closeList = function() {
     if (listType) { html += '</' + listType + '>'; listType = null; }
   };
-  for (let line of lines) {
-    const trimmed = line.trim();
-    let m;
+  for (var i = 0; i < lines.length; i++) {
+    var trimmed = lines[i].trim();
+    var m;
     if (m = trimmed.match(/^### (.+)$/)) { closeList(); flushPara(); html += '<h3>' + inlineMd(esc(m[1])) + '</h3>'; }
     else if (m = trimmed.match(/^## (.+)$/)) { closeList(); flushPara(); html += '<h2>' + inlineMd(esc(m[1])) + '</h2>'; }
     else if (m = trimmed.match(/^# (.+)$/)) { closeList(); flushPara(); html += '<h1>' + inlineMd(esc(m[1])) + '</h1>'; }
@@ -2132,51 +2200,11 @@ function renderMarkdown(text) {
 }
 
 function inlineMd(text) {
-  let result = text;
+  var result = text;
   result = result.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
   result = result.replace(/\*(.+?)\*/g, '<em>$1</em>');
   result = result.replace(/`(.+?)`/g, '<code>$1</code>');
   return result;
-}
-
-function enterNoteEditMode(id) {
-  if (id && id !== 'new') {
-    const q = state.data.quickNotes.find(x => x.id === id);
-    state.noteEdit.draft = q ? q.content : '';
-  } else if (!id) {
-    state.noteEdit.draft = '';
-    id = 'new';
-  }
-  state.noteEdit.id = id;
-  render();
-}
-
-function cancelNoteEdit() {
-  state.noteEdit.id = null;
-  state.noteEdit.draft = '';
-  render();
-}
-
-function onNoteEditKeydown(event) {
-  if (event.key === 'Enter' && !event.shiftKey) { event.preventDefault(); saveNoteFromBoard(state.noteEdit.id === 'new' ? '' : state.noteEdit.id); }
-  if (event.key === 'Escape') { event.preventDefault(); cancelNoteEdit(); }
-}
-
-function saveNoteFromBoard(id) {
-  const ta = document.getElementById('note-edit-textarea');
-  if (!ta) return;
-  const content = ta.value.trim();
-  if (!content) { toast('请输入笔记内容', 'error'); return; }
-  if (id) {
-    const q = state.data.quickNotes.find(x => x.id === id);
-    if (q) { q.content = content; saveData(); toast('已保存', 'success'); }
-  } else {
-    state.data.quickNotes.unshift({ id: uid(), content, createdAt: Date.now(), krId: '' });
-    saveData(); toast('已添加笔记', 'success');
-  }
-  state.noteEdit.id = null;
-  state.noteEdit.draft = '';
-  render();
 }
 
 function highlightHtml(text, re) {
@@ -2716,6 +2744,7 @@ function renderSettings() {
       <div class="settings-row"><label>KR 数</label><span class="sr-val">${totalKRs}</span></div>
       <div class="settings-row"><label>Todo 数</label><span class="sr-val">${totalTodos}（已完成 ${doneTodos}）</span></div>
       <div class="settings-row"><label>闪念笔记数</label><span class="sr-val">${totalNotes}</span></div>
+      <div class="settings-row"><label>任务笔记数</label><span class="sr-val">${state.data.todos.filter(t => t.knowledge && t.knowledge.trim()).length}</span></div>
       <div class="settings-row"><label>存储方式</label><span class="sr-val">本地存储 (localStorage)</span></div>
     </div>
 
@@ -2934,9 +2963,10 @@ function deleteTodo(id) {
 
 function addQuickNote() {
   const input = document.getElementById('qn-input');
-  const text = input.value.trim();
+  const text = (input.value || '').trim();
   if (!text) return;
-  state.data.quickNotes.unshift({ id: uid(), content: text, createdAt: Date.now(), krId: '' });
+  state.data.quickNotes.unshift({ id: uid(), content: text, createdAt: Date.now(), krId: '', domainId: '', tags: [] });
+  input.value = ''; input.style.height = 'auto';
   saveData(); render(); toast('已添加笔记', 'success');
 }
 
@@ -2948,6 +2978,7 @@ function deleteQuickNote(id) {
 function openQuickNoteModal(id) {
   const q = id ? state.data.quickNotes.find(x => x.id === id) : null;
   const krs = state.data.krs;
+  const domains = state.data.domains.filter(d => !d.hidden);
   showModal(`
     <div class="modal-head">
       <h3>${q ? '编辑笔记' : '新建笔记'}</h3>
@@ -2959,11 +2990,22 @@ function openQuickNoteModal(id) {
         <textarea id="qn-content" rows="6" placeholder="记录你的想法...">${q ? esc(q.content) : ''}</textarea>
       </div>
       <div class="form-group">
-        <label>归属KR（选填）</label>
-        <select id="qn-kr">
-          <option value="">不归属（独立闪念笔记）</option>
-          ${krs.map(kr => `<option value="${kr.id}" ${q && q.krId === kr.id ? 'selected' : ''}>${esc(kr.name)}</option>`).join('')}
+        <label>归属领域（选填）</label>
+        <select id="qn-domain" onchange="updateQN_KROptions()">
+          <option value="">不归属（未分类）</option>
+          ${domains.map(d => `<option value="${d.id}" ${q && q.domainId === d.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}
         </select>
+      </div>
+      <div class="form-group">
+        <label>归属KR（选填）</label>
+        <select id="qn-kr" onchange="updateQN_KROptions()">
+          <option value="">不归属（独立闪念笔记）</option>
+          ${(q && q.domainId ? krs.filter(kr => kr.domainId === q.domainId) : krs).map(kr => `<option value="${kr.id}" ${q && q.krId === kr.id ? 'selected' : ''}>${esc(kr.name)}</option>`).join('')}
+        </select>
+      </div>
+      <div class="form-group">
+        <label>标签（选填，逗号分隔）</label>
+        <input type="text" id="qn-tags" value="${q && q.tags ? q.tags.join(', ') : ''}" placeholder="如：租房, 攻略, 复盘">
       </div>
     </div>
     <div class="modal-foot">
@@ -2978,12 +3020,17 @@ function saveQuickNote(id) {
   const content = document.getElementById('qn-content').value.trim();
   if (!content) { toast('请输入笔记内容', 'error'); return; }
   const krId = document.getElementById('qn-kr').value;
+  const domainId = document.getElementById('qn-domain') ? document.getElementById('qn-domain').value : '';
+  const tagsStr = document.getElementById('qn-tags') ? document.getElementById('qn-tags').value.trim() : '';
+  const tags = tagsStr ? tagsStr.split(/[,，]/).map(t => t.trim()).filter(Boolean) : [];
   if (id) {
     const q = state.data.quickNotes.find(x => x.id === id);
     q.content = content;
     q.krId = krId;
+    q.domainId = domainId;
+    q.tags = tags;
   } else {
-    state.data.quickNotes.unshift({ id: uid(), content, createdAt: Date.now(), krId });
+    state.data.quickNotes.unshift({ id: uid(), content, createdAt: Date.now(), krId, domainId, tags });
   }
   saveData();
   closeModal();
@@ -3323,7 +3370,7 @@ function openTodoModal(id, krId, preset) {
       </div>
       <div class="form-group">
         <label>备注</label>
-        <textarea id="td-nextstep" rows="2" placeholder="补充说明">${t ? esc(t.nextStep) : (preset ? esc(preset.nextStep) : '')}</textarea>
+        <textarea id="td-notes" rows="2" placeholder="补充说明">${t ? esc(t.notes) : (preset ? esc(preset.notes) : '')}</textarea>
       </div>
       <div class="form-group">
         <label>文档</label>
@@ -3331,7 +3378,11 @@ function openTodoModal(id, krId, preset) {
       </div>
       <div class="form-group">
         <label>下一步</label>
-        <textarea id="td-notes" placeholder="下一步行动计划...">${t ? esc(t.notes) : (preset ? esc(preset.notes) : '')}</textarea>
+        <textarea id="td-nextstep" rows="2" placeholder="下一步行动计划...">${t ? esc(t.nextStep) : (preset ? esc(preset.nextStep) : '')}</textarea>
+      </div>
+      <div class="form-group">
+        <label>笔记区</label>
+        <textarea id="td-knowledge" rows="4" placeholder="做完后沉淀的知识、攻略、踩坑记录...">${t ? esc(t.knowledge || '') : (preset ? esc(preset.knowledge || '') : '')}</textarea>
       </div>
       <div class="form-group">
         <label style="display:flex;align-items:center;gap:8px;cursor:pointer;">
@@ -3356,6 +3407,16 @@ function updateKROptions() {
   krSelect.innerHTML = '<option value="">无（独立Todo）</option>' + krs.map(k => `<option value="${k.id}" ${currentVal === k.id ? 'selected' : ''}>${esc(k.name)}</option>`).join('');
 }
 
+function updateQN_KROptions() {
+  const domainId = document.getElementById('qn-domain') ? document.getElementById('qn-domain').value : '';
+  const krSelect = document.getElementById('qn-kr');
+  if (!krSelect) return;
+  const currentVal = krSelect.value;
+  const allKRs = state.data.krs;
+  const filtered = domainId ? allKRs.filter(k => k.domainId === domainId) : allKRs;
+  krSelect.innerHTML = '<option value="">不归属（独立闪念笔记）</option>' + filtered.map(k => `<option value="${k.id}" ${currentVal === k.id ? 'selected' : ''}>${esc(k.name)}</option>`).join('');
+}
+
 function saveTodo(id) {
   const title = document.getElementById('td-title').value.trim();
   if (!title) { toast('请输入任务标题', 'error'); return; }
@@ -3371,6 +3432,7 @@ function saveTodo(id) {
     nextStep: document.getElementById('td-nextstep').value.trim(),
     docLink: document.getElementById('td-doclink').value.trim(),
     notes: document.getElementById('td-notes').value.trim(),
+    knowledge: document.getElementById('td-knowledge') ? document.getElementById('td-knowledge').value.trim() : '',
     showHome: document.getElementById('td-showHome').checked
   };
 
