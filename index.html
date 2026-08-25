@@ -125,11 +125,14 @@ body {
 .note-empty-icon { font-size: 48px; margin-bottom: 12px; }
 .notes-merge-bar { position: sticky; bottom: 16px; background: var(--c-primary); color: #fff; padding: 12px 20px; border-radius: var(--r-lg); display: flex; align-items: center; justify-content: space-between; gap: 12px; box-shadow: var(--sh-lg); z-index: 10; }
 /* ===== Todo expand for knowledge ===== */
-.inline-edit-field:hover { background: var(--c-primary-bg); border-radius: 2px; }
-.inline-edit-field:focus { background: var(--c-surface); border: 1px solid var(--c-primary); border-radius: var(--r-sm); padding: 2px 4px; }
 .todo-title-edit-input { font-family: inherit; }
 .todo-expand-btn { font-size: 11px; color: var(--c-primary); cursor: pointer; padding: 2px 8px; border-radius: var(--r-sm); background: var(--c-primary-bg); border: none; }
 .todo-expand-btn:hover { background: var(--c-primary); color: #fff; }
+.expand-field { margin-bottom: 10px; }
+.expand-label { display: block; font-size: 12px; color: var(--c-text-3); margin-bottom: 4px; font-weight: 500; }
+.expand-textarea { width: 100%; border: 1px solid transparent; border-radius: var(--r-sm); padding: 6px 10px; font-size: 13px; line-height: 1.6; color: var(--c-text); background: var(--c-surface); resize: none; font-family: inherit; outline: none; overflow: hidden; }
+.expand-textarea:focus { border-color: var(--c-primary); background: var(--c-surface); }
+.expand-textarea::placeholder { color: var(--c-text-3); }
 .todo-knowledge-panel { padding: 12px 16px; background: var(--c-bg); border-radius: var(--r-md); margin: 8px 0 0 28px; font-size: 13px; line-height: 1.6; color: var(--c-text-2); white-space: pre-wrap; word-break: break-word; border-left: 3px solid var(--c-primary); width: calc(100% - 28px); flex-basis: 100%; order: 10; }
 /* ===== Homepage flash notes redesign ===== */
 .qn-list-item { padding: 10px 12px; background: var(--c-bg); border-radius: var(--r-md); margin-bottom: 6px; font-size: 13px; transition: background .15s; }
@@ -1568,7 +1571,7 @@ function renderTodoRow(t, re, opts) {
       <button class="todo-action-btn" onclick="event.stopPropagation();openTodoModal('${t.id}')" title="编辑">✏️</button>
       ${showDelete ? `<button class="todo-action-btn" onclick="event.stopPropagation();deleteTodo('${t.id}')" title="删除">🗑</button>` : ''}
     </div>
-    ${(state.expandedTodos && state.expandedTodos.includes(t.id) && (t.nextStep || t.knowledge)) ? '<div class="todo-knowledge-panel">' + (t.nextStep ? '<div style="margin-bottom:8px;"><b>下一步：</b> <span class="inline-edit-field" contenteditable="true" data-todo-id="' + t.id + '" data-field="nextStep" onblur="saveInlineExpand(this)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();this.blur()}" style="outline:none;cursor:text;">' + esc(t.nextStep) + '</span></div>' : '') + (t.knowledge ? '<div><b>笔记：</b> <span class="inline-edit-field" contenteditable="true" data-todo-id="' + t.id + '" data-field="knowledge" onblur="saveInlineExpand(this)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();this.blur()}" style="outline:none;cursor:text;">' + esc(t.knowledge) + '</span></div>' : '') + '</div>' : ''}
+    ${(state.expandedTodos && state.expandedTodos.includes(t.id)) ? '<div class="todo-knowledge-panel">' + '<div class="expand-field"><label class="expand-label">下一步</label><textarea class="expand-textarea" id="expand-next-' + t.id + '" oninput="autoResizeExpand(this)" onblur="saveExpandField(\'' + t.id + '\',\'nextStep\',this.value)" placeholder="输入下一步行动计划..." style="min-height:36px;">' + esc(t.nextStep || '') + '</textarea></div>' + '<div class="expand-field"><label class="expand-label">笔记区</label><textarea class="expand-textarea" id="expand-knowledge-' + t.id + '" oninput="autoResizeExpand(this)" onblur="saveExpandField(\'' + t.id + '\',\'knowledge\',this.value)" placeholder="沉淀知识、攻略、踩坑记录..." style="min-height:60px;">' + esc(t.knowledge || '') + '</textarea></div>' + '</div>' : ''}
   </div>`;
 }
 
@@ -2024,33 +2027,10 @@ function editNoteInline(type, id) {
   if (type === 'kr') { const kr = state.data.krs.find(k => k.id === id); content = kr ? kr.notes : ''; }
   else if (type === 'todo') { const todo = state.data.todos.find(t => t.id === id); content = todo ? todo.knowledge : ''; }
   else if (type === 'flash') { const qn = state.data.quickNotes.find(q => q.id === id); content = qn ? qn.content : ''; }
-  area.outerHTML = '<div class="note-edit-wrap" id="note-edit-wrap-' + id + '"><textarea class="note-edit-area" id="note-edit-' + id + '" oninput="autoResizeTextarea(this)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();saveNoteInline(\''+type+'\',\''+id+'\')}" onpaste="handleNotePaste(event,\''+type+'\',\''+id+'\')" placeholder="Enter保存，Shift+Enter换行，可粘贴图片...">' + esc(content) + '</textarea><div class="note-edit-actions"><button class="note-action-btn" onclick="renderNotes()">取消</button></div></div>';
+  area.outerHTML = '<div class="note-edit-wrap" id="note-edit-wrap-' + id + '"><textarea class="note-edit-area" id="note-edit-' + id + '" oninput="autoResizeTextarea(this)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();saveNoteInline(\''+type+'\',\''+id+'\')}" placeholder="Enter保存，Shift+Enter换行...">' + esc(content) + '</textarea><div class="note-edit-actions"><button class="note-action-btn" onclick="renderNotes()">取消</button></div></div>';
   setTimeout(() => { const el = document.getElementById('note-edit-' + id); if (el) { el.focus(); autoResizeTextarea(el); el.setSelectionRange(el.value.length, el.value.length); } }, 0);
 }
-function handleNotePaste(e, type, id) {
-  const items = e.clipboardData && e.clipboardData.items;
-  if (!items) return;
-  for (const item of items) {
-    if (item.type && item.type.startsWith('image/')) {
-      e.preventDefault();
-      const blob = item.getAsFile();
-      if (!blob) return;
-      const reader = new FileReader();
-      reader.onload = function(ev) {
-        const dataUrl = ev.target.result;
-        const imgTag = '\n![粘贴图片](' + dataUrl + ')\n';
-        const ta = document.getElementById('note-edit-' + id);
-        if (!ta) return;
-        const start = ta.selectionStart, end = ta.selectionEnd;
-        ta.value = ta.value.substring(0, start) + imgTag + ta.value.substring(end);
-        ta.selectionStart = ta.selectionEnd = start + imgTag.length;
-        autoResizeTextarea(ta);
-      };
-      reader.readAsDataURL(blob);
-      return;
-    }
-  }
-}
+
 function autoResizeTextarea(el) {
   el.style.height = 'auto';
   el.style.height = Math.max(120, el.scrollHeight) + 'px';
@@ -2080,15 +2060,17 @@ function mergeSelectedNotes() {
   state.selectedNoteIds = [];
   saveData(); renderNotes(); toast('已合并 ' + selected.length + ' 条笔记', 'success');
 }
-function saveInlineExpand(el) {
-  const todoId = el.dataset.todoId;
-  const field = el.dataset.field;
+function saveExpandField(todoId, field, value) {
   const todo = state.data.todos.find(t => t.id === todoId);
   if (!todo) return;
-  const newVal = el.textContent.trim();
+  const newVal = (value || '').trim();
   if (field === 'nextStep') todo.nextStep = newVal;
   else if (field === 'knowledge') todo.knowledge = newVal;
   saveData();
+}
+function autoResizeExpand(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.max(el.dataset.minH || 36, el.scrollHeight) + 'px';
 }
 function inlineEditTodoTitle(id) {
   const todo = state.data.todos.find(t => t.id === id);
