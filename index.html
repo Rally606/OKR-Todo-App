@@ -127,7 +127,7 @@ body {
 /* ===== Todo expand for knowledge ===== */
 .todo-expand-btn { font-size: 11px; color: var(--c-primary); cursor: pointer; padding: 2px 8px; border-radius: var(--r-sm); background: var(--c-primary-bg); border: none; }
 .todo-expand-btn:hover { background: var(--c-primary); color: #fff; }
-.todo-knowledge-panel { padding: 12px 16px; background: var(--c-bg); border-radius: var(--r-md); margin: 8px 0 0 28px; font-size: 13px; line-height: 1.6; color: var(--c-text-2); white-space: pre-wrap; word-break: break-word; border-left: 3px solid var(--c-primary); }
+.todo-knowledge-panel { padding: 12px 16px; background: var(--c-bg); border-radius: var(--r-md); margin: 8px 0 0 28px; font-size: 13px; line-height: 1.6; color: var(--c-text-2); white-space: pre-wrap; word-break: break-word; border-left: 3px solid var(--c-primary); width: calc(100% - 28px); flex-basis: 100%; order: 10; }
 /* ===== Homepage flash notes redesign ===== */
 .qn-list-item { padding: 10px 12px; background: var(--c-bg); border-radius: var(--r-md); margin-bottom: 6px; font-size: 13px; transition: background .15s; }
 .qn-list-item:hover { background: var(--c-surface); }
@@ -395,7 +395,7 @@ body {
 }
 .weekly-overview h3 { font-size: 15px; font-weight: 600; margin-bottom: 12px; display: flex; align-items: center; gap: 8px; }
 .weekly-overview h3 .count { font-size: 12px; color: var(--c-text-3); font-weight: 400; }
-.todo-row {
+.todo-row { flex-wrap: wrap;
   display: flex;
   align-items: center;
   gap: 12px;
@@ -1504,7 +1504,7 @@ function renderDashboard() {
         <div class="quick-notes">
           <h3>💡 闪念笔记</h3>
           <div class="qn-input">
-            <input type="text" id="qn-input" placeholder="快速记录，回车即保存..." onkeydown="if(event.key==='Enter'){event.preventDefault();addQuickNote()}">
+            <textarea id="qn-input" placeholder="快速记录，Enter保存，Shift+Enter换行..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();addQuickNote()}" rows="1" style="flex:1;border:1px solid var(--c-border);border-radius:var(--r-sm);padding:8px 12px;font-size:14px;resize:none;outline:none;background:var(--c-surface);color:var(--c-text);font-family:inherit;max-height:120px;overflow:hidden;" oninput="this.style.height='auto';this.style.height=Math.max(36,this.scrollHeight)+'px'"></textarea>
             <button class="qn-full-edit-btn" onclick="openQuickNoteModal()" title="完整编辑">＋</button>
           </div>
           ${state.data.quickNotes.slice(0, 5).map(q => {
@@ -1563,7 +1563,7 @@ function renderTodoRow(t, re, opts) {
       <button class="todo-action-btn" onclick="event.stopPropagation();openTodoModal('${t.id}')" title="编辑">✏️</button>
       ${showDelete ? `<button class="todo-action-btn" onclick="event.stopPropagation();deleteTodo('${t.id}')" title="删除">🗑</button>` : ''}
     </div>
-    ${state.expandedTodos && state.expandedTodos.includes(t.id) && (t.nextStep || t.knowledge) ? `<div class="todo-knowledge-panel">${t.nextStep ? '<div style="margin-bottom:8px;"><b>下一步：</b>${esc(t.nextStep)}</div>' : ''}${t.knowledge ? '<div><b>笔记：</b>${esc(t.knowledge)}</div>' : ''}</div>` : ''}
+    ${(state.expandedTodos && state.expandedTodos.includes(t.id) && (t.nextStep || t.knowledge)) ? '<div class="todo-knowledge-panel">' + (t.nextStep ? '<div style="margin-bottom:8px;"><b>下一步：</b>' + esc(t.nextStep) + '</div>' : '') + (t.knowledge ? '<div><b>笔记：</b>' + esc(t.knowledge) + '</div>' : '') + '</div>' : ''}
   </div>`;
 }
 
@@ -1907,19 +1907,17 @@ function renderNotes() {
         <div class="notes-filter-btn ${state.notesTypeFilter==='kr'?'active':''}" onclick="filterNotesType('kr')">KR笔记</div>
         <div class="notes-filter-btn ${state.notesTypeFilter==='todo'?'active':''}" onclick="filterNotesType('todo')">任务笔记</div>
         <div class="notes-filter-btn ${state.notesTypeFilter==='flash'?'active':''}" onclick="filterNotesType('flash')">闪念笔记</div>
+        <div class="notes-tag-filter-wrap" id="notes-tag-wrap" style="margin-left:auto;">
+          <div class="notes-tag-dropdown-btn ${state.notesTagFilter.length > 0 ? 'active' : ''}" onclick="toggleNotesTagDropdown()">${state.notesTagFilter.length > 0 ? `标签筛选 (${state.notesTagFilter.length})` : '标签筛选'}</div>
+          ${state._notesTagDropdownOpen && allTags.length > 0 ? `
+            <div class="notes-tag-dropdown">
+              ${allTags.map(tag => `<div class="notes-tag-opt ${state.notesTagFilter.includes(tag)?'active':''}" onclick="toggleTagFilter('${tag.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')"><span>${state.notesTagFilter.includes(tag) ? '✓' : '○'}</span> ${esc(tag)}</div>`).join('')}
+            </div>
+          ` : ''}
+        </div>
       </div>
     </div>
-    <div style="margin-bottom:16px;display:flex;align-items:center;gap:8px;">
-      <div class="notes-tag-filter-wrap" id="notes-tag-wrap">
-        <div class="notes-tag-dropdown-btn ${state.notesTagFilter.length > 0 ? 'active' : ''}" onclick="toggleNotesTagDropdown()">${state.notesTagFilter.length > 0 ? `标签筛选 (${state.notesTagFilter.length})` : '标签筛选'}</div>
-        ${state._notesTagDropdownOpen && allTags.length > 0 ? `
-          <div class="notes-tag-dropdown">
-            ${allTags.map(tag => `<div class="notes-tag-opt ${state.notesTagFilter.includes(tag)?'active':''}" onclick="toggleTagFilter('${tag.replace(/'/g,"\\'").replace(/"/g,'&quot;')}')"><span>${state.notesTagFilter.includes(tag) ? '✓' : '○'}</span> ${esc(tag)}</div>`).join('')}
-          </div>
-        ` : ''}
-      </div>
-      ${state.notesTagFilter.length > 0 ? `<button class="notes-filter-btn" onclick="clearTagFilter()">清除标签筛选</button>` : ''}
-    </div>
+    ${state.notesTagFilter.length > 0 ? `<button class="notes-filter-btn" onclick="clearTagFilter()" style="margin-left:auto;">清除标签</button>` : ''}
     <div style="font-size:13px;color:var(--c-text-2);margin-bottom:16px;display:flex;align-items:center;justify-content:space-between;">
       <span>共 ${totalCount} 条笔记${pinnedCount > 0 ? `（${pinnedCount} 条已置顶）` : ''}</span>
       ${selectedCount > 0 ? `<button class="btn btn-primary btn-sm" onclick="mergeSelectedNotes()">合并选中 ${selectedCount} 条</button>` : ''}
@@ -1999,7 +1997,7 @@ function editNoteInline(type, id) {
   if (type === 'kr') { const kr = state.data.krs.find(k => k.id === id); content = kr ? kr.notes : ''; }
   else if (type === 'todo') { const todo = state.data.todos.find(t => t.id === id); content = todo ? todo.knowledge : ''; }
   else if (type === 'flash') { const qn = state.data.quickNotes.find(q => q.id === id); content = qn ? qn.content : ''; }
-  area.outerHTML = '<div class="note-edit-wrap" id="note-edit-wrap-' + id + '"><textarea class="note-edit-area" id="note-edit-' + id + '" oninput="autoResizeTextarea(this)">' + esc(content) + '</textarea><div class="note-edit-actions"><button class="note-action-btn" onclick="saveNoteInline(\''+type+'\',\''+id+'\')">💾 保存</button><button class="note-action-btn" onclick="renderNotes()">取消</button></div></div>';
+  area.outerHTML = '<div class="note-edit-wrap" id="note-edit-wrap-' + id + '"><textarea class="note-edit-area" id="note-edit-' + id + '" oninput="autoResizeTextarea(this)" onkeydown="if(event.key===\'Enter\'&&!event.shiftKey){event.preventDefault();saveNoteInline(\''+type+'\',\''+id+'\')}" placeholder="Enter保存，Shift+Enter换行...">' + esc(content) + '</textarea><div class="note-edit-actions"><button class="note-action-btn" onclick="renderNotes()">取消</button></div></div>';
   setTimeout(() => { const el = document.getElementById('note-edit-' + id); if (el) { el.focus(); autoResizeTextarea(el); el.setSelectionRange(el.value.length, el.value.length); } }, 0);
 }
 function autoResizeTextarea(el) {
@@ -2795,9 +2793,10 @@ function deleteTodo(id) {
 
 function addQuickNote() {
   const input = document.getElementById('qn-input');
-  const text = input.value.trim();
+  const text = (input.value || '').trim();
   if (!text) return;
   state.data.quickNotes.unshift({ id: uid(), content: text, createdAt: Date.now(), krId: '', domainId: '', tags: [] });
+  input.value = ''; input.style.height = 'auto';
   saveData(); render(); toast('已添加笔记', 'success');
 }
 
@@ -2822,16 +2821,16 @@ function openQuickNoteModal(id) {
       </div>
       <div class="form-group">
         <label>归属领域（选填）</label>
-        <select id="qn-domain">
+        <select id="qn-domain" onchange="updateQN_KROptions()">
           <option value="">不归属（未分类）</option>
           ${domains.map(d => `<option value="${d.id}" ${q && q.domainId === d.id ? 'selected' : ''}>${esc(d.name)}</option>`).join('')}
         </select>
       </div>
       <div class="form-group">
         <label>归属KR（选填）</label>
-        <select id="qn-kr">
+        <select id="qn-kr" onchange="updateQN_KROptions()">
           <option value="">不归属（独立闪念笔记）</option>
-          ${krs.map(kr => `<option value="${kr.id}" ${q && q.krId === kr.id ? 'selected' : ''}>${esc(kr.name)}</option>`).join('')}
+          ${(q && q.domainId ? krs.filter(kr => kr.domainId === q.domainId) : krs).map(kr => `<option value="${kr.id}" ${q && q.krId === kr.id ? 'selected' : ''}>${esc(kr.name)}</option>`).join('')}
         </select>
       </div>
       <div class="form-group">
@@ -3200,16 +3199,16 @@ function openTodoModal(id, krId, preset) {
         </div>
       </div>
       <div class="form-group">
-        <label>下一步</label>
-        <textarea id="td-nextstep" rows="2" placeholder="下一步行动计划...">${t ? esc(t.nextStep) : (preset ? esc(preset.nextStep) : '')}</textarea>
+        <label>备注</label>
+        <textarea id="td-notes" rows="2" placeholder="补充说明">${t ? esc(t.notes) : (preset ? esc(preset.notes) : '')}</textarea>
       </div>
       <div class="form-group">
         <label>文档</label>
         <textarea id="td-doclink" rows="2" placeholder="文档链接，可点击打开">${t ? esc(t.docLink || '') : (preset ? esc(preset.docLink || '') : '')}</textarea>
       </div>
       <div class="form-group">
-        <label>备注</label>
-        <textarea id="td-notes" rows="2" placeholder="补充说明">${t ? esc(t.notes) : (preset ? esc(preset.notes) : '')}</textarea>
+        <label>下一步</label>
+        <textarea id="td-nextstep" rows="2" placeholder="下一步行动计划...">${t ? esc(t.nextStep) : (preset ? esc(preset.nextStep) : '')}</textarea>
       </div>
       <div class="form-group">
         <label>笔记区</label>
@@ -3236,6 +3235,16 @@ function updateKROptions() {
   const currentVal = krSelect.value;
   const krs = getKRsByDomain(domainId);
   krSelect.innerHTML = '<option value="">无（独立Todo）</option>' + krs.map(k => `<option value="${k.id}" ${currentVal === k.id ? 'selected' : ''}>${esc(k.name)}</option>`).join('');
+}
+
+function updateQN_KROptions() {
+  const domainId = document.getElementById('qn-domain') ? document.getElementById('qn-domain').value : '';
+  const krSelect = document.getElementById('qn-kr');
+  if (!krSelect) return;
+  const currentVal = krSelect.value;
+  const allKRs = state.data.krs;
+  const filtered = domainId ? allKRs.filter(k => k.domainId === domainId) : allKRs;
+  krSelect.innerHTML = '<option value="">不归属（独立闪念笔记）</option>' + filtered.map(k => `<option value="${k.id}" ${currentVal === k.id ? 'selected' : ''}>${esc(k.name)}</option>`).join('');
 }
 
 function saveTodo(id) {
