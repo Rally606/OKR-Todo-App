@@ -106,20 +106,8 @@ body {
 .note-pin-btn:hover { opacity: 1; }
 .note-pin-btn.pinned { opacity: 1; }
 .note-select-cb { cursor: pointer; width: 16px; height: 16px; }
-.note-content { font-size: 14px; line-height: 1.6; color: var(--c-text); word-break: break-word; flex: 1; }
-.note-content h1 { font-size: 18px; font-weight: 700; margin: 8px 0 4px; }
-.note-content h2 { font-size: 16px; font-weight: 600; margin: 8px 0 4px; }
-.note-content h3 { font-size: 14px; font-weight: 600; margin: 6px 0 2px; }
-.note-content ul { list-style: disc; padding-left: 20px; margin: 4px 0; }
-.note-content ol { list-style: decimal; padding-left: 20px; margin: 4px 0; }
-.note-content li { margin: 2px 0; }
-.note-content p { margin: 4px 0; white-space: pre-wrap; }
-.note-content strong { font-weight: 700; }
-.note-content em { font-style: italic; }
-.note-content code { background: var(--c-border-2); padding: 1px 4px; border-radius: 3px; font-family: monospace; font-size: 13px; }
-.note-content blockquote { border-left: 3px solid var(--c-primary); padding-left: 12px; margin: 4px 0; color: var(--c-text-2); }
-.note-content pre { background: var(--c-border-2); padding: 8px; border-radius: var(--r-sm); overflow-x: auto; margin: 4px 0; }
-.note-edit-area { width: 100%; border: 1px solid var(--c-primary); border-radius: var(--r-sm); padding: 8px; font-size: 14px; line-height: 1.6; color: var(--c-text); background: var(--c-surface); resize: none; min-height: 120px; font-family: inherit; outline: none; overflow: hidden; }
+.note-content { font-size: 14px; line-height: 1.6; color: var(--c-text); white-space: pre-wrap; word-break: break-word; flex: 1; }
+.note-edit-area { width: 100%; border: 1px solid var(--c-primary); border-radius: var(--r-sm); padding: 8px; font-size: 14px; line-height: 1.6; color: var(--c-text); background: var(--c-surface); resize: none; min-height: 60px; font-family: inherit; outline: none; overflow: hidden; }
 .note-source { font-size: 12px; color: var(--c-text-3); display: flex; align-items: center; gap: 6px; flex-wrap: wrap; }
 .note-source-link { color: var(--c-primary); cursor: pointer; text-decoration: none; }
 .note-source-link:hover { text-decoration: underline; }
@@ -139,26 +127,7 @@ body {
 /* ===== Todo expand for knowledge ===== */
 .todo-expand-btn { font-size: 11px; color: var(--c-primary); cursor: pointer; padding: 2px 8px; border-radius: var(--r-sm); background: var(--c-primary-bg); border: none; }
 .todo-expand-btn:hover { background: var(--c-primary); color: #fff; }
-.todo-knowledge-panel { padding: 12px 16px; background: var(--c-bg); border-radius: var(--r-md); margin: 8px 0 0 28px; font-size: 13px; line-height: 1.6; color: var(--c-text-2); word-break: break-word; border-left: 3px solid var(--c-primary); width: calc(100% - 28px); flex-basis: 100%; order: 10; }
-
-/* Inline editing for todo title */
-.todo-title { cursor: text; border-radius: var(--r-sm); transition: background .12s; }
-.todo-title:hover { background: var(--c-border-2); }
-.todo-title[contenteditable="true"] { outline: 2px solid var(--c-primary); outline-offset: 2px; border-radius: var(--r-sm); padding: 2px 6px; margin: -2px -6px; background: var(--c-surface); }
-
-/* Priority quick-switch dropdown */
-.priority-dropdown { position: fixed; z-index: 9999; background: var(--c-surface); border: 1px solid var(--c-border); border-radius: var(--r-sm); box-shadow: var(--sh-md); padding: 4px; display: flex; flex-direction: column; gap: 2px; }
-.pri-option { padding: 6px 16px; border-radius: var(--r-sm); cursor: pointer; font-size: 12px; font-weight: 600; text-align: center; transition: background .12s; }
-.pri-option:hover { background: var(--c-border-2); }
-.pri-option.selected { background: var(--c-primary-bg); }
-
-/* Editable fields in todo expand panel */
-.todo-expand-field { display: flex; flex-direction: column; gap: 4px; }
-.todo-expand-label { font-size: 11px; color: var(--c-text-3); font-weight: 600; }
-.todo-expand-text { font-size: 13px; line-height: 1.5; padding: 6px 8px; border-radius: var(--r-sm); border: 1px solid transparent; cursor: pointer; white-space: pre-wrap; word-break: break-word; min-height: 20px; }
-.todo-expand-text:hover { border-color: var(--c-border-2); background: var(--c-surface); }
-.todo-expand-empty { color: var(--c-text-3); font-style: italic; }
-.todo-expand-textarea { width: 100%; font-size: 13px; line-height: 1.5; padding: 6px 8px; border: 1px solid var(--c-primary); border-radius: var(--r-sm); background: var(--c-surface); color: var(--c-text); outline: none; resize: vertical; min-height: 40px; font-family: inherit; }
+.todo-knowledge-panel { padding: 12px 16px; background: var(--c-bg); border-radius: var(--r-md); margin: 8px 0 0 28px; font-size: 13px; line-height: 1.6; color: var(--c-text-2); white-space: pre-wrap; word-break: break-word; border-left: 3px solid var(--c-primary); width: calc(100% - 28px); flex-basis: 100%; order: 10; }
 /* ===== Homepage flash notes redesign ===== */
 .qn-list-item { padding: 10px 12px; background: var(--c-bg); border-radius: var(--r-md); margin-bottom: 6px; font-size: 13px; transition: background .15s; }
 .qn-list-item:hover { background: var(--c-surface); }
@@ -1576,27 +1545,26 @@ function renderTodoRow(t, re, opts) {
   const kr = t.krId ? getKR(t.krId) : null;
   const h = !!re;
   const showDelete = !opts || opts.showDelete !== false;
-  const expanded = state.expandedTodos && state.expandedTodos.includes(t.id);
   return `<div class="todo-row ${h?'highlight':''}" draggable="true" ondragstart="onTodoDragStart(event,'${t.id}')" ondragend="onTodoDragEnd(event)" ondragover="onTodoDragOver(event)" ondrop="onTodoDrop(event,'${t.id}')" ondragleave="onTodoDragLeave(event)">
     <span class="todo-drag-handle">⠿</span>
     <div class="todo-check ${t.done?'done':''}" onclick="toggleTodo('${t.id}')"></div>
     <div class="todo-info">
-      <div class="todo-title ${t.done?'done':''}" onclick="inlineEditTodoTitle(this,'${t.id}')" onblur="saveInlineTodoTitle(this,'${t.id}')" onkeydown="onTodoTitleKeydown(event,'${t.id}')">${highlightHtml(t.title, re)}</div>
+      <div class="todo-title ${t.done?'done':''}">${highlightHtml(t.title, re)}</div>
       <div class="todo-meta">
-        ${t.priority ? `<span class="kr-pri pri-${esc(t.priority)}" onclick="event.stopPropagation();showPriorityMenu(event,'${t.id}')" style="cursor:pointer;" title="点击切换优先级">${esc(t.priority)}</span>` : ''}
+        ${t.priority ? `<span class="kr-pri pri-${esc(t.priority)}">${esc(t.priority)}</span>` : ''}
         ${kr ? `<span>${esc(kr.name)}</span>` : ''}
         ${domain ? `<span>${esc(domain.name)}</span>` : ''}
         ${formatDDL(t) ? `<span class="todo-ddl">⏰ ${formatDDL(t)}</span>` : ''}
         ${t.notes ? `<span>📍 ${esc(t.notes)}</span>` : ''}
         ${t.docLink ? `<span>📄 ${renderLinkableText(t.docLink)}</span>` : ''}
-        <button class="todo-expand-btn" onclick="event.stopPropagation();toggleTodoExpand('${t.id}')">${expanded ? '收起详情' : '展开详情'}</button>
+        ${(t.nextStep || t.knowledge) ? `<button class="todo-expand-btn" onclick="event.stopPropagation();toggleTodoExpand('${t.id}')">${state.expandedTodos && state.expandedTodos.includes(t.id) ? '收起详情' : '展开详情'}</button>` : ''}
       </div>
     </div>
     <div class="todo-actions">
       <button class="todo-action-btn" onclick="event.stopPropagation();openTodoModal('${t.id}')" title="编辑">✏️</button>
       ${showDelete ? `<button class="todo-action-btn" onclick="event.stopPropagation();deleteTodo('${t.id}')" title="删除">🗑</button>` : ''}
     </div>
-    ${expanded ? '<div class="todo-knowledge-panel" onclick="event.stopPropagation()"><div class="todo-expand-field"><div class="todo-expand-label">📝 下一步</div><div class="todo-expand-text" onclick="inlineEditTodoField(this,\'' + t.id + '\',\'nextStep\')" title="点击编辑">' + (t.nextStep ? esc(t.nextStep) : '<span class="todo-expand-empty">点击添加下一步…</span>') + '</div></div><div class="todo-expand-field"><div class="todo-expand-label">📍 笔记</div><div class="todo-expand-text" onclick="inlineEditTodoField(this,\'' + t.id + '\',\'knowledge\')" title="点击编辑">' + (t.knowledge ? esc(t.knowledge) : '<span class="todo-expand-empty">点击添加笔记…</span>') + '</div></div></div>' : ''}
+    ${(state.expandedTodos && state.expandedTodos.includes(t.id) && (t.nextStep || t.knowledge)) ? '<div class="todo-knowledge-panel">' + (t.nextStep ? '<div style="margin-bottom:8px;"><b>下一步：</b>' + esc(t.nextStep) + '</div>' : '') + (t.knowledge ? '<div><b>笔记：</b>' + esc(t.knowledge) + '</div>' : '') + '</div>' : ''}
   </div>`;
 }
 
@@ -1710,7 +1678,7 @@ function renderKRDetail(kr) {
 
     ${kr.nextStep ? `
       <div class="section-label">📝 备注</div>
-      <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;line-height:1.6;">${renderMarkdown(kr.nextStep)}</div>
+      <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;">${esc(kr.nextStep)}</div>
     ` : ''}
 
     ${kr.docLink ? `
@@ -1719,7 +1687,7 @@ function renderKRDetail(kr) {
     ` : ''}
 
     <div class="section-label">📝 笔记区</div>
-    <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;min-height:40px;line-height:1.6;">${kr.notes ? renderMarkdown(kr.notes) : '<span style="color:var(--c-text-3);font-style:italic;">暂无笔记</span>'}</div>
+    <div style="padding:10px 12px;background:var(--c-bg);border-radius:var(--r-md);font-size:14px;min-height:40px;white-space:pre-wrap;">${esc(kr.notes) || '暂无笔记'}</div>
 
     ${(() => {
       const krNotes = state.data.quickNotes.filter(q => q.krId === kr.id);
@@ -1975,7 +1943,7 @@ function renderNotes() {
                 <span class="note-del-x" onclick="deleteNote('${n.type}','${n.id}')" title="删除">✕</span>
               </div>
             </div>
-            <div class="note-content" id="note-content-${n.id}" onclick="editNoteInline('${n.type}','${n.id}')" style="cursor:text;">${renderMarkdown(n.content)}</div>
+            <div class="note-content" id="note-content-${n.id}" onclick="editNoteInline('${n.type}','${n.id}')" style="cursor:text;">${esc(n.content)}</div>
             <div class="note-source">
               来源：
               ${n.type === 'kr' ? `<span class="note-source-link" onclick="switchView('krs');selectDomain('${n.domainId}');selectKR('${n.id}')">${esc(n.sourceName)}</span>` : ''}
@@ -2035,7 +2003,7 @@ function editNoteInline(type, id) {
 }
 function autoResizeTextarea(el) {
   el.style.height = 'auto';
-  el.style.height = Math.max(120, el.scrollHeight) + 'px';
+  el.style.height = Math.max(60, el.scrollHeight) + 'px';
 }
 function saveNoteInline(type, id) {
   const el = document.getElementById('note-edit-' + id);
@@ -2068,143 +2036,6 @@ function toggleTodoExpand(id) {
   if (idx > -1) state.expandedTodos.splice(idx, 1);
   else state.expandedTodos.push(id);
   render();
-}
-
-/* ===== Inline editing: Todo title, priority, expand fields ===== */
-function inlineEditTodoTitle(el, id) {
-  if (el.getAttribute('contenteditable') === 'true') return;
-  const t = state.data.todos.find(x => x.id === id);
-  if (!t) return;
-  el.setAttribute('contenteditable', 'true');
-  el.setAttribute('draggable', 'false');
-  el.textContent = t.title;
-  el.focus();
-  const range = document.createRange();
-  range.selectNodeContents(el);
-  range.collapse(false);
-  const sel = window.getSelection();
-  sel.removeAllRanges();
-  sel.addRange(range);
-}
-
-function saveInlineTodoTitle(el, id) {
-  if (el.getAttribute('contenteditable') !== 'true') return;
-  const text = el.textContent.trim();
-  const t = state.data.todos.find(x => x.id === id);
-  if (t && text && text !== t.title) {
-    t.title = text;
-    saveData();
-  }
-  render();
-}
-
-function onTodoTitleKeydown(event, id) {
-  if (event.key === 'Enter') { event.preventDefault(); event.target.blur(); }
-  if (event.key === 'Escape') { event.preventDefault(); render(); }
-}
-
-function showPriorityMenu(event, id) {
-  event.stopPropagation();
-  const existing = document.getElementById('priority-menu');
-  if (existing) existing.remove();
-  const t = state.data.todos.find(x => x.id === id);
-  if (!t) return;
-  const menu = document.createElement('div');
-  menu.id = 'priority-menu';
-  menu.className = 'priority-dropdown';
-  menu.innerHTML = ['P0','P1','P2','P3'].map(p =>
-    '<div class="pri-option ' + (t.priority === p ? 'selected' : '') + '" onclick="setTodoPriority(\'' + id + '\',\'' + p + '\')">' + p + '</div>'
-  ).join('');
-  document.body.appendChild(menu);
-  const rect = event.target.getBoundingClientRect();
-  menu.style.left = rect.left + 'px';
-  menu.style.top = (rect.bottom + 4) + 'px';
-  setTimeout(function() { document.addEventListener('click', closePriorityMenu, { once: true }); }, 0);
-}
-
-function closePriorityMenu() {
-  var menu = document.getElementById('priority-menu');
-  if (menu) menu.remove();
-}
-
-function setTodoPriority(id, priority) {
-  var t = state.data.todos.find(function(x) { return x.id === id; });
-  if (t && t.priority !== priority) {
-    t.priority = priority;
-    saveData();
-    toast('优先级已切换为 ' + priority, 'success');
-  }
-  closePriorityMenu();
-  render();
-}
-
-function inlineEditTodoField(el, id, field) {
-  if (el.querySelector('textarea')) return;
-  var t = state.data.todos.find(function(x) { return x.id === id; });
-  if (!t) return;
-  var currentVal = t[field] || '';
-  var textarea = document.createElement('textarea');
-  textarea.className = 'todo-expand-textarea';
-  textarea.value = currentVal;
-  textarea.rows = Math.max(2, currentVal.split('\n').length + 1);
-  textarea.placeholder = field === 'nextStep' ? '点击添加下一步…' : '点击添加笔记…';
-  el.innerHTML = '';
-  el.appendChild(textarea);
-  textarea.focus();
-  textarea.setSelectionRange(textarea.value.length, textarea.value.length);
-  var saved = false;
-  var save = function() {
-    if (saved) return;
-    saved = true;
-    var val = textarea.value.trim();
-    if (val !== (t[field] || '')) {
-      t[field] = val;
-      saveData();
-    }
-    render();
-  };
-  textarea.addEventListener('blur', save);
-  textarea.addEventListener('keydown', function(e) {
-    if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); save(); }
-    if (e.key === 'Escape') { e.preventDefault(); saved = true; render(); }
-  });
-}
-
-/* ===== Markdown rendering ===== */
-function renderMarkdown(text) {
-  if (!text) return '';
-  var lines = String(text).split('\n');
-  var html = '';
-  var listType = null;
-  var paraBuffer = [];
-  var flushPara = function() {
-    if (paraBuffer.length > 0) { html += '<p>' + paraBuffer.join(' ') + '</p>'; paraBuffer = []; }
-  };
-  var closeList = function() {
-    if (listType) { html += '</' + listType + '>'; listType = null; }
-  };
-  for (var i = 0; i < lines.length; i++) {
-    var trimmed = lines[i].trim();
-    var m;
-    if (m = trimmed.match(/^### (.+)$/)) { closeList(); flushPara(); html += '<h3>' + inlineMd(esc(m[1])) + '</h3>'; }
-    else if (m = trimmed.match(/^## (.+)$/)) { closeList(); flushPara(); html += '<h2>' + inlineMd(esc(m[1])) + '</h2>'; }
-    else if (m = trimmed.match(/^# (.+)$/)) { closeList(); flushPara(); html += '<h1>' + inlineMd(esc(m[1])) + '</h1>'; }
-    else if (m = trimmed.match(/^> (.+)$/)) { closeList(); flushPara(); html += '<blockquote>' + inlineMd(esc(m[1])) + '</blockquote>'; }
-    else if (m = trimmed.match(/^- (.+)$/)) { flushPara(); if (listType !== 'ul') { closeList(); html += '<ul>'; listType = 'ul'; } html += '<li>' + inlineMd(esc(m[1])) + '</li>'; }
-    else if (m = trimmed.match(/^\d+\. (.+)$/)) { flushPara(); if (listType !== 'ol') { closeList(); html += '<ol>'; listType = 'ol'; } html += '<li>' + inlineMd(esc(m[1])) + '</li>'; }
-    else if (trimmed === '') { closeList(); flushPara(); }
-    else { closeList(); paraBuffer.push(inlineMd(esc(trimmed))); }
-  }
-  closeList(); flushPara();
-  return html;
-}
-
-function inlineMd(text) {
-  var result = text;
-  result = result.replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>');
-  result = result.replace(/\*(.+?)\*/g, '<em>$1</em>');
-  result = result.replace(/`(.+?)`/g, '<code>$1</code>');
-  return result;
 }
 
 function highlightHtml(text, re) {
